@@ -60,13 +60,13 @@ Ver [`docs/roadmap.md`](../../docs/roadmap.md) y [`docs/project-status.md`](../.
 1. Copiar/enlazar este directorio en `<moodle>/local/monlaututoria`.
 2. Visitar *Administración del sitio → Notificaciones* para completar la instalación, o ejecutar `php admin/cli/upgrade.php`.
 
-> **Nota:** verificado en un Moodle 5.1 de pruebas real hasta la Fase 3B.1 inclusive (incluido el selector AJAX de usuario). Las actualizaciones de esquema y la interfaz de las Fases 3B.2, 3B.3A, 3C.1 y 3D.2, y los servicios sin interfaz de 3B.4A/3B.5A (esta versión), todavía no se han probado manualmente en esa instancia — solo se ha validado la sintaxis PHP.
+> **Nota:** verificado en un Moodle 5.1 de pruebas real hasta la Fase 3B.1 inclusive a nivel de interfaz (incluido el selector AJAX de usuario). **La actualización de esquema completa (3B.2 → 3D.2, incluida la corrección del fallo de índice en PostgreSQL) se ha instalado sin errores en esa misma instancia** — confirmado por el usuario. Lo que falta todavía por probar manualmente en el navegador: la interfaz de las Fases 3B.2/3B.3A/3C.1/3D.2, y ejecutar PHPUnit/Behat (los servicios de 3B.4A/3B.5A no tienen interfaz que probar).
 
 ## Versiones compatibles
 
 | Versión del plugin | Moodle |
 |---|---|
-| 0.4.2 | 5.1.x (instalación verificada hasta 3B.1 inclusive; resto pendiente — 3B.2/3B.3A/3C.1/3D.2 tienen migración de esquema pendiente de `db/upgrade.php`) |
+| 0.4.2 | 5.1.x (instalación y **actualización de esquema verificadas** ✅ hasta esta versión inclusive, tras corregir un fallo de índice en PostgreSQL; interfaz de 3B.2/3B.3A/3C.1/3D.2 y PHPUnit/Behat todavía pendientes de probar) |
 | 0.4.1 | 5.1.x (instalación verificada hasta 3B.1 inclusive; 3B.2/3B.3A/3B.4A/3B.5A/3C.1/3D.1 pendientes de probar — 3D.1 no toca esquema; 3B.2/3B.3A/3C.1 sí, pendiente `db/upgrade.php`) |
 | 0.4.0 | 5.1.x (instalación verificada hasta 3B.1 inclusive; 3B.2/3B.3A/3B.4A/3B.5A/3C.1 pendientes de probar en el navegador y, para 3B.2/3B.3A/3C.1, `db/upgrade.php`) |
 | 0.3.5 | 5.1.x (instalación verificada hasta 3B.1 inclusive; 3B.2/3B.3A/3B.4A/3B.5A pendientes de probar en el navegador y, para 3B.2/3B.3A, `db/upgrade.php`) |
