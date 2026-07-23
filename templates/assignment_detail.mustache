@@ -31,10 +31,18 @@
     * timestartformatted string
     * timeendformatted string
     * sourcelabel string
+    * noteformatted string - administrative note, or a placeholder when empty
+    * closereasonlabel string - coded closing reason label, or a placeholder when not closed
     * createdbyname string
     * createdonformatted string
     * modifiedbyname string
     * modifiedonformatted string
+    * canedit bool - whether to show the edit action
+    * editurl string - only used when canedit is true
+    * editlabel string - only used when canedit is true
+    * canclose bool - whether to show the close action (never true for co-tutor rows)
+    * closeurl string - only used when canclose is true
+    * closelabel string - only used when canclose is true
     * status, statuslabel, statusclass, statusicon - see assignment_status
 
     Example context (json):
@@ -47,10 +55,18 @@
         "timestartformatted": "1 September 2026",
         "timeendformatted": "—",
         "sourcelabel": "Manual",
+        "noteformatted": "—",
+        "closereasonlabel": "—",
         "createdbyname": "Admin User",
         "createdonformatted": "1 September 2026, 09:00",
         "modifiedbyname": "Admin User",
         "modifiedonformatted": "1 September 2026, 09:00",
+        "canedit": true,
+        "editurl": "https://example.org/local/monlaututoria/assignments/edit.php?id=1",
+        "editlabel": "Edit",
+        "canclose": true,
+        "closeurl": "https://example.org/local/monlaututoria/assignments/close.php?id=1",
+        "closelabel": "Close",
         "status": "active",
         "statuslabel": "Active",
         "statusclass": "success",
@@ -85,9 +101,21 @@
     <dt class="col-sm-3">{{#str}} assignment_col_source, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">{{sourcelabel}}</dd>
 
+    <dt class="col-sm-3">{{#str}} assignment_field_note, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{noteformatted}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_field_closereason, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{closereasonlabel}}</dd>
+
     <dt class="col-sm-3">{{#str}} assignment_createdby, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">{{createdbyname}} — {{createdonformatted}}</dd>
 
     <dt class="col-sm-3">{{#str}} assignment_modifiedby, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">{{modifiedbyname}} — {{modifiedonformatted}}</dd>
 </dl>
+{{#canedit}}
+<p><a class="btn btn-secondary" href="{{editurl}}">{{editlabel}}</a></p>
+{{/canedit}}
+{{#canclose}}
+<p><a class="btn btn-outline-danger" href="{{closeurl}}">{{closelabel}}</a></p>
+{{/canclose}}

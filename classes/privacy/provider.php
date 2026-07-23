@@ -94,6 +94,8 @@ final class provider implements
             'timestart'      => 'privacy:metadata:assignment:timestart',
             'timeend'        => 'privacy:metadata:assignment:timeend',
             'source'         => 'privacy:metadata:assignment:source',
+            'note'           => 'privacy:metadata:assignment:note',
+            'closereason'    => 'privacy:metadata:assignment:closereason',
             'createdby'      => 'privacy:metadata:createdby',
             'modifiedby'     => 'privacy:metadata:modifiedby',
             'timecreated'    => 'privacy:metadata:timecreated',

@@ -115,6 +115,50 @@ final class assignment_repository_test extends \advanced_testcase {
         $this->assertCount(1, $repository->find_historical($student->id));
     }
 
+    public function test_close_persists_closereason_and_note(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $id = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+        ]);
+
+        $timeend = time();
+        $repository->close($id, get_admin()->id, $timeend, 'end_of_year', 'Fin de curso');
+
+        $record = $repository->get($id);
+        $this->assertSame('closed', $record->status);
+        $this->assertSame($timeend, (int) $record->timeend);
+        $this->assertSame('end_of_year', $record->closereason);
+        $this->assertSame('Fin de curso', $record->note);
+    }
+
+    public function test_close_without_reason_or_note_leaves_them_untouched(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $id = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+            'note' => 'Nota original',
+        ]);
+
+        $repository->close($id, get_admin()->id, time());
+
+        $record = $repository->get($id);
+        $this->assertSame('Nota original', $record->note);
+        $this->assertNull($record->closereason);
+    }
+
     public function test_find_by_cohort(): void {
         $this->resetAfterTest();
 
@@ -275,6 +319,43 @@ final class assignment_repository_test extends \advanced_testcase {
         // interpolated into the SQL as-is.
         $results = $repository->search(['studentid' => $student->id], 0, 0, 'id; DROP TABLE users; --');
         $this->assertCount(1, $results);
+    }
+
+    public function test_update_editable_fields_persists_and_ignores_protected_fields(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $otherstudent = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $id = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid, 'timestart' => strtotime('2026-09-01'),
+            'createdby' => get_admin()->id,
+        ]);
+
+        $newstart = strtotime('2026-09-15');
+        $newend = strtotime('2027-06-01');
+        $repository->update_editable_fields($id, (object) [
+            'timestart' => $newstart,
+            'timeend'   => $newend,
+            'note'      => 'Updated note',
+            // These must be silently ignored even though present.
+            'studentid' => $otherstudent->id,
+            'tutorid'   => $otherstudent->id,
+            'status'    => 'closed',
+        ], get_admin()->id);
+
+        $record = $repository->get($id);
+        $this->assertSame($newstart, (int) $record->timestart);
+        $this->assertSame($newend, (int) $record->timeend);
+        $this->assertSame('Updated note', $record->note);
+        // Protected fields must be untouched.
+        $this->assertSame((int) $student->id, (int) $record->studentid);
+        $this->assertSame((int) $tutor->id, (int) $record->tutorid);
+        $this->assertSame('active', $record->status);
     }
 
     public function test_get_cotutors_for_students_groups_by_student(): void {

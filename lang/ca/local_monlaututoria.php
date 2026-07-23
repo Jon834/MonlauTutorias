@@ -255,3 +255,56 @@ $string['assignments_list_empty'] = 'No hi ha assignacions que coincideixin amb 
 $string['assignment_history_empty'] = 'Aquest alumne encara no té historial d\'assignacions.';
 
 $string['eventassignmentviewed'] = 'Assignació vista';
+$string['eventassignmentupdated'] = 'Assignació actualitzada';
+
+$string['assignment_create_title'] = 'Nova assignació';
+$string['assignment_edit_title'] = 'Editar assignació';
+$string['assignment_create'] = 'Nova assignació';
+$string['assignment_edit'] = 'Editar';
+$string['assignment_create_success'] = 'Assignació creada.';
+$string['assignment_update_success'] = 'Assignació actualitzada.';
+$string['assignment_field_isprimary'] = 'Marcar com a tutor principal';
+$string['assignment_field_note'] = 'Observació administrativa';
+$string['assignment_field_editreason'] = 'Motiu de la modificació';
+$string['assignment_field_closereason'] = 'Motiu de tancament';
+$string['assignment_field_closedate'] = 'Data efectiva de tancament';
+
+$string['assignment_close'] = 'Tancar';
+$string['assignment_close_title'] = 'Tancar assignació';
+$string['assignment_close_confirm'] = 'Confirmar tancament';
+$string['assignment_close_confirm_checkbox'] = 'Confirmo que vull tancar aquesta assignació.';
+$string['assignment_close_success'] = 'Assignació tancada.';
+$string['assignment_close_success_no_primary'] = 'Assignació tancada. L\'alumne ha quedat sense tutor principal actiu.';
+$string['warning_assignment_close_no_primary'] = 'En tancar aquesta assignació, l\'alumne quedarà sense tutor principal actiu.';
+
+$string['closereason_tutorchange'] = 'Canvi de tutor';
+$string['closereason_groupchange'] = 'Canvi de grup';
+$string['closereason_levelchange'] = 'Canvi de nivell';
+$string['closereason_endofyear'] = 'Fi de curs acadèmic';
+$string['closereason_studentleft'] = 'Baixa de l\'alumne';
+$string['closereason_tutorleft'] = 'Baixa del tutor';
+$string['closereason_adminerror'] = 'Error administratiu';
+$string['closereason_supportended'] = 'Fi de suport o cotutoria';
+$string['closereason_other'] = 'Altre';
+
+$string['error_assignment_closed_no_permission'] = 'No tens permís per editar una assignació tancada o cancel·lada.';
+$string['error_assignment_edit_reason_required'] = 'Cal indicar un motiu per modificar una assignació tancada o cancel·lada.';
+$string['error_assignment_close_reason_invalid'] = 'Motiu de tancament no vàlid.';
+$string['error_assignment_close_before_start'] = 'La data de tancament no pot ser anterior a la data d\'inici.';
+$string['error_assignment_close_not_confirmed'] = 'Cal confirmar el tancament.';
+$string['error_assignment_close_use_remove_cotutor'] = 'Una assignació de cotutor es retira des de la gestió de cotutors, no des d\'aquesta pàgina.';
+$string['error_assignment_reassign_reason_invalid'] = 'Motiu de reassignació no vàlid.';
+$string['error_assignment_reassign_conflict'] = 'Aquesta assignació s\'ha modificat mitjançant una altra acció mentre es processava aquesta reassignació. No s\'ha aplicat cap canvi; comprova l\'estat actual i torna-ho a provar.';
+
+$string['reassignreason_groupchange'] = 'Canvi de grup';
+$string['reassignreason_levelchange'] = 'Canvi de nivell';
+$string['reassignreason_orgchange'] = 'Canvi organitzatiu';
+$string['reassignreason_tempsubstitution'] = 'Substitució temporal';
+$string['reassignreason_tutorleft'] = 'Baixa del tutor';
+$string['reassignreason_reorganization'] = 'Reorganització de tutories';
+$string['reassignreason_adminerror'] = 'Error administratiu';
+$string['reassignreason_coordinationrequest'] = 'Sol·licitud de coordinació';
+$string['reassignreason_other'] = 'Altre';
+
+$string['privacy:metadata:assignment:note'] = 'Una observació administrativa opcional sobre l\'assignació.';
+$string['privacy:metadata:assignment:closereason'] = 'El motiu codificat pel qual es va tancar l\'assignació.';

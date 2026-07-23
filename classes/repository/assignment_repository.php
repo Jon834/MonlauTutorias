@@ -60,6 +60,8 @@ class assignment_repository {
         $record->timeend = isset($data->timeend) ? (int) $data->timeend : null;
         $record->source = $data->source ?? \local_monlaututoria\domain\assignment_source::MANUAL;
         $record->externalid = $data->externalid ?? null;
+        $record->note = $data->note ?? null;
+        $record->closereason = null;
         $record->createdby = (int) $data->createdby;
         $record->modifiedby = (int) $data->createdby;
         $record->timecreated = time();
@@ -94,17 +96,70 @@ class assignment_repository {
      * Closes an assignment (status=closed, timeend set). Callers are
      * responsible for enforcing business guards before calling this.
      *
+     * $closereason and $note are only written when explicitly passed
+     * (non-null): internal callers such as reassign() and remove_cotutor()
+     * close a row without either, leaving those fields untouched.
+     *
      * @param int $id
      * @param int $modifiedby
      * @param int $timeend
+     * @param string|null $closereason one of assignment_close_reason::values()
+     * @param string|null $note replaces the administrative note when provided
      * @return bool
      */
-    public function close(int $id, int $modifiedby, int $timeend): bool {
+    public function close(
+        int $id,
+        int $modifiedby,
+        int $timeend,
+        ?string $closereason = null,
+        ?string $note = null
+    ): bool {
         global $DB;
 
         $record = $this->get($id);
         $record->status = assignment_status::CLOSED;
         $record->timeend = $timeend;
+        if ($closereason !== null) {
+            $record->closereason = $closereason;
+        }
+        if ($note !== null) {
+            $record->note = $note !== '' ? $note : null;
+        }
+        $record->modifiedby = $modifiedby;
+        $record->timemodified = time();
+
+        return $DB->update_record(self::TABLE, $record);
+    }
+
+    /**
+     * Updates only the editable fields of an assignment: cohortid, timestart,
+     * timeend, note. Deliberately never reads or touches studentid, tutorid,
+     * assignmenttype, isprimary or status from $data, even if present —
+     * changing tutor is a reassignment (a separate flow) and changing status
+     * is a close/cancel action (a separate flow), not a generic edit.
+     *
+     * @param int $id
+     * @param \stdClass $data may contain cohortid, timestart, timeend, note
+     * @param int $modifiedby
+     * @return bool
+     */
+    public function update_editable_fields(int $id, \stdClass $data, int $modifiedby): bool {
+        global $DB;
+
+        $record = $this->get($id);
+
+        if (property_exists($data, 'cohortid')) {
+            $record->cohortid = !empty($data->cohortid) ? (int) $data->cohortid : null;
+        }
+        if (property_exists($data, 'timestart')) {
+            $record->timestart = (int) $data->timestart;
+        }
+        if (property_exists($data, 'timeend')) {
+            $record->timeend = !empty($data->timeend) ? (int) $data->timeend : null;
+        }
+        if (property_exists($data, 'note')) {
+            $record->note = $data->note !== '' ? $data->note : null;
+        }
         $record->modifiedby = $modifiedby;
         $record->timemodified = time();
 

@@ -63,6 +63,8 @@ final class student_reassigned extends assignment_event_base {
      * @param int $previoustutorid
      * @param int $previousassignmentid
      * @param int $academicyearid
+     * @param string|null $reassignreason one of assignment_reassign_reason::values()
+     * @param int[] $closedcotutorids co-tutor assignment ids closed as part of this reassignment
      * @return self
      */
     public static function create_from_id(
@@ -71,12 +73,20 @@ final class student_reassigned extends assignment_event_base {
         int $studentid,
         int $previoustutorid,
         int $previousassignmentid,
-        int $academicyearid
+        int $academicyearid,
+        ?string $reassignreason = null,
+        array $closedcotutorids = []
     ): self {
-        return self::build($objectid, $userid, $studentid, [
+        $other = [
             'previoustutorid'      => $previoustutorid,
             'previousassignmentid' => $previousassignmentid,
             'academicyearid'       => $academicyearid,
-        ]);
+            'closedcotutorids'     => $closedcotutorids,
+        ];
+        if ($reassignreason !== null) {
+            $other['reassignreason'] = $reassignreason;
+        }
+
+        return self::build($objectid, $userid, $studentid, $other);
     }
 }

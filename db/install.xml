@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/monlaututoria/db" VERSION="20260724" COMMENT="XMLDB file for Moodle local/monlaututoria"
+<XMLDB PATH="local/monlaututoria/db" VERSION="20260726" COMMENT="XMLDB file for Moodle local/monlaututoria"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -84,6 +84,8 @@
         <FIELD NAME="timeend" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Null while active; set only when the assignment is closed"/>
         <FIELD NAME="source" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="manual" SEQUENCE="false" COMMENT="manual, cohort, csv, external, migration"/>
         <FIELD NAME="externalid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Reserved for phase 3D external/CSV reconciliation; unused in phase 3A"/>
+        <FIELD NAME="note" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Optional administrative note, editable via assignments/edit.php (phase 3B.2)"/>
+        <FIELD NAME="closereason" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false" COMMENT="Coded reason set when the assignment is closed via assignments/close.php (phase 3B.3), see assignment_close_reason"/>
         <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

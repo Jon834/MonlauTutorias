@@ -35,6 +35,12 @@
     * sourcelabel string
     * detailurl string
     * viewdetaillabel string
+    * canedit bool - whether to show the edit link
+    * editurl string - only used when canedit is true
+    * editlabel string - only used when canedit is true
+    * canclose bool - whether to show the close link (never true for co-tutor rows)
+    * closeurl string - only used when canclose is true
+    * closelabel string - only used when canclose is true
     * status, statuslabel, statusclass, statusicon - see assignment_status
 
     Example context (json):
@@ -50,6 +56,12 @@
         "sourcelabel": "Manual",
         "detailurl": "https://example.org/local/monlaututoria/assignments/view.php?id=1",
         "viewdetaillabel": "View detail",
+        "canedit": true,
+        "editurl": "https://example.org/local/monlaututoria/assignments/edit.php?id=1",
+        "editlabel": "Edit",
+        "canclose": true,
+        "closeurl": "https://example.org/local/monlaututoria/assignments/close.php?id=1",
+        "closelabel": "Close",
         "status": "active",
         "statuslabel": "Active",
         "statusclass": "success",
@@ -67,5 +79,9 @@
     <td>{{timeendformatted}}</td>
     <td>{{> local_monlaututoria/assignment_status}}</td>
     <td>{{sourcelabel}}</td>
-    <td><a href="{{detailurl}}">{{viewdetaillabel}}</a></td>
+    <td>
+        <a href="{{detailurl}}">{{viewdetaillabel}}</a>
+        {{#canedit}} | <a href="{{editurl}}">{{editlabel}}</a>{{/canedit}}
+        {{#canclose}} | <a href="{{closeurl}}">{{closelabel}}</a>{{/canclose}}
+    </td>
 </tr>

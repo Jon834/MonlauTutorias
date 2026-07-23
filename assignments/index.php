@@ -160,6 +160,10 @@ $typeoptions = \local_monlaututoria\domain\assignment_type::get_options();
 $sourceoptions = \local_monlaututoria\domain\assignment_source::get_options();
 $dateformat = get_string('strftimedatefullshort', 'langconfig');
 
+$canmanageassignments = has_capability('local/monlaututoria:manageassignments', $context);
+$canmanageclosed = has_capability('local/monlaututoria:manageclosedassignments', $context);
+$canassignstudents = has_capability('local/monlaututoria:assignstudents', $context);
+
 $rows = [];
 foreach ($records as $record) {
     $student = $users[$record->studentid] ?? null;
@@ -169,6 +173,11 @@ foreach ($records as $record) {
     $cotutornames = $cotutorsbystudent[(int) $record->studentid] ?? [];
 
     $badge = $renderer->status_badge_data($record->status, (int) $record->timestart);
+
+    $isactive = $record->status === \local_monlaututoria\domain\assignment_status::ACTIVE;
+    $canedit = $canmanageassignments && ($isactive || $canmanageclosed);
+    $canclose = $canmanageassignments && $isactive
+        && $record->assignmenttype !== \local_monlaututoria\domain\assignment_type::CO_TUTOR;
 
     $rows[] = $badge + [
         'studentname'        => $student ? fullname($student) : ('#' . $record->studentid),
@@ -182,11 +191,28 @@ foreach ($records as $record) {
         'sourcelabel'        => $sourceoptions[$record->source] ?? $record->source,
         'detailurl'          => (new moodle_url('/local/monlaututoria/assignments/view.php', ['id' => $record->id]))->out(false),
         'viewdetaillabel'    => get_string('assignment_viewdetail', 'local_monlaututoria'),
+        'canedit'            => $canedit,
+        'editurl'            => $canedit
+            ? (new moodle_url('/local/monlaututoria/assignments/edit.php', ['id' => $record->id]))->out(false)
+            : '',
+        'editlabel'          => get_string('assignment_edit', 'local_monlaututoria'),
+        'canclose'           => $canclose,
+        'closeurl'           => $canclose
+            ? (new moodle_url('/local/monlaututoria/assignments/close.php', ['id' => $record->id]))->out(false)
+            : '',
+        'closelabel'         => get_string('assignment_close', 'local_monlaututoria'),
     ];
 }
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('assignments', 'local_monlaututoria'));
+
+if ($canassignstudents) {
+    echo $OUTPUT->single_button(
+        new moodle_url('/local/monlaututoria/assignments/create.php'),
+        get_string('assignment_create', 'local_monlaututoria')
+    );
+}
 
 $filterform->display();
 

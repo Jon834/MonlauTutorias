@@ -14,21 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_monlaututoria\domain;
+
 /**
- * Version details for local_monlaututoria.
+ * Immutable input for assignment_service::reassign_primary_tutor(). Carries
+ * only what the caller may decide: never the previous assignment's id or
+ * tutor — the service looks those up itself from studentid/academicyearid,
+ * so a stale or manipulated value cannot be smuggled in.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class reassign_assignment_command {
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026072700;
-// Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
-// este valor es compatible con esa instancia; sigue sin confirmarse el número
-// exacto del core (no bloqueante, solo pendiente de precisión).
-$plugin->requires  = 2025100600;
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.3.4';
+    public function __construct(
+        public readonly int $studentid,
+        public readonly int $newtutorid,
+        public readonly int $academicyearid,
+        public readonly string $reassignreason,
+        public readonly ?int $effectivedate = null,
+        public readonly bool $keepcotutors = true,
+        public readonly bool $allowsuspended = false,
+        public readonly bool $canoverridelock = false
+    ) {
+    }
+}

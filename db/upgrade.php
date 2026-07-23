@@ -138,5 +138,27 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026072400, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026072500) {
+        // Optional administrative note on assignments, introduced in phase 3B.2.
+        $table = new xmldb_table('local_tut_assignment');
+        $field = new xmldb_field('note', XMLDB_TYPE_TEXT, null, null, null, null, null, 'externalid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026072500, 'local', 'monlaututoria');
+    }
+
+    if ($oldversion < 2026072600) {
+        // Coded closing reason on assignments, introduced in phase 3B.3.
+        $table = new xmldb_table('local_tut_assignment');
+        $field = new xmldb_field('closereason', XMLDB_TYPE_CHAR, '30', null, null, null, null, 'note');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026072600, 'local', 'monlaututoria');
+    }
+
     return true;
 }

@@ -17,26 +17,25 @@
 namespace local_monlaututoria\event;
 
 /**
- * Event triggered when a tutor-student assignment is closed (not as part of
- * a reassignment — that triggers student_reassigned instead — and not for a
- * co-tutor row, which triggers co_tutor_removed instead).
+ * Event triggered when an assignment's editable fields (cohort, dates, note)
+ * are updated through assignments/edit.php.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class assignment_closed extends assignment_event_base {
+final class assignment_updated extends assignment_event_base {
 
     protected function get_crud_value(): string {
         return 'u';
     }
 
     public static function get_name() {
-        return get_string('eventassignmentclosed', 'local_monlaututoria');
+        return get_string('eventassignmentupdated', 'local_monlaututoria');
     }
 
     public function get_description() {
-        return "The user with id {$this->userid} closed the assignment with id {$this->objectid} "
+        return "The user with id {$this->userid} updated the assignment with id {$this->objectid} "
             . "for the student with id {$this->relateduserid}.";
     }
 
@@ -44,20 +43,17 @@ final class assignment_closed extends assignment_event_base {
      * @param int $objectid
      * @param int $userid
      * @param int $studentid
-     * @param string $closereason one of assignment_close_reason::values()
-     * @param bool $leftwithoutprimary whether the student is now left without an active primary tutor
+     * @param int $academicyearid
+     * @param array $extra e.g. ['fieldschanged' => [...], 'reason' => '...'] — never the note content itself
      * @return self
      */
     public static function create_from_id(
         int $objectid,
         int $userid,
         int $studentid,
-        string $closereason,
-        bool $leftwithoutprimary = false
+        int $academicyearid,
+        array $extra = []
     ): self {
-        return self::build($objectid, $userid, $studentid, [
-            'closereason'        => $closereason,
-            'leftwithoutprimary' => $leftwithoutprimary,
-        ]);
+        return self::build($objectid, $userid, $studentid, ['academicyearid' => $academicyearid] + $extra);
     }
 }

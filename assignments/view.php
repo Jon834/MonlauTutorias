@@ -78,6 +78,15 @@ $sourceoptions = \local_monlaututoria\domain\assignment_source::get_options();
 
 $badge = $renderer->status_badge_data($assignment->status, (int) $assignment->timestart);
 
+$canmanageclosed = has_capability('local/monlaututoria:manageclosedassignments', $context);
+$canmanageassignments = has_capability('local/monlaututoria:manageassignments', $context);
+$isactive = $assignment->status === \local_monlaututoria\domain\assignment_status::ACTIVE;
+$canedit = $canmanageassignments && ($isactive || $canmanageclosed);
+$canclose = $canmanageassignments && $isactive
+    && $assignment->assignmenttype !== \local_monlaututoria\domain\assignment_type::CO_TUTOR;
+
+$closereasonoptions = \local_monlaututoria\domain\assignment_close_reason::get_options();
+
 $detaildata = (object) ($badge + [
     'studentname'         => $student ? fullname($student) : ('#' . $assignment->studentid),
     'tutorname'           => $tutor ? fullname($tutor) : ('#' . $assignment->tutorid),
@@ -87,10 +96,24 @@ $detaildata = (object) ($badge + [
     'timestartformatted'  => userdate($assignment->timestart, $dateformat),
     'timeendformatted'    => !empty($assignment->timeend) ? userdate($assignment->timeend, $dateformat) : '—',
     'sourcelabel'         => $sourceoptions[$assignment->source] ?? $assignment->source,
+    'noteformatted'       => !empty($assignment->note) ? format_text($assignment->note, FORMAT_PLAIN) : '—',
+    'closereasonlabel'    => !empty($assignment->closereason)
+        ? ($closereasonoptions[$assignment->closereason] ?? $assignment->closereason)
+        : '—',
     'createdbyname'       => $createdby ? fullname($createdby) : ('#' . $assignment->createdby),
     'createdonformatted'  => userdate($assignment->timecreated, $datetimeformat),
     'modifiedbyname'      => $modifiedby ? fullname($modifiedby) : ('#' . $assignment->modifiedby),
     'modifiedonformatted' => userdate($assignment->timemodified, $datetimeformat),
+    'canedit'             => $canedit,
+    'editurl'             => $canedit
+        ? (new moodle_url('/local/monlaututoria/assignments/edit.php', ['id' => $id]))->out(false)
+        : '',
+    'editlabel'           => get_string('assignment_edit', 'local_monlaututoria'),
+    'canclose'            => $canclose,
+    'closeurl'            => $canclose
+        ? (new moodle_url('/local/monlaututoria/assignments/close.php', ['id' => $id]))->out(false)
+        : '',
+    'closelabel'          => get_string('assignment_close', 'local_monlaututoria'),
 ]);
 
 // Basic history: every assignment for this student, most recent first.

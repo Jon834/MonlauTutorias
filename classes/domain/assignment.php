@@ -38,6 +38,8 @@ final class assignment {
         public readonly ?int $timeend,
         public readonly string $source,
         public readonly ?string $externalid,
+        public readonly ?string $note,
+        public readonly ?string $closereason,
         public readonly int $createdby,
         public readonly int $modifiedby,
         public readonly int $timecreated,
@@ -65,6 +67,8 @@ final class assignment {
             isset($record->timeend) ? (int) $record->timeend : null,
             $record->source,
             $record->externalid ?? null,
+            $record->note ?? null,
+            $record->closereason ?? null,
             (int) ($record->createdby ?? 0),
             (int) ($record->modifiedby ?? 0),
             (int) ($record->timecreated ?? 0),
@@ -93,6 +97,8 @@ final class assignment {
         $record->timeend = $this->timeend;
         $record->source = $this->source;
         $record->externalid = $this->externalid;
+        $record->note = $this->note;
+        $record->closereason = $this->closereason;
         $record->createdby = $this->createdby;
         $record->modifiedby = $this->modifiedby;
         $record->timecreated = $this->timecreated;

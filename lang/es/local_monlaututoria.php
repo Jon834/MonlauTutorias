@@ -255,3 +255,56 @@ $string['assignments_list_empty'] = 'No hay asignaciones que coincidan con los f
 $string['assignment_history_empty'] = 'Este alumno todavía no tiene historial de asignaciones.';
 
 $string['eventassignmentviewed'] = 'Asignación vista';
+$string['eventassignmentupdated'] = 'Asignación actualizada';
+
+$string['assignment_create_title'] = 'Nueva asignación';
+$string['assignment_edit_title'] = 'Editar asignación';
+$string['assignment_create'] = 'Nueva asignación';
+$string['assignment_edit'] = 'Editar';
+$string['assignment_create_success'] = 'Asignación creada.';
+$string['assignment_update_success'] = 'Asignación actualizada.';
+$string['assignment_field_isprimary'] = 'Marcar como tutor principal';
+$string['assignment_field_note'] = 'Observación administrativa';
+$string['assignment_field_editreason'] = 'Motivo de la modificación';
+$string['assignment_field_closereason'] = 'Motivo de cierre';
+$string['assignment_field_closedate'] = 'Fecha efectiva de cierre';
+
+$string['assignment_close'] = 'Cerrar';
+$string['assignment_close_title'] = 'Cerrar asignación';
+$string['assignment_close_confirm'] = 'Confirmar cierre';
+$string['assignment_close_confirm_checkbox'] = 'Confirmo que deseo cerrar esta asignación.';
+$string['assignment_close_success'] = 'Asignación cerrada.';
+$string['assignment_close_success_no_primary'] = 'Asignación cerrada. El alumno ha quedado sin tutor principal activo.';
+$string['warning_assignment_close_no_primary'] = 'Al cerrar esta asignación, el alumno quedará sin tutor principal activo.';
+
+$string['closereason_tutorchange'] = 'Cambio de tutor';
+$string['closereason_groupchange'] = 'Cambio de grupo';
+$string['closereason_levelchange'] = 'Cambio de nivel';
+$string['closereason_endofyear'] = 'Fin de curso académico';
+$string['closereason_studentleft'] = 'Baja del alumno';
+$string['closereason_tutorleft'] = 'Baja del tutor';
+$string['closereason_adminerror'] = 'Error administrativo';
+$string['closereason_supportended'] = 'Fin de apoyo o cotutoría';
+$string['closereason_other'] = 'Otro';
+
+$string['error_assignment_closed_no_permission'] = 'No tienes permiso para editar una asignación cerrada o cancelada.';
+$string['error_assignment_edit_reason_required'] = 'Debes indicar un motivo para modificar una asignación cerrada o cancelada.';
+$string['error_assignment_close_reason_invalid'] = 'Motivo de cierre no válido.';
+$string['error_assignment_close_before_start'] = 'La fecha de cierre no puede ser anterior a la fecha de inicio.';
+$string['error_assignment_close_not_confirmed'] = 'Debes confirmar el cierre.';
+$string['error_assignment_close_use_remove_cotutor'] = 'Una asignación de cotutor se retira desde la gestión de cotutores, no desde esta página.';
+$string['error_assignment_reassign_reason_invalid'] = 'Motivo de reasignación no válido.';
+$string['error_assignment_reassign_conflict'] = 'Esta asignación se ha modificado mediante otra acción mientras se procesaba esta reasignación. No se ha aplicado ningún cambio; comprueba el estado actual e inténtalo de nuevo.';
+
+$string['reassignreason_groupchange'] = 'Cambio de grupo';
+$string['reassignreason_levelchange'] = 'Cambio de nivel';
+$string['reassignreason_orgchange'] = 'Cambio organizativo';
+$string['reassignreason_tempsubstitution'] = 'Sustitución temporal';
+$string['reassignreason_tutorleft'] = 'Baja del tutor';
+$string['reassignreason_reorganization'] = 'Reorganización de tutorías';
+$string['reassignreason_adminerror'] = 'Error administrativo';
+$string['reassignreason_coordinationrequest'] = 'Solicitud de coordinación';
+$string['reassignreason_other'] = 'Otro';
+
+$string['privacy:metadata:assignment:note'] = 'Una observación administrativa opcional sobre la asignación.';
+$string['privacy:metadata:assignment:closereason'] = 'El motivo codificado por el que se cerró la asignación.';
