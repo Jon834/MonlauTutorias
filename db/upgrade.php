@@ -198,6 +198,19 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         // no single cohort/academic year/tutor — each row can specify its own.
         $table = new xmldb_table('local_tut_bulkoperation');
 
+        // On some DBs (observed on PostgreSQL) changing a column's NOT NULL
+        // constraint fails with a dependency error while an index still
+        // references that column; drop the two affected indexes first and
+        // recreate them once the column changes are done.
+        $cohortindex = new xmldb_index('ix_cohortid', XMLDB_INDEX_NOTUNIQUE, ['cohortid']);
+        if ($dbman->index_exists($table, $cohortindex)) {
+            $dbman->drop_index($table, $cohortindex);
+        }
+        $academicyearindex = new xmldb_index('ix_academicyearid', XMLDB_INDEX_NOTUNIQUE, ['academicyearid']);
+        if ($dbman->index_exists($table, $academicyearindex)) {
+            $dbman->drop_index($table, $academicyearindex);
+        }
+
         $field = new xmldb_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'operationtype');
         if ($dbman->field_exists($table, $field)) {
             $dbman->change_field_notnull($table, $field);
@@ -216,6 +229,13 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         $field = new xmldb_field('mode', XMLDB_TYPE_CHAR, '30', null, null, null, null, 'status');
         if ($dbman->field_exists($table, $field)) {
             $dbman->change_field_notnull($table, $field);
+        }
+
+        if (!$dbman->index_exists($table, $cohortindex)) {
+            $dbman->add_index($table, $cohortindex);
+        }
+        if (!$dbman->index_exists($table, $academicyearindex)) {
+            $dbman->add_index($table, $academicyearindex);
         }
 
         upgrade_plugin_savepoint(true, 2026073100, 'local', 'monlaututoria');
