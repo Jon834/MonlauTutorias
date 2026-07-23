@@ -380,4 +380,126 @@ class assignment_repository {
             'assignmenttype' => assignment_type::CO_TUTOR,
         ]);
     }
+
+    /** @var string[] columns callers may sort search() results by */
+    private const SORTABLE_COLUMNS = ['timestart', 'timeend', 'status', 'assignmenttype', 'source'];
+
+    /**
+     * Paginated, filterable listing of assignments for the administration
+     * pages. Never joins against `user`/`cohort`: callers must batch-fetch
+     * display data for the returned rows themselves (see
+     * assignments/index.php) to avoid loading full user profiles here.
+     *
+     * @param array $filters optional keys: academicyearid, tutorid, studentid, cohortid,
+     *                        assignmenttype, status, source, timestartfrom, timestartto,
+     *                        timeendfrom, timeendto
+     * @param int $limitfrom
+     * @param int $limitnum
+     * @param string $sort must be one of self::SORTABLE_COLUMNS, silently falls back to
+     *                     'timestart' otherwise (never interpolates an arbitrary value into SQL)
+     * @param string $direction 'ASC' or 'DESC'
+     * @return \stdClass[]
+     */
+    public function search(
+        array $filters,
+        int $limitfrom = 0,
+        int $limitnum = 0,
+        string $sort = 'timestart',
+        string $direction = 'DESC'
+    ): array {
+        global $DB;
+
+        [$sql, $params] = $this->build_search_where($filters);
+
+        if (!in_array($sort, self::SORTABLE_COLUMNS, true)) {
+            $sort = 'timestart';
+        }
+        $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
+
+        return $DB->get_records_select(self::TABLE, $sql, $params, "$sort $direction, id DESC", '*', $limitfrom, $limitnum);
+    }
+
+    /**
+     * Total count of rows matching $filters, for pagination.
+     *
+     * @param array $filters see search()
+     * @return int
+     */
+    public function count_search(array $filters): int {
+        global $DB;
+
+        [$sql, $params] = $this->build_search_where($filters);
+
+        return $DB->count_records_select(self::TABLE, $sql, $params);
+    }
+
+    /**
+     * Active co-tutor rows for a batch of students, in a single query. Callers
+     * group the result by studentid themselves (see assignments/index.php) —
+     * this avoids one query per row when rendering a page of results.
+     *
+     * @param int[] $studentids
+     * @param int|null $academicyearid
+     * @return \stdClass[]
+     */
+    public function get_cotutors_for_students(array $studentids, ?int $academicyearid = null): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($studentids, SQL_PARAMS_NAMED, 'student');
+        $params = array_merge(
+            $inparams,
+            ['status' => assignment_status::ACTIVE, 'assignmenttype' => assignment_type::CO_TUTOR]
+        );
+        $sql = "studentid $insql AND status = :status AND assignmenttype = :assignmenttype";
+
+        if ($academicyearid !== null) {
+            $sql .= ' AND academicyearid = :academicyearid';
+            $params['academicyearid'] = $academicyearid;
+        }
+
+        return $DB->get_records_select(self::TABLE, $sql, $params);
+    }
+
+    /**
+     * Builds the shared WHERE clause + params for search()/count_search(),
+     * so both stay in sync without duplicating the filter logic.
+     *
+     * @param array $filters see search()
+     * @return array{0: string, 1: array}
+     */
+    private function build_search_where(array $filters): array {
+        $conditions = ['1 = 1'];
+        $params = [];
+
+        $equalityfilters = ['academicyearid', 'tutorid', 'studentid', 'cohortid', 'assignmenttype', 'status', 'source'];
+        foreach ($equalityfilters as $key) {
+            if (isset($filters[$key]) && $filters[$key] !== '') {
+                $conditions[] = "$key = :$key";
+                $params[$key] = $filters[$key];
+            }
+        }
+
+        if (!empty($filters['timestartfrom'])) {
+            $conditions[] = 'timestart >= :timestartfrom';
+            $params['timestartfrom'] = (int) $filters['timestartfrom'];
+        }
+        if (!empty($filters['timestartto'])) {
+            $conditions[] = 'timestart <= :timestartto';
+            $params['timestartto'] = (int) $filters['timestartto'];
+        }
+        if (!empty($filters['timeendfrom'])) {
+            $conditions[] = 'timeend >= :timeendfrom';
+            $params['timeendfrom'] = (int) $filters['timeendfrom'];
+        }
+        if (!empty($filters['timeendto'])) {
+            $conditions[] = 'timeend <= :timeendto';
+            $params['timeendto'] = (int) $filters['timeendto'];
+        }
+
+        return [implode(' AND ', $conditions), $params];
+    }
 }

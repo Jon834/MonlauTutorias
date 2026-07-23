@@ -214,3 +214,44 @@ $string['privacy:metadata:assignment:status'] = 'The assignment status (active, 
 $string['privacy:metadata:assignment:timestart'] = 'When the assignment started.';
 $string['privacy:metadata:assignment:timeend'] = 'When the assignment ended, if closed.';
 $string['privacy:metadata:assignment:source'] = 'How the assignment was created (manual, cohort, CSV, etc.).';
+
+$string['assignments'] = 'Assignments';
+$string['assignment_detail_title'] = 'Assignment detail';
+$string['assignment_history_title'] = 'Assignment history';
+
+$string['filter_academicyear'] = 'Academic year';
+$string['filter_tutor'] = 'Tutor';
+$string['filter_student'] = 'Student';
+$string['filter_cohort'] = 'Cohort';
+$string['filter_assignmenttype'] = 'Assignment type';
+$string['filter_status'] = 'Status';
+$string['filter_source'] = 'Source';
+$string['filter_timestartfrom'] = 'Start date from';
+$string['filter_timestartto'] = 'Start date to';
+$string['filter_timeendfrom'] = 'End date from';
+$string['filter_timeendto'] = 'End date to';
+$string['filter_apply'] = 'Apply filters';
+$string['filter_all'] = 'All';
+
+$string['assignment_col_student'] = 'Student';
+$string['assignment_col_tutor'] = 'Tutor';
+$string['assignment_col_cotutors'] = 'Co-tutors';
+$string['assignment_col_cohort'] = 'Cohort';
+$string['assignment_col_academicyear'] = 'Academic year';
+$string['assignment_col_type'] = 'Type';
+$string['assignment_col_timestart'] = 'Start date';
+$string['assignment_col_timeend'] = 'End date';
+$string['assignment_col_status'] = 'Status';
+$string['assignment_col_source'] = 'Source';
+$string['assignment_col_actions'] = 'Actions';
+$string['assignment_viewdetail'] = 'View detail';
+
+$string['assignment_createdby'] = 'Created by';
+$string['assignment_modifiedby'] = 'Last modified by';
+
+$string['assignment_upcoming'] = 'Upcoming';
+
+$string['assignments_list_empty'] = 'No assignments match the selected filters.';
+$string['assignment_history_empty'] = 'This student has no assignment history yet.';
+
+$string['eventassignmentviewed'] = 'Assignment viewed';

@@ -209,4 +209,77 @@ final class renderer extends \plugin_renderer_base {
             \core\output\notification::NOTIFY_WARNING
         );
     }
+
+    /**
+     * Computes the display data for a status badge, distinguishing "upcoming"
+     * (active but timestart in the future) from the 4 stored status values.
+     * Shared by the list, detail and history templates via the
+     * assignment_status partial — never colour-only, always label + icon.
+     *
+     * @param string $status one of assignment_status::values()
+     * @param int $timestart
+     * @return array
+     */
+    public function status_badge_data(string $status, int $timestart): array {
+        if ($status === \local_monlaututoria\domain\assignment_status::ACTIVE && $timestart > time()) {
+            return [
+                'status'      => 'upcoming',
+                'statuslabel' => get_string('assignment_upcoming', 'local_monlaututoria'),
+                'statusclass' => 'info',
+                'statusicon'  => 'clock-o',
+            ];
+        }
+
+        $map = [
+            \local_monlaututoria\domain\assignment_status::ACTIVE    => ['success', 'check-circle'],
+            \local_monlaututoria\domain\assignment_status::CLOSED    => ['secondary', 'times-circle'],
+            \local_monlaututoria\domain\assignment_status::CANCELLED => ['danger', 'ban'],
+            \local_monlaututoria\domain\assignment_status::PENDING   => ['warning', 'hourglass-half'],
+        ];
+        [$class, $icon] = $map[$status] ?? ['secondary', 'question-circle'];
+
+        return [
+            'status'      => $status,
+            'statuslabel' => get_string('assignmentstatus_' . $status, 'local_monlaututoria'),
+            'statusclass' => $class,
+            'statusicon'  => $icon,
+        ];
+    }
+
+    /**
+     * @param array $rows each row already merged with display data (student/tutor
+     *                    names, cohort/academic year names, status badge data, urls)
+     * @return string
+     */
+    public function assignments_list(array $rows): string {
+        $data = [
+            'hasrows' => !empty($rows),
+            'rows'    => array_values($rows),
+            'message' => get_string('assignments_list_empty', 'local_monlaututoria'),
+        ];
+
+        return $this->render_from_template('local_monlaututoria/assignments_list', $data);
+    }
+
+    /**
+     * @param \stdClass $data already merged with display data (see assignments/view.php)
+     * @return string
+     */
+    public function assignment_detail(\stdClass $data): string {
+        return $this->render_from_template('local_monlaututoria/assignment_detail', (array) $data);
+    }
+
+    /**
+     * @param array $entries each already merged with display data, most recent first
+     * @return string
+     */
+    public function assignment_history(array $entries): string {
+        $data = [
+            'hasentries' => !empty($entries),
+            'entries'    => array_values($entries),
+            'message'    => get_string('assignment_history_empty', 'local_monlaututoria'),
+        ];
+
+        return $this->render_from_template('local_monlaututoria/assignment_history', $data);
+    }
 }

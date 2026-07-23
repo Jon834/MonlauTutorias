@@ -24,7 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-if ($hassiteconfig || has_capability('local/monlaututoria:viewconfiguration', context_system::instance())) {
+if ($hassiteconfig
+    || has_capability('local/monlaututoria:viewconfiguration', context_system::instance())
+    || has_any_capability(
+        ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents'],
+        context_system::instance()
+    )) {
     $ADMIN->add('localplugins', new admin_category(
         'local_monlaututoria',
         get_string('pluginname', 'local_monlaututoria')
@@ -49,6 +54,13 @@ if ($hassiteconfig || has_capability('local/monlaututoria:viewconfiguration', co
         get_string('modalities', 'local_monlaututoria'),
         new moodle_url('/local/monlaututoria/modalities.php'),
         ['local/monlaututoria:viewconfiguration', 'local/monlaututoria:managecatalogues']
+    ));
+
+    $ADMIN->add('local_monlaututoria', new admin_externalpage(
+        'local_monlaututoria_assignments',
+        get_string('assignments', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/assignments/index.php'),
+        ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents']
     ));
 }
 

@@ -1,6 +1,6 @@
 # local_monlaututoria
 
-**Versión:** 0.3.0 · **Moodle:** 5.1.x (pendiente de verificar) · **Licencia:** GPL v3+
+**Versión:** 0.3.1 · **Moodle:** 5.1.x (instalación verificada ✅) · **Licencia:** GPL v3+
 
 ## Objetivo
 
@@ -10,26 +10,29 @@ Toda la lógica de negocio reside en este plugin. El bloque complementario `bloc
 
 ## Estado del proyecto
 
-**Fase 3A — Modelo y servicios básicos de asignación tutor-alumno.** ✅ Completada a nivel de código (primer incremento de un prompt de Fase 3 más amplio; 3B-3E siguen pendientes).
+**Fase 3B.1 — Listado y detalle de asignaciones.** ✅ Completada a nivel de código, sobre la Fase 3A (modelo y servicios) ya instalada y validada en un Moodle 5.1 de pruebas real.
 
-Esta versión (0.3.0) añade:
+Esta versión (0.3.1) añade:
 
 | Área | Contenido |
 |---|---|
-| Asignaciones | `local_tut_assignment`: `assignment_service` (crear, cerrar, reasignar, cotutores) y `scope_service` (control de acceso alumno a alumno) |
-| Capacidades | 10 nuevas: `viewownstudents`, `viewstudent`, `viewhistoricalassignments`, `assignstudents`, `manageassignments`, `managecohortassignments`, `importassignments`, `reassignstudents`, `viewallassignments`, `manageclosedassignments` |
-| Eventos | `assignment_created`, `assignment_closed`, `student_reassigned`, `co_tutor_added`, `co_tutor_removed` |
-| Privacy API | Metadatos de la nueva tabla añadidos; export/borrado pendientes de política institucional (ver `docs/modelo-datos.md`) |
+| Interfaz de asignaciones | `assignments/index.php` (listado paginado + filtros, con ámbito por capacidad) y `assignments/view.php` (detalle + historial básico), en *Administración del sitio → Plugins → Monlau Tutoria → Asignaciones* |
+| Repositorio | `assignment_repository::search()`/`count_search()`/`get_cotutors_for_students()`, con patrón "batch fetch tras paginar" para evitar N+1 |
+| Eventos | `assignment_viewed` (nuevo) |
+| Renderizado | Primer uso de Mustache en este plugin (6 plantillas nuevas); Fase 2 usa `html_writer` puro, sin tocar |
+| Capacidades | `local/monlaututoria:viewstudent` obtiene su primer consumidor real |
 
-Versión previa (0.2.0 — Fase 2): cursos académicos y catálogos de motivos/modalidades.
+Versiones previas: 0.3.0 (Fase 3A — modelo y servicios de asignación), 0.2.0 (Fase 2 — cursos académicos y catálogos).
 
-**Todavía sin implementar:** páginas de administración de asignaciones, asignación desde cohortes, importación CSV, ficha del alumno, registro de tutorías, acuerdos, seguimientos, dashboards, notificaciones, derivaciones.
+**Todavía sin implementar:** creación, edición, cierre y reasignación de asignaciones, gestión de cotutores, informe de alumnos sin tutor, asignación desde cohortes, importación CSV, ficha del alumno, registro de tutorías, acuerdos, seguimientos, dashboards, notificaciones, derivaciones.
+
+**Punto abierto:** el selector de alumno/tutor con autocompletar (`assignment_filter_form`) usa `core_user/form_user_selector` — no verificado con certeza al 100% contra Moodle 5.1; confirmar manualmente en la instancia real.
 
 Ver [`docs/plan-desarrollo.md`](../../docs/plan-desarrollo.md) en la raíz del repositorio para el roadmap completo.
 
 ## Requisitos
 
-- **Moodle 5.1.x.** El valor de `$plugin->requires` en [`version.php`](version.php) es un *placeholder* pendiente de verificar contra el build real del core (ver comentario en el propio archivo) — no se ha confirmado todavía porque el entorno Moodle local (fase "Entorno local" del plan de desarrollo) aún no está implementado.
+- **Moodle 5.1.x.** El valor de `$plugin->requires` en [`version.php`](version.php) ya se comprobó compatible al instalar correctamente en un Moodle 5.1 de pruebas real; sigue pendiente ajustarlo al número exacto del core (no bloqueante).
 - PHP según los requisitos de Moodle 5.1.
 
 ## Instalación
@@ -37,13 +40,14 @@ Ver [`docs/plan-desarrollo.md`](../../docs/plan-desarrollo.md) en la raíz del r
 1. Copiar/enlazar este directorio en `<moodle>/local/monlaututoria`.
 2. Visitar *Administración del sitio → Notificaciones* para completar la instalación, o ejecutar `php admin/cli/upgrade.php`.
 
-> **Nota:** no verificado en un Moodle real en este entorno de desarrollo (no hay instancia disponible); solo se ha validado la sintaxis PHP de cada archivo.
+> **Nota:** verificado en un Moodle 5.1 de pruebas real hasta la Fase 3A inclusive. La interfaz de la Fase 3B.1 (esta versión) todavía no se ha probado manualmente en esa instancia — solo se ha validado la sintaxis PHP.
 
 ## Versiones compatibles
 
 | Versión del plugin | Moodle |
 |---|---|
-| 0.3.0 | 5.1.x (pendiente de verificación) |
+| 0.3.1 | 5.1.x (instalación verificada hasta 3A; 3B.1 pendiente de probar en el navegador) |
+| 0.3.0 | 5.1.x (instalación verificada ✅) |
 | 0.2.0 | 5.1.x (pendiente de verificación) |
 | 0.1.0 | 5.1.x (pendiente de verificación) |
 

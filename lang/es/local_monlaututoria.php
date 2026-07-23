@@ -214,3 +214,44 @@ $string['privacy:metadata:assignment:status'] = 'El estado de la asignación (ac
 $string['privacy:metadata:assignment:timestart'] = 'Cuándo empezó la asignación.';
 $string['privacy:metadata:assignment:timeend'] = 'Cuándo finalizó la asignación, si está cerrada.';
 $string['privacy:metadata:assignment:source'] = 'Cómo se creó la asignación (manual, cohorte, CSV, etc.).';
+
+$string['assignments'] = 'Asignaciones';
+$string['assignment_detail_title'] = 'Detalle de la asignación';
+$string['assignment_history_title'] = 'Historial de asignaciones';
+
+$string['filter_academicyear'] = 'Curso académico';
+$string['filter_tutor'] = 'Tutor';
+$string['filter_student'] = 'Alumno';
+$string['filter_cohort'] = 'Cohorte';
+$string['filter_assignmenttype'] = 'Tipo de asignación';
+$string['filter_status'] = 'Estado';
+$string['filter_source'] = 'Origen';
+$string['filter_timestartfrom'] = 'Fecha de inicio desde';
+$string['filter_timestartto'] = 'Fecha de inicio hasta';
+$string['filter_timeendfrom'] = 'Fecha de fin desde';
+$string['filter_timeendto'] = 'Fecha de fin hasta';
+$string['filter_apply'] = 'Aplicar filtros';
+$string['filter_all'] = 'Todos';
+
+$string['assignment_col_student'] = 'Alumno';
+$string['assignment_col_tutor'] = 'Tutor';
+$string['assignment_col_cotutors'] = 'Cotutores';
+$string['assignment_col_cohort'] = 'Cohorte';
+$string['assignment_col_academicyear'] = 'Curso académico';
+$string['assignment_col_type'] = 'Tipo';
+$string['assignment_col_timestart'] = 'Fecha de inicio';
+$string['assignment_col_timeend'] = 'Fecha de finalización';
+$string['assignment_col_status'] = 'Estado';
+$string['assignment_col_source'] = 'Origen';
+$string['assignment_col_actions'] = 'Acciones';
+$string['assignment_viewdetail'] = 'Ver detalle';
+
+$string['assignment_createdby'] = 'Creado por';
+$string['assignment_modifiedby'] = 'Última modificación por';
+
+$string['assignment_upcoming'] = 'Futura';
+
+$string['assignments_list_empty'] = 'No hay asignaciones que coincidan con los filtros seleccionados.';
+$string['assignment_history_empty'] = 'Este alumno todavía no tiene historial de asignaciones.';
+
+$string['eventassignmentviewed'] = 'Asignación vista';

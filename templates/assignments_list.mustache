@@ -1,0 +1,65 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_monlaututoria/assignments_list
+
+    Paginated table of tutor-student assignments. Pagination itself is
+    rendered separately by the page via $OUTPUT->paging_bar(), not inside
+    this template.
+
+    Classes required for JS: none
+    Data attributes required for JS: none
+
+    Context variables required for this template:
+    * hasrows bool
+    * rows array - see local_monlaututoria/assignment_summary
+    * message string - shown instead of the table when hasrows is false
+
+    Example context (json):
+    {
+        "hasrows": false,
+        "rows": [],
+        "message": "No assignments have been created yet."
+    }
+}}
+{{#hasrows}}
+<table class="table table-striped generaltable">
+    <thead>
+        <tr>
+            <th>{{#str}} assignment_col_student, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_tutor, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_cotutors, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_cohort, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_academicyear, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_type, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_timestart, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_timeend, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_status, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_source, local_monlaututoria {{/str}}</th>
+            <th>{{#str}} assignment_col_actions, local_monlaututoria {{/str}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#rows}}
+            {{> local_monlaututoria/assignment_summary}}
+        {{/rows}}
+    </tbody>
+</table>
+{{/hasrows}}
+{{^hasrows}}
+    {{> local_monlaututoria/empty_state}}
+{{/hasrows}}

@@ -206,4 +206,95 @@ final class assignment_repository_test extends \advanced_testcase {
         $this->assertTrue($repository->has_historical_relationship($tutor->id, $student->id));
         $this->assertFalse($repository->is_current_tutor_of_student($tutor->id, $student->id));
     }
+
+    public function test_search_filters_by_academicyear_and_status(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $yearone = $this->create_academic_year();
+        $yeartwo = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $activeid = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $yearone, 'createdby' => get_admin()->id,
+        ]);
+        $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $yeartwo, 'createdby' => get_admin()->id,
+        ]);
+        $repository->close($activeid, get_admin()->id, time());
+
+        $results = $repository->search(['academicyearid' => $yearone]);
+        $this->assertCount(1, $results);
+        $this->assertSame($activeid, (int) array_values($results)[0]->id);
+
+        $results = $repository->search(['academicyearid' => $yearone, 'status' => 'active']);
+        $this->assertCount(0, $results);
+
+        $this->assertSame(2, $repository->count_search(['studentid' => $student->id]));
+        $this->assertSame(1, $repository->count_search(['studentid' => $student->id, 'status' => 'closed']));
+    }
+
+    public function test_search_pagination(): void {
+        $this->resetAfterTest();
+
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+        $repository = new assignment_repository();
+
+        for ($i = 0; $i < 5; $i++) {
+            $student = $this->getDataGenerator()->create_user();
+            $repository->create((object) [
+                'studentid' => $student->id, 'tutorid' => $tutor->id,
+                'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+            ]);
+        }
+
+        $this->assertSame(5, $repository->count_search(['tutorid' => $tutor->id]));
+        $this->assertCount(2, $repository->search(['tutorid' => $tutor->id], 0, 2));
+        $this->assertCount(2, $repository->search(['tutorid' => $tutor->id], 2, 2));
+        $this->assertCount(1, $repository->search(['tutorid' => $tutor->id], 4, 2));
+    }
+
+    public function test_search_rejects_unknown_sort_column(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+        ]);
+
+        // An unrecognised sort column must fall back to 'timestart', never be
+        // interpolated into the SQL as-is.
+        $results = $repository->search(['studentid' => $student->id], 0, 0, 'id; DROP TABLE users; --');
+        $this->assertCount(1, $results);
+    }
+
+    public function test_get_cotutors_for_students_groups_by_student(): void {
+        $this->resetAfterTest();
+
+        $studentone = $this->getDataGenerator()->create_user();
+        $studenttwo = $this->getDataGenerator()->create_user();
+        $cotutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $repository->create((object) [
+            'studentid' => $studentone->id, 'tutorid' => $cotutor->id,
+            'academicyearid' => $academicyearid, 'assignmenttype' => 'co_tutor',
+            'createdby' => get_admin()->id,
+        ]);
+
+        $results = $repository->get_cotutors_for_students([$studentone->id, $studenttwo->id]);
+
+        $this->assertCount(1, $results);
+        $this->assertSame((int) $studentone->id, (int) array_values($results)[0]->studentid);
+    }
 }

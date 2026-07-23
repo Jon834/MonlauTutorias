@@ -1,0 +1,54 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_monlaututoria/assignment_history
+
+    Chronological history of a student's assignments (most recent first).
+    Does not show closure/reassignment reasons yet: local_tut_assignment has
+    no such field in this phase.
+
+    Classes required for JS: none
+    Data attributes required for JS: none
+
+    Context variables required for this template:
+    * hasentries bool
+    * entries array, each with: tutorname, typelabel, timestartformatted,
+      timeendformatted, and status/statuslabel/statusclass/statusicon (see
+      assignment_status)
+    * message string - shown instead of the list when hasentries is false
+
+    Example context (json):
+    {
+        "hasentries": false,
+        "entries": [],
+        "message": "This student has no assignment history yet."
+    }
+}}
+<h3>{{#str}} assignment_history_title, local_monlaututoria {{/str}}</h3>
+{{#hasentries}}
+<ul class="list-group">
+    {{#entries}}
+    <li class="list-group-item">
+        <div>{{tutorname}} — {{typelabel}} {{> local_monlaututoria/assignment_status}}</div>
+        <div class="small text-muted">{{timestartformatted}} — {{timeendformatted}}</div>
+    </li>
+    {{/entries}}
+</ul>
+{{/hasentries}}
+{{^hasentries}}
+    {{> local_monlaututoria/empty_state}}
+{{/hasentries}}

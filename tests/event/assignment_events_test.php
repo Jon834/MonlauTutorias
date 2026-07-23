@@ -153,4 +153,30 @@ final class assignment_events_test extends \advanced_testcase {
         $this->assertCount(1, $events);
         $this->assertInstanceOf(co_tutor_removed::class, $events[0]);
     }
+
+    public function test_assignment_viewed_event(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $service = new assignment_service();
+        $id = $service->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid,
+        ], get_admin()->id);
+
+        $sink = $this->redirectEvents();
+        assignment_viewed::create_from_id($id, get_admin()->id, $student->id, $academicyearid)->trigger();
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(assignment_viewed::class, $events[0]);
+        $this->assertEquals($id, $events[0]->objectid);
+        $this->assertEquals($student->id, $events[0]->relateduserid);
+        $this->assertSame('local_tut_assignment', $events[0]->objecttable);
+        $this->assertEquals($academicyearid, $events[0]->other['academicyearid']);
+    }
 }

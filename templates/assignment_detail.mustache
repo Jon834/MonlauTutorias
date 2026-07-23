@@ -1,0 +1,93 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_monlaututoria/assignment_detail
+
+    Detail view of a single tutor-student assignment.
+
+    Classes required for JS: none
+    Data attributes required for JS: none
+
+    Context variables required for this template:
+    * studentname string
+    * tutorname string
+    * typelabel string
+    * academicyearname string
+    * cohortname string
+    * timestartformatted string
+    * timeendformatted string
+    * sourcelabel string
+    * createdbyname string
+    * createdonformatted string
+    * modifiedbyname string
+    * modifiedonformatted string
+    * status, statuslabel, statusclass, statusicon - see assignment_status
+
+    Example context (json):
+    {
+        "studentname": "Jane Student",
+        "tutorname": "John Tutor",
+        "typelabel": "Primary tutor",
+        "academicyearname": "2026-2027",
+        "cohortname": "—",
+        "timestartformatted": "1 September 2026",
+        "timeendformatted": "—",
+        "sourcelabel": "Manual",
+        "createdbyname": "Admin User",
+        "createdonformatted": "1 September 2026, 09:00",
+        "modifiedbyname": "Admin User",
+        "modifiedonformatted": "1 September 2026, 09:00",
+        "status": "active",
+        "statuslabel": "Active",
+        "statusclass": "success",
+        "statusicon": "check-circle"
+    }
+}}
+<dl class="row">
+    <dt class="col-sm-3">{{#str}} assignment_col_student, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{studentname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_tutor, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{tutorname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_type, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{typelabel}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_academicyear, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{academicyearname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_cohort, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{cohortname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_timestart, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{timestartformatted}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_timeend, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{timeendformatted}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_status, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{> local_monlaututoria/assignment_status}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_source, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{sourcelabel}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_createdby, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{createdbyname}} — {{createdonformatted}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_modifiedby, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{modifiedbyname}} — {{modifiedonformatted}}</dd>
+</dl>
