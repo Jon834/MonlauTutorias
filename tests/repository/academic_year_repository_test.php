@@ -55,6 +55,23 @@ final class academic_year_repository_test extends \advanced_testcase {
         $repository->get(999999);
     }
 
+    public function test_find_by_shortname(): void {
+        $this->resetAfterTest();
+
+        $repository = new academic_year_repository();
+        $id = $repository->create((object) [
+            'name'      => '2026-2027',
+            'shortname' => '2026-2027-' . uniqid(),
+            'startdate' => strtotime('2026-09-01'),
+            'enddate'   => strtotime('2027-06-30'),
+            'createdby' => get_admin()->id,
+        ]);
+        $record = $repository->get($id);
+
+        $this->assertSame($id, (int) $repository->find_by_shortname($record->shortname)->id);
+        $this->assertNull($repository->find_by_shortname('does-not-exist'));
+    }
+
     public function test_shortname_exists(): void {
         $this->resetAfterTest();
 

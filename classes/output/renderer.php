@@ -282,4 +282,80 @@ final class renderer extends \plugin_renderer_base {
 
         return $this->render_from_template('local_monlaututoria/assignment_history', $data);
     }
+
+    /**
+     * Renders the CSV import preview table (phase 3D.2). Plain html_writer
+     * table, same rationale as the other admin listings in this class: this
+     * is an internal admin screen, not learner-facing UI.
+     *
+     * @param \local_monlaututoria\domain\csv_import_preview_row[] $rows
+     * @return string
+     */
+    public function csv_import_preview_table(array $rows): string {
+        if (empty($rows)) {
+            return $this->output->notification(
+                get_string('csv_preview_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('csv_col_row', 'local_monlaututoria'),
+            get_string('csv_col_status', 'local_monlaututoria'),
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('assignment_col_tutor', 'local_monlaututoria'),
+            get_string('assignment_col_academicyear', 'local_monlaututoria'),
+            get_string('assignment_col_cohort', 'local_monlaututoria'),
+            get_string('csv_col_messages', 'local_monlaututoria'),
+        ];
+
+        foreach ($rows as $row) {
+            $table->data[] = [
+                $row->rownumber,
+                $this->csv_row_status_badge($row->status),
+                s($row->values['student'] ?? ''),
+                s($row->values['tutor'] ?? ''),
+                s($row->values['academicyear'] ?? ''),
+                s($row->values['cohort'] ?? '') ?: '—',
+                $this->csv_row_messages($row->messagecodes),
+            ];
+        }
+
+        return \html_writer::table($table);
+    }
+
+    /**
+     * @param string $status one of csv_import_row_status::values()
+     * @return string
+     */
+    private function csv_row_status_badge(string $status): string {
+        $map = [
+            \local_monlaututoria\domain\csv_import_row_status::VALID    => ['success', 'csv_status_valid'],
+            \local_monlaututoria\domain\csv_import_row_status::WARNING  => ['warning', 'csv_status_warning'],
+            \local_monlaututoria\domain\csv_import_row_status::CONFLICT => ['danger', 'csv_status_conflict'],
+            \local_monlaututoria\domain\csv_import_row_status::ERROR    => ['danger', 'csv_status_error'],
+            \local_monlaututoria\domain\csv_import_row_status::EXCLUDED => ['secondary', 'csv_status_excluded'],
+        ];
+        [$class, $stringkey] = $map[$status] ?? ['secondary', $status];
+
+        return \html_writer::span(get_string($stringkey, 'local_monlaututoria'), 'badge badge-' . $class);
+    }
+
+    /**
+     * @param string[] $codes csv_import_error_code and/or csv_import_message_code values
+     * @return string
+     */
+    private function csv_row_messages(array $codes): string {
+        if (empty($codes)) {
+            return '—';
+        }
+
+        $labels = array_map(
+            static fn (string $code) => get_string('csv_message_' . $code, 'local_monlaututoria'),
+            $codes
+        );
+
+        return implode('; ', $labels);
+    }
 }

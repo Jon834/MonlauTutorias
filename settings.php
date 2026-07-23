@@ -62,6 +62,13 @@ if ($hassiteconfig
         new moodle_url('/local/monlaututoria/assignments/index.php'),
         ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents']
     ));
+
+    $ADMIN->add('local_monlaututoria', new admin_externalpage(
+        'local_monlaututoria_import',
+        get_string('csv_import_title', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/assignments/import.php'),
+        ['local/monlaututoria:importassignments']
+    ));
 }
 
 // This plugin has no admin_settingpage of its own, only external pages above.

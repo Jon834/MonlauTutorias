@@ -88,6 +88,18 @@ class academic_year_repository {
     }
 
     /**
+     * @param string $shortname
+     * @return \stdClass|null
+     */
+    public function find_by_shortname(string $shortname): ?\stdClass {
+        global $DB;
+
+        $record = $DB->get_record(self::TABLE, ['shortname' => $shortname]);
+
+        return $record !== false ? $record : null;
+    }
+
+    /**
      * Returns the currently active academic year, or null if none is active.
      *
      * @return \stdClass|null

@@ -308,3 +308,77 @@ $string['reassignreason_other'] = 'Altre';
 
 $string['privacy:metadata:assignment:note'] = 'Una observació administrativa opcional sobre l\'assignació.';
 $string['privacy:metadata:assignment:closereason'] = 'El motiu codificat pel qual es va tancar l\'assignació.';
+
+$string['eventcohortassignmentpreviewed'] = 'Previsualització d\'assignació des de cohort generada';
+
+$string['error_cohort_mode_invalid'] = 'Mode de sincronització no vàlid.';
+$string['error_cohort_same_tutor_cotutor'] = 'El tutor principal i el cotutor no poden ser la mateixa persona.';
+
+$string['privacy:metadata:bulkoperation'] = 'Operacions massives d\'assignació des de cohorts';
+$string['privacy:metadata:bulkoperation:cohortid'] = 'La cohort utilitzada com a font de població d\'alumnes.';
+$string['privacy:metadata:bulkoperation:academicyearid'] = 'El curs acadèmic al qual s\'aplica l\'operació.';
+$string['privacy:metadata:bulkoperation:primarytutorid'] = 'El tutor seleccionat com a tutor principal per a l\'operació.';
+$string['privacy:metadata:bulkoperation:cotutorid'] = 'El tutor seleccionat com a cotutor per a l\'operació, si n\'hi ha.';
+$string['privacy:metadata:bulkoperation:mode'] = 'El mode de sincronització utilitzat en l\'operació.';
+
+$string['eventcsvimportpreviewed'] = 'Previsualització d\'importació CSV generada';
+
+$string['csv_import_title'] = 'Importar assignacions des de CSV';
+$string['csv_import_intro'] = 'Puja un fitxer CSV per previsualitzar quines assignacions tutor-alumne crearia. Encara no s\'aplica res — això només mostra una previsualització.';
+$string['csv_field_file'] = 'Fitxer CSV';
+$string['csv_field_delimiter'] = 'Delimitador';
+$string['csv_delimiter_comma'] = 'Coma (,)';
+$string['csv_delimiter_semicolon'] = 'Punt i coma (;)';
+$string['csv_delimiter_tab'] = 'Tabulador';
+$string['csv_field_encoding'] = 'Codificació del fitxer';
+$string['csv_upload_preview'] = 'Previsualitzar';
+$string['csv_preview_summary_title'] = 'Resum de la previsualització';
+$string['csv_summary_total'] = 'Files analitzades: {$a}';
+$string['csv_summary_valid'] = 'Vàlides: {$a}';
+$string['csv_summary_warning'] = 'Amb advertiment: {$a}';
+$string['csv_summary_conflict'] = 'Conflictes: {$a}';
+$string['csv_summary_error'] = 'Errors: {$a}';
+$string['csv_summary_excluded'] = 'Excloses: {$a}';
+$string['csv_col_row'] = 'Fila';
+$string['csv_col_status'] = 'Estat';
+$string['csv_col_messages'] = 'Missatges';
+$string['csv_preview_empty'] = 'El fitxer no té files de dades per previsualitzar.';
+$string['csv_exclude_title'] = 'Excloure files';
+$string['csv_exclude_intro'] = 'Marca les files que vulguis excloure i recalcula la previsualització.';
+$string['csv_row_label'] = 'Excloure fila {$a}';
+$string['csv_recalculate_preview'] = 'Recalcular previsualització';
+$string['csv_apply_not_available_yet'] = 'Encara no està disponible aplicar aquesta importació — aquesta fase només previsualitza el fitxer.';
+
+$string['csv_status_valid'] = 'Vàlida';
+$string['csv_status_warning'] = 'Advertiment';
+$string['csv_status_conflict'] = 'Conflicte';
+$string['csv_status_error'] = 'Error';
+$string['csv_status_excluded'] = 'Exclosa';
+
+$string['csv_message_empty_file'] = 'El fitxer és buit.';
+$string['csv_message_missing_required_header'] = 'Falta una capçalera obligatòria.';
+$string['csv_message_unknown_column'] = 'El fitxer conté una columna no reconeguda.';
+$string['csv_message_column_count_mismatch'] = 'Aquesta fila no té el nombre de columnes esperat.';
+$string['csv_message_missing_student'] = 'La columna d\'alumne és buida.';
+$string['csv_message_missing_tutor'] = 'La columna de tutor és buida.';
+$string['csv_message_missing_academicyear'] = 'La columna de curs acadèmic és buida.';
+$string['csv_message_invalid_isprimary'] = 'La columna "tutor principal" ha de ser 0 o 1.';
+$string['csv_message_invalid_timestart'] = 'La data d\'inici no és una data vàlida (AAAA-MM-DD).';
+$string['csv_message_invalid_timeend'] = 'La data de fi no és una data vàlida (AAAA-MM-DD).';
+$string['csv_message_invalid_assignmenttype'] = 'El tipus d\'assignació no es reconeix.';
+$string['csv_message_invalid_source'] = 'L\'origen no es reconeix.';
+$string['csv_message_duplicate_row'] = 'Aquesta fila repeteix una altra d\'anterior del mateix fitxer.';
+$string['csv_message_student_not_found'] = 'No s\'ha trobat cap compte d\'alumne coincident (per correu, usuari o número d\'identificació).';
+$string['csv_message_student_suspended'] = 'El compte de l\'alumne està suspès.';
+$string['csv_message_student_self_tutor'] = 'L\'alumne i el tutor no poden ser la mateixa persona.';
+$string['csv_message_tutor_not_found'] = 'No s\'ha trobat cap compte de tutor coincident (per correu, usuari o número d\'identificació).';
+$string['csv_message_tutor_suspended'] = 'El compte del tutor està suspès.';
+$string['csv_message_academicyear_not_found'] = 'Cap curs acadèmic coincideix amb aquest identificador curt.';
+$string['csv_message_academicyear_locked'] = 'Aquest curs acadèmic està bloquejat per a noves assignacions.';
+$string['csv_message_cohort_not_found'] = 'Cap cohort coincideix amb aquest identificador; l\'assignació es crearia sense cohort.';
+$string['csv_message_duplicate_active'] = 'Ja existeix una assignació activa idèntica.';
+$string['csv_message_primary_conflict'] = 'Aquest alumne ja té un tutor principal actiu.';
+$string['csv_message_row_excluded'] = 'Exclosa manualment.';
+
+$string['error_csv_file_not_usable'] = 'No s\'ha pogut llegir el fitxer, o no té files utilitzables. Comprova les capçaleres i torna-ho a provar.';
+$string['error_csv_invalid_parameters'] = 'Paràmetres d\'importació no vàlids o incomplets.';

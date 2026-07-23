@@ -501,11 +501,14 @@ final class assignment_service {
      * Validates the user exists and is not deleted. Deleted is always
      * blocking, unlike suspended: there is no override parameter for it.
      *
+     * Public (not just used internally): cohort_assignment_preview_service
+     * (phase 3C) reuses this instead of duplicating the same check.
+     *
      * @param int $userid
      * @param string $errorkey
      * @return \stdClass
      */
-    private function validate_user(int $userid, string $errorkey): \stdClass {
+    public function validate_user(int $userid, string $errorkey): \stdClass {
         $user = \core_user::get_user($userid);
         if (!$user || !empty($user->deleted)) {
             throw new \moodle_exception($errorkey, 'local_monlaututoria');
@@ -515,22 +518,26 @@ final class assignment_service {
     }
 
     /**
+     * Public for the same reason as validate_user() above.
+     *
      * @param \stdClass $user
      * @param bool $allowsuspended
      * @param string $errorkey
      */
-    private function validate_not_suspended(\stdClass $user, bool $allowsuspended, string $errorkey): void {
+    public function validate_not_suspended(\stdClass $user, bool $allowsuspended, string $errorkey): void {
         if (!empty($user->suspended) && !$allowsuspended) {
             throw new \moodle_exception($errorkey, 'local_monlaututoria');
         }
     }
 
     /**
+     * Public for the same reason as validate_user() above.
+     *
      * @param int $academicyearid
      * @param bool $canoverridelock
      * @return \stdClass
      */
-    private function validate_academic_year(int $academicyearid, bool $canoverridelock): \stdClass {
+    public function validate_academic_year(int $academicyearid, bool $canoverridelock): \stdClass {
         try {
             $year = $this->academicyearrepository->get($academicyearid);
         } catch (\dml_missing_record_exception $e) {
@@ -545,9 +552,11 @@ final class assignment_service {
     }
 
     /**
+     * Public for the same reason as validate_user() above.
+     *
      * @param int $cohortid
      */
-    private function validate_cohort(int $cohortid): void {
+    public function validate_cohort(int $cohortid): void {
         global $DB;
 
         if (!$DB->record_exists('cohort', ['id' => $cohortid])) {

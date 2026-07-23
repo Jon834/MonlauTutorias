@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/monlaututoria/db" VERSION="20260726" COMMENT="XMLDB file for Moodle local/monlaututoria"
+<XMLDB PATH="local/monlaututoria/db" VERSION="20260731" COMMENT="XMLDB file for Moodle local/monlaututoria"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -101,6 +101,35 @@
         <INDEX NAME="ix_student_academicyear" UNIQUE="false" FIELDS="studentid, academicyearid"/>
         <INDEX NAME="ix_tutor_academicyear_status" UNIQUE="false" FIELDS="tutorid, academicyearid, status"/>
         <INDEX NAME="ix_student_tutor_academicyear" UNIQUE="false" FIELDS="studentid, tutorid, academicyearid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_bulkoperation" COMMENT="Bulk assignment operations for local_monlaututoria: cohort-based (phase 3C.1) and CSV import (phase 3D.2). Preview only so far, no per-student rows persisted">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="operationuuid" TYPE="char" LENGTH="36" NOTNULL="true" SEQUENCE="false" COMMENT="RFC4122 v4 UUID correlating preview, confirmation and execution across requests"/>
+        <FIELD NAME="operationtype" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="cohort_assignment" SEQUENCE="false" COMMENT="cohort_assignment or csv_import"/>
+        <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to cohort.id, not enforced at DB level; null for csv_import operations (no single cohort)"/>
+        <FIELD NAME="academicyearid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to local_tut_academicyear.id, not enforced at DB level; null for csv_import operations (each row may specify a different year)"/>
+        <FIELD NAME="primarytutorid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to user.id, not enforced at DB level; null for csv_import operations (each row specifies its own tutor)"/>
+        <FIELD NAME="cotutorid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to user.id, not enforced at DB level; null when no co-tutor was selected"/>
+        <FIELD NAME="mode" TYPE="char" LENGTH="30" NOTNULL="false" SEQUENCE="false" COMMENT="preview_only, add_only, add_and_close_missing, replace_primary; null for csv_import operations"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="draft" SEQUENCE="false" COMMENT="draft, previewed, confirmed, processing, completed, completed_with_errors, failed, cancelled — only draft/previewed produced until phase 3C.3+/3D.3+"/>
+        <FIELD NAME="parametersjson" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Secondary configuration (dates, flags); never per-student data"/>
+        <FIELD NAME="summaryjson" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Aggregate counts computed at preview time, used to detect drift on revalidation"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_operationuuid" TYPE="unique" FIELDS="operationuuid"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_cohortid" UNIQUE="false" FIELDS="cohortid"/>
+        <INDEX NAME="ix_academicyearid" UNIQUE="false" FIELDS="academicyearid"/>
+        <INDEX NAME="ix_status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="ix_createdby" UNIQUE="false" FIELDS="createdby"/>
+        <INDEX NAME="ix_timecreated" UNIQUE="false" FIELDS="timecreated"/>
       </INDEXES>
     </TABLE>
   </TABLES>

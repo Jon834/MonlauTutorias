@@ -81,6 +81,21 @@ final class provider implements
             'shortname' => 'privacy:metadata:modality:shortname',
         ], 'privacy:metadata:modality');
 
+        // Metadata only. Much lighter footprint than local_tut_assignment:
+        // this table never stores per-student data (see
+        // cohort_assignment_preview_service's class docblock) — only
+        // attribution (createdby) and the selected tutor(s) as references.
+        $collection->add_database_table('local_tut_bulkoperation', [
+            'cohortid'       => 'privacy:metadata:bulkoperation:cohortid',
+            'academicyearid' => 'privacy:metadata:bulkoperation:academicyearid',
+            'primarytutorid' => 'privacy:metadata:bulkoperation:primarytutorid',
+            'cotutorid'      => 'privacy:metadata:bulkoperation:cotutorid',
+            'mode'           => 'privacy:metadata:bulkoperation:mode',
+            'createdby'      => 'privacy:metadata:createdby',
+            'timecreated'    => 'privacy:metadata:timecreated',
+            'timemodified'   => 'privacy:metadata:timemodified',
+        ], 'privacy:metadata:bulkoperation');
+
         // Metadata only — see the class docblock for why export/delete do not
         // yet cover this table.
         $collection->add_database_table('local_tut_assignment', [

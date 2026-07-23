@@ -378,4 +378,53 @@ final class assignment_repository_test extends \advanced_testcase {
         $this->assertCount(1, $results);
         $this->assertSame((int) $studentone->id, (int) array_values($results)[0]->studentid);
     }
+
+    public function test_find_primary_rows_for_students_scopes_by_type_and_year(): void {
+        $this->resetAfterTest();
+
+        $studentone = $this->getDataGenerator()->create_user();
+        $studenttwo = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $yearone = $this->create_academic_year();
+        $yeartwo = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $repository->create((object) [
+            'studentid' => $studentone->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $yearone, 'assignmenttype' => 'primary', 'isprimary' => 1,
+            'createdby' => get_admin()->id,
+        ]);
+        // Different type: must be excluded even for the same student/year.
+        $repository->create((object) [
+            'studentid' => $studentone->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $yearone, 'assignmenttype' => 'co_tutor',
+            'createdby' => get_admin()->id,
+        ]);
+        // Different academic year: must be excluded.
+        $repository->create((object) [
+            'studentid' => $studentone->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $yeartwo, 'assignmenttype' => 'primary', 'isprimary' => 1,
+            'createdby' => get_admin()->id,
+        ]);
+        // Not in the requested student batch: must be excluded.
+        $repository->create((object) [
+            'studentid' => $studenttwo->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $yearone, 'assignmenttype' => 'primary', 'isprimary' => 1,
+            'createdby' => get_admin()->id,
+        ]);
+
+        $results = $repository->find_primary_rows_for_students([$studentone->id], $yearone);
+
+        $this->assertCount(1, $results);
+        $this->assertSame((int) $studentone->id, (int) array_values($results)[0]->studentid);
+        $this->assertSame($yearone, (int) array_values($results)[0]->academicyearid);
+    }
+
+    public function test_find_primary_rows_for_students_empty_input_returns_empty(): void {
+        $this->resetAfterTest();
+
+        $repository = new assignment_repository();
+
+        $this->assertSame([], $repository->find_primary_rows_for_students([], $this->create_academic_year()));
+    }
 }

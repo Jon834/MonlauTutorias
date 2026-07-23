@@ -308,3 +308,77 @@ $string['reassignreason_other'] = 'Otro';
 
 $string['privacy:metadata:assignment:note'] = 'Una observación administrativa opcional sobre la asignación.';
 $string['privacy:metadata:assignment:closereason'] = 'El motivo codificado por el que se cerró la asignación.';
+
+$string['eventcohortassignmentpreviewed'] = 'Previsualización de asignación desde cohorte generada';
+
+$string['error_cohort_mode_invalid'] = 'Modo de sincronización no válido.';
+$string['error_cohort_same_tutor_cotutor'] = 'El tutor principal y el cotutor no pueden ser la misma persona.';
+
+$string['privacy:metadata:bulkoperation'] = 'Operaciones masivas de asignación desde cohortes';
+$string['privacy:metadata:bulkoperation:cohortid'] = 'La cohorte usada como fuente de población de alumnos.';
+$string['privacy:metadata:bulkoperation:academicyearid'] = 'El curso académico al que se aplica la operación.';
+$string['privacy:metadata:bulkoperation:primarytutorid'] = 'El tutor seleccionado como tutor principal para la operación.';
+$string['privacy:metadata:bulkoperation:cotutorid'] = 'El tutor seleccionado como cotutor para la operación, si lo hay.';
+$string['privacy:metadata:bulkoperation:mode'] = 'El modo de sincronización usado en la operación.';
+
+$string['eventcsvimportpreviewed'] = 'Previsualización de importación CSV generada';
+
+$string['csv_import_title'] = 'Importar asignaciones desde CSV';
+$string['csv_import_intro'] = 'Sube un archivo CSV para previsualizar qué asignaciones tutor-alumno crearía. Todavía no se aplica nada — esto solo muestra una previsualización.';
+$string['csv_field_file'] = 'Archivo CSV';
+$string['csv_field_delimiter'] = 'Delimitador';
+$string['csv_delimiter_comma'] = 'Coma (,)';
+$string['csv_delimiter_semicolon'] = 'Punto y coma (;)';
+$string['csv_delimiter_tab'] = 'Tabulador';
+$string['csv_field_encoding'] = 'Codificación del archivo';
+$string['csv_upload_preview'] = 'Previsualizar';
+$string['csv_preview_summary_title'] = 'Resumen de la previsualización';
+$string['csv_summary_total'] = 'Filas analizadas: {$a}';
+$string['csv_summary_valid'] = 'Válidas: {$a}';
+$string['csv_summary_warning'] = 'Con advertencia: {$a}';
+$string['csv_summary_conflict'] = 'Conflictos: {$a}';
+$string['csv_summary_error'] = 'Errores: {$a}';
+$string['csv_summary_excluded'] = 'Excluidas: {$a}';
+$string['csv_col_row'] = 'Fila';
+$string['csv_col_status'] = 'Estado';
+$string['csv_col_messages'] = 'Mensajes';
+$string['csv_preview_empty'] = 'El archivo no tiene filas de datos que previsualizar.';
+$string['csv_exclude_title'] = 'Excluir filas';
+$string['csv_exclude_intro'] = 'Marca las filas que quieras excluir y recalcula la previsualización.';
+$string['csv_row_label'] = 'Excluir fila {$a}';
+$string['csv_recalculate_preview'] = 'Recalcular previsualización';
+$string['csv_apply_not_available_yet'] = 'Todavía no está disponible aplicar esta importación — esta fase solo previsualiza el archivo.';
+
+$string['csv_status_valid'] = 'Válida';
+$string['csv_status_warning'] = 'Advertencia';
+$string['csv_status_conflict'] = 'Conflicto';
+$string['csv_status_error'] = 'Error';
+$string['csv_status_excluded'] = 'Excluida';
+
+$string['csv_message_empty_file'] = 'El archivo está vacío.';
+$string['csv_message_missing_required_header'] = 'Falta una cabecera obligatoria.';
+$string['csv_message_unknown_column'] = 'El archivo contiene una columna no reconocida.';
+$string['csv_message_column_count_mismatch'] = 'Esta fila no tiene el número de columnas esperado.';
+$string['csv_message_missing_student'] = 'La columna de alumno está vacía.';
+$string['csv_message_missing_tutor'] = 'La columna de tutor está vacía.';
+$string['csv_message_missing_academicyear'] = 'La columna de curso académico está vacía.';
+$string['csv_message_invalid_isprimary'] = 'La columna "tutor principal" debe ser 0 o 1.';
+$string['csv_message_invalid_timestart'] = 'La fecha de inicio no es una fecha válida (AAAA-MM-DD).';
+$string['csv_message_invalid_timeend'] = 'La fecha de fin no es una fecha válida (AAAA-MM-DD).';
+$string['csv_message_invalid_assignmenttype'] = 'El tipo de asignación no se reconoce.';
+$string['csv_message_invalid_source'] = 'El origen no se reconoce.';
+$string['csv_message_duplicate_row'] = 'Esta fila repite otra anterior del mismo archivo.';
+$string['csv_message_student_not_found'] = 'No se ha encontrado ninguna cuenta de alumno coincidente (por correo, usuario o número de identificación).';
+$string['csv_message_student_suspended'] = 'La cuenta del alumno está suspendida.';
+$string['csv_message_student_self_tutor'] = 'El alumno y el tutor no pueden ser la misma persona.';
+$string['csv_message_tutor_not_found'] = 'No se ha encontrado ninguna cuenta de tutor coincidente (por correo, usuario o número de identificación).';
+$string['csv_message_tutor_suspended'] = 'La cuenta del tutor está suspendida.';
+$string['csv_message_academicyear_not_found'] = 'Ningún curso académico coincide con este identificador corto.';
+$string['csv_message_academicyear_locked'] = 'Este curso académico está bloqueado para nuevas asignaciones.';
+$string['csv_message_cohort_not_found'] = 'Ninguna cohorte coincide con este identificador; la asignación se crearía sin cohorte.';
+$string['csv_message_duplicate_active'] = 'Ya existe una asignación activa idéntica.';
+$string['csv_message_primary_conflict'] = 'Este alumno ya tiene un tutor principal activo.';
+$string['csv_message_row_excluded'] = 'Excluida manualmente.';
+
+$string['error_csv_file_not_usable'] = 'No se ha podido leer el archivo, o no tiene filas utilizables. Comprueba las cabeceras e inténtalo de nuevo.';
+$string['error_csv_invalid_parameters'] = 'Parámetros de importación no válidos o incompletos.';

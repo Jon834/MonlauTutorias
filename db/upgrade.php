@@ -160,5 +160,66 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026072600, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026072900) {
+        // Cohort-based bulk assignment operations, introduced in phase 3C.1.
+        // Preview only: no per-student rows are persisted (see docs/modelo-datos.md).
+        $table = new xmldb_table('local_tut_bulkoperation');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('operationuuid', XMLDB_TYPE_CHAR, '36', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('operationtype', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'cohort_assignment');
+        $table->add_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('academicyearid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('primarytutorid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('cotutorid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('mode', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('status', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, 'draft');
+        $table->add_field('parametersjson', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('summaryjson', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_operationuuid', XMLDB_KEY_UNIQUE, ['operationuuid']);
+        $table->add_index('ix_cohortid', XMLDB_INDEX_NOTUNIQUE, ['cohortid']);
+        $table->add_index('ix_academicyearid', XMLDB_INDEX_NOTUNIQUE, ['academicyearid']);
+        $table->add_index('ix_status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+        $table->add_index('ix_createdby', XMLDB_INDEX_NOTUNIQUE, ['createdby']);
+        $table->add_index('ix_timecreated', XMLDB_INDEX_NOTUNIQUE, ['timecreated']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026072900, 'local', 'monlaututoria');
+    }
+
+    if ($oldversion < 2026073100) {
+        // CSV import operations (phase 3D.2) reuse local_tut_bulkoperation
+        // alongside cohort-based operations (phase 3C.1), but a CSV import has
+        // no single cohort/academic year/tutor — each row can specify its own.
+        $table = new xmldb_table('local_tut_bulkoperation');
+
+        $field = new xmldb_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'operationtype');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_notnull($table, $field);
+        }
+
+        $field = new xmldb_field('academicyearid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'cohortid');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_notnull($table, $field);
+        }
+
+        $field = new xmldb_field('primarytutorid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'academicyearid');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_notnull($table, $field);
+        }
+
+        $field = new xmldb_field('mode', XMLDB_TYPE_CHAR, '30', null, null, null, null, 'status');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_notnull($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026073100, 'local', 'monlaututoria');
+    }
+
     return true;
 }

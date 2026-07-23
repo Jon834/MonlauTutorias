@@ -436,6 +436,30 @@ class assignment_repository {
         ]);
     }
 
+    /**
+     * All primary-type rows (any status) for a batch of students within one
+     * academic year, in a single query — used by unassigned_students_service
+     * to classify primary-tutor coverage without querying per student.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return \stdClass[] ordered by studentid, timestart DESC
+     */
+    public function find_primary_rows_for_students(array $studentids, int $academicyearid): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($studentids, SQL_PARAMS_NAMED, 'student');
+        $params['academicyearid'] = $academicyearid;
+        $params['assignmenttype'] = assignment_type::PRIMARY;
+        $sql = "studentid $insql AND academicyearid = :academicyearid AND assignmenttype = :assignmenttype";
+
+        return $DB->get_records_select(self::TABLE, $sql, $params, 'studentid ASC, timestart DESC');
+    }
+
     /** @var string[] columns callers may sort search() results by */
     private const SORTABLE_COLUMNS = ['timestart', 'timeend', 'status', 'assignmenttype', 'source'];
 

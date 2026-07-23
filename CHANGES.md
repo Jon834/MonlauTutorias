@@ -1,5 +1,80 @@
 # Changelog — local_monlaututoria
 
+## 0.4.2 — 2026-07-23
+
+**Subida y previsualización de importación CSV** — Fase 3D.2 (sobre la Fase 3D.1). Sin aplicación, informe, exportación ni tarea ad hoc en este incremento — solo subida + previsualización.
+- `local_tut_bulkoperation` (de 3C.1) se amplía en vez de crear una tabla nueva: `operationtype=csv_import`; `cohortid`/`academicyearid`/`primarytutorid`/`mode` pasan a admitir `null`. **Quinta migración de esquema real del proyecto.**
+- `csv_import_preview_service::preview()`: resuelve cada fila contra la base de datos (alumno/tutor por correo/usuario/`idnumber`, curso académico por `shortname`, cohorte opcional por id/`idnumber`), reutilizando las validaciones ya públicas de `assignment_service` (desde 3C.1) y las consultas de duplicados de `assignment_repository` (desde 3A) — sin duplicar ninguna regla.
+- Estados por fila: `valid`, `warning`, `conflict`, `error`, `excluded`. Cohorte no encontrada = advertencia (se crearía sin cohorte), no error.
+- `assignments/import.php`: formulario de subida (área de borrador de Moodle, nunca almacenamiento permanente del plugin) + tabla de previsualización + exclusión manual de filas, que siempre recalcula desde cero.
+- Refactor: `is_expired()`/`generate_uuid()` se mueven de `cohort_assignment_preview_service` a `bulk_operation_repository`, compartidos ahora por los dos servicios de operación masiva.
+- Evento nuevo `csv_import_previewed`, con recuentos agregados únicamente.
+
+**Pruebas**
+- PHPUnit: ampliación de `academic_year_repository_test.php` y `bulk_operation_repository_test.php`, `csv_import_preview_service_test.php` (nuevo, 16 casos), `csv_import_previewed_test.php` (nuevo).
+- Behat: `csv_import_preview.feature` (nuevo, primeros escenarios de la Fase 3D) — con aviso explícito de que el paso de subida de archivo es lo menos verificado de esta entrega.
+  - ⚠️ Nada ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin) y validación XML de `install.xml`.
+
+**Fuera de alcance de esta versión** (resto de 3D): aplicación real, informe de resultados, exportación de errores, tarea ad hoc, limpieza de temporales.
+
+---
+
+## 0.4.1 — 2026-07-23
+
+**Parser y formato de importación CSV** — Fase 3D.1 (sobre la Fase 3C.1). Sin subida de archivo, previsualización ni aplicación en este incremento — solo el parser puro.
+- `csv_import_parser_service::parse()`: convierte contenido CSV en filas estructuradas y validadas sintácticamente. Cabeceras obligatorias `student`/`tutor`/`academicyear`, opcionales `cohort`/`assignmenttype`/`isprimary`/`timestart`/`timeend`/`source`; cabecera desconocida o alguna obligatoria ausente aborta el parseo completo (error a nivel de archivo, sin procesar filas).
+- Validación por fila (solo sintáctica, sin consultar la base de datos): campos obligatorios no vacíos, `isprimary` `0`/`1`, fechas `YYYY-MM-DD` estrictas (ISO 8601), `assignmenttype`/`source` reutilizando `assignment_type`/`assignment_source` ya definidos, número de columnas coincidente con la cabecera, duplicados internos del propio archivo.
+- Uso de `fgetcsv()` sobre un stream en memoria (soporta campos entre comillas con delimitadores o saltos de línea incrustados), conversión de codificación con `core_text::convert()`, retirada de la marca BOM UTF-8.
+- A partir de este incremento, el seguimiento fase a fase pasa a `docs/roadmap.md`/`docs/project-status.md` (decisión explícita: seguir ese roadmap tal cual, sin construir todavía las interfaces pendientes de cotutores, reasignación, alumnos sin tutor ni cohortes).
+
+**Pruebas**
+- PHPUnit: `csv_import_parser_service_test.php` (nuevo, 17 casos).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+- Sin Behat en esta entrega (no hay interfaz que probar todavía).
+
+**Fuera de alcance de esta versión** (resto de 3D): subida de archivo, previsualización en pantalla, resolución de identificadores contra usuarios reales, aplicación, informe, exportación, tarea ad hoc.
+
+---
+
+## 0.4.0 — 2026-07-23
+
+**Modelo de operación y previsualización de asignación masiva desde cohortes** — Fase 3C.1 (sobre la Fase 3B.5A). Sin formulario, confirmación, ejecución real, cierre de ausentes, sustitución, tarea ad hoc ni exportación en este incremento — solo clasificación de lectura.
+- Tabla nueva `local_tut_bulkoperation` (identidad + parámetros + resumen agregado). **Decisión explícita de no crear una tabla de elementos por alumno**: el detalle de una previsualización se recalcula siempre en el momento en vez de persistirse, evitando tanto el problema de "caducidad" (una lista guardada solo puede quedar desincronizada) como la retención indefinida de datos por alumno que nunca llegaron a ejecutarse.
+- `cohort_assignment_preview_service::preview()`: clasifica cada miembro de una cohorte Moodle frente a un tutor principal (y cotutor opcional) propuestos para un curso académico, con la misma semántica de vigencia usada en todo el proyecto desde la Fase 3A. Reutiliza sin cambios `cohort_membership_repository`/`assignment_repository::find_primary_rows_for_students()`/`get_cotutors_for_students()` (de las Fases 3B.1/3B.5), y cuatro validaciones de `assignment_service` que pasan de `private` a `public` para evitar duplicarlas.
+- Acciones por alumno (`cohort_assignment_action`, 10 códigos): acción principal (tutor) y acción de cotutor independientes para el mismo alumno.
+- `add_and_close_missing` identifica, en una consulta aparte, las asignaciones `source=cohort` de esa cohorte/curso cuyo alumno ya no es miembro — nunca asignaciones manuales, de otra cohorte o de otro curso, y funciona incluso si la cohorte se ha quedado sin miembros.
+- Caducidad sin tabla de detalle: `is_expired()` por antigüedad, `has_changed_since_preview()` recalcula y compara el resumen agregado contra el guardado.
+- Evento nuevo `cohort_assignment_previewed`, con recuentos agregados únicamente — nunca la lista de alumnos.
+- Privacy API: nueva entrada de metadatos para `local_tut_bulkoperation` — footprint mucho más ligero que `local_tut_assignment`, ya que esta tabla nunca almacena datos por alumno.
+
+**Pruebas**
+- PHPUnit: `bulk_operation_repository_test.php` (nuevo), `cohort_assignment_preview_service_test.php` (nuevo, 20 casos: los 13 escenarios de previsualización del prompt incluidos los 4 modos, más caducidad, cambio detectado y validaciones), `cohort_assignment_previewed_test.php` (nuevo).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin) y validación XML de `install.xml`.
+- Sin Behat en esta entrega (no hay interfaz que probar todavía).
+
+**Fuera de alcance de esta versión** (resto de 3C): formulario web, tabla de previsualización en pantalla, exclusión manual, confirmación, ejecución real, cierre de ausentes efectivo, sustitución efectiva, informe de resultados, exportación, tarea ad hoc, locking/concurrencia de ejecución, reintento, cancelación.
+
+---
+
+## 0.3.5 — 2026-07-23
+
+**Servicio de detección de alumnos sin tutor principal** — Fase 3B.5A (sobre la Fase 3B.4A). Sin interfaz, filtros, exportación ni migración de esquema en este incremento.
+- `unassigned_students_service::search()`/`count()`/`get_coverage_summary()`: dado un conjunto de cohortes Moodle, un curso académico y una fecha de referencia (por defecto ahora), clasifica cada alumno del universo como con/sin tutor principal vigente — misma semántica temporal que `scope_service`/la reasignación de 3B.4.
+- Nuevo repositorio `cohort_membership_repository` (solo `cohort_members`/`user`, nunca referencia `local_tut_assignment`) y nuevo `assignment_repository::find_primary_rows_for_students()`.
+- Clasificación completa en PHP tras exactamente 3 consultas fijas (no crece con el tamaño de la población) — decisión deliberada para mantener el criterio de "sin joins entre tablas" ya establecido en el repositorio; documentado como válido hasta unos miles de alumnos, no diseñado para poblaciones mucho mayores sin revisar el enfoque.
+- Estados (`unassigned_status_code`): sin asignación, anterior cerrada, futura pendiente, activa pero fuera de vigencia, y conflicto de datos (prioritario sobre los demás).
+- Conflictos (`assignment_conflict_code`): dos principales vigentes a la vez, dos futuras solapadas, solapamiento entre cerradas históricas, tutor con cuenta eliminada en una fila activa. Un tutor de otro curso académico no necesita detección propia: al filtrar por curso, esas filas no aparecen y el alumno se clasifica correctamente como "nunca asignado" para ese curso.
+- Límite de ámbito documentado explícitamente: el modelo de ámbitos actual no permite restringir cohortes por coordinador (no existe ese concepto en el sistema) — se deja como limitación conocida en vez de simular un aislamiento inexistente.
+
+**Pruebas**
+- PHPUnit: `cohort_membership_repository_test.php` (nuevo), ampliación de `assignment_repository_test.php`, y `unassigned_students_service_test.php` (nuevo, 18 casos: los 10 escenarios de detección y los 4 de conflicto pedidos, más cobertura, paginación, población vacía y curso académico inválido).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+- Sin Behat en esta entrega (no hay interfaz que probar todavía).
+
+**Fuera de alcance de esta versión** (resto de 3B.5): interfaz, resumen visual, filtros interactivos, exportación CSV, acción "Asignar tutor" desde el informe.
+
+---
+
 ## 0.3.4 — 2026-07-23
 
 **Servicio transaccional de reasignación** — Fase 3B.4A (sobre la Fase 3B.3A). Sin interfaz ni migración de esquema en este incremento.

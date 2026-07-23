@@ -14,21 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_monlaututoria\domain;
+
 /**
- * Version details for local_monlaututoria.
+ * Immutable result of csv_import_preview_service::preview(). Only
+ * operationuuid and summary are persisted (on local_tut_bulkoperation); rows
+ * always come from a fresh resolution against the current database state.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class csv_import_preview {
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026073100;
-// Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
-// este valor es compatible con esa instancia; sigue sin confirmarse el número
-// exacto del core (no bloqueante, solo pendiente de precisión).
-$plugin->requires  = 2025100600;
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.4.2';
+    /**
+     * @param string $operationuuid
+     * @param int $operationid
+     * @param csv_import_preview_summary $summary
+     * @param csv_import_preview_row[] $rows
+     */
+    public function __construct(
+        public readonly string $operationuuid,
+        public readonly int $operationid,
+        public readonly csv_import_preview_summary $summary,
+        public readonly array $rows
+    ) {
+    }
+}
