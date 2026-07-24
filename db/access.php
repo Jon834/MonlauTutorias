@@ -60,6 +60,21 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [],
     ],
+    'local/monlaututoria:viewownfile' => [
+        // Defaults to the 'user' (authenticated user) archetype, not
+        // 'student': this capability is defined at CONTEXT_SYSTEM, and
+        // Moodle's Student role is normally assigned at course context, never
+        // system context — a system-level archetype default for 'student'
+        // would silently never apply in a typical installation. 'user' IS
+        // assigned at system context for every logged-in account by default,
+        // which is what actually makes "a student can view their own file
+        // out of the box" true. This is safe to grant broadly: scope_service
+        // only ever uses it to let $userid see $userid's own record, never
+        // anyone else's, regardless of who else also holds it.
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => ['user' => CAP_ALLOW],
+    ],
     'local/monlaututoria:viewhistoricalassignments' => [
         'captype'      => 'read',
         'contextlevel' => CONTEXT_SYSTEM,

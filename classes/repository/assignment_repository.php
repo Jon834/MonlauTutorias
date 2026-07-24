@@ -42,7 +42,8 @@ class assignment_repository {
      *
      * @param \stdClass $data must contain studentid, tutorid, academicyearid, createdby;
      *                        may contain cohortid, assignmenttype, isprimary, status, timestart,
-     *                        timeend, source, externalid
+     *                        timeend, source, externalid, reassignreason (only set by
+     *                        reassign_primary_tutor(), see assignment_reassign_reason)
      * @return int
      */
     public function create(\stdClass $data): int {
@@ -62,6 +63,7 @@ class assignment_repository {
         $record->externalid = $data->externalid ?? null;
         $record->note = $data->note ?? null;
         $record->closereason = null;
+        $record->reassignreason = $data->reassignreason ?? null;
         $record->createdby = (int) $data->createdby;
         $record->modifiedby = (int) $data->createdby;
         $record->timecreated = time();
@@ -496,6 +498,31 @@ class assignment_repository {
         $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
 
         return $DB->get_records_select(self::TABLE, $sql, $params, "$sort $direction, id DESC", '*', $limitfrom, $limitnum);
+    }
+
+    /**
+     * Paginated history for one student's longitudinal file (phase 4.2):
+     * every assignment of any type/status, always ordered as a timeline —
+     * most recent academic year first, then most recent start date within
+     * it — never the caller-chosen $sort/$direction of search(), since this
+     * is meant to read as a chronology, not a sortable admin table.
+     *
+     * @param int $studentid
+     * @param array $filters optional keys: academicyearid, status, assignmenttype
+     *                        (studentid is always forced to $studentid, even if present)
+     * @param int $limitfrom
+     * @param int $limitnum
+     * @return \stdClass[]
+     */
+    public function search_history_for_student(int $studentid, array $filters, int $limitfrom = 0, int $limitnum = 0): array {
+        global $DB;
+
+        $filters['studentid'] = $studentid;
+        [$sql, $params] = $this->build_search_where($filters);
+
+        return $DB->get_records_select(
+            self::TABLE, $sql, $params, 'academicyearid DESC, timestart DESC, id DESC', '*', $limitfrom, $limitnum
+        );
     }
 
     /**

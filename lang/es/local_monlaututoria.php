@@ -108,6 +108,9 @@ $string['eventreasonactivated'] = 'Motivo de tutoría activado o desactivado';
 $string['eventmodalitycreated'] = 'Modalidad de contacto creada';
 $string['eventmodalityupdated'] = 'Modalidad de contacto actualizada';
 $string['eventmodalityactivated'] = 'Modalidad de contacto activada o desactivada';
+$string['eventacademicyeardeleted'] = 'Curso académico eliminado';
+$string['eventreasondeleted'] = 'Motivo de tutoría eliminado';
+$string['eventmodalitydeleted'] = 'Modalidad de contacto eliminada';
 
 $string['reason_seed_acogida_inicial'] = 'Acogida inicial';
 $string['reason_seed_seguimiento_ordinario'] = 'Seguimiento ordinario';
@@ -162,6 +165,7 @@ $string['monlaututoria:importassignments'] = 'Importar asignaciones desde CSV';
 $string['monlaututoria:reassignstudents'] = 'Reasignar alumnos a un nuevo tutor';
 $string['monlaututoria:viewallassignments'] = 'Ver todas las asignaciones sin restricción de ámbito';
 $string['monlaututoria:manageclosedassignments'] = 'Reabrir o modificar asignaciones cerradas';
+$string['monlaututoria:viewownfile'] = 'Ver mi propia ficha longitudinal';
 
 $string['error_assignment_self'] = 'Un alumno no puede ser su propio tutor.';
 $string['error_assignment_invalid_student'] = 'El alumno seleccionado no existe o ha sido eliminado.';
@@ -288,6 +292,7 @@ $string['closereason_supportended'] = 'Fin de apoyo o cotutoría';
 $string['closereason_other'] = 'Otro';
 
 $string['error_assignment_closed_no_permission'] = 'No tienes permiso para editar una asignación cerrada o cancelada.';
+$string['error_invalidacademicyearid'] = 'El curso académico solicitado no existe.';
 $string['error_assignment_edit_reason_required'] = 'Debes indicar un motivo para modificar una asignación cerrada o cancelada.';
 $string['error_assignment_close_reason_invalid'] = 'Motivo de cierre no válido.';
 $string['error_assignment_close_before_start'] = 'La fecha de cierre no puede ser anterior a la fecha de inicio.';
@@ -382,3 +387,73 @@ $string['csv_message_row_excluded'] = 'Excluida manualmente.';
 
 $string['error_csv_file_not_usable'] = 'No se ha podido leer el archivo, o no tiene filas utilizables. Comprueba las cabeceras e inténtalo de nuevo.';
 $string['error_csv_invalid_parameters'] = 'Parámetros de importación no válidos o incompletos.';
+
+$string['eventcsvimportqueued'] = 'Importación CSV encolada para procesamiento en segundo plano';
+$string['eventcsvimportstarted'] = 'Importación CSV iniciada';
+$string['eventcsvimportcompleted'] = 'Importación CSV completada';
+$string['eventcsvimportcompletedwitherrors'] = 'Importación CSV completada con errores';
+$string['eventcsvimportfailed'] = 'Importación CSV fallida';
+
+$string['csv_field_strategy'] = 'Estrategia de aplicación';
+$string['csv_strategy_partial_valid'] = 'Aplicar las filas válidas y registrar los errores por fila (recomendado)';
+$string['csv_strategy_atomic_all'] = 'Todo o nada: una fila fallida cancela todo el lote';
+$string['csv_field_allow_reassign'] = 'Reasignar tutores principales en conflicto';
+$string['csv_field_allow_reassign_help'] = 'Cuando una fila entra en conflicto con un tutor principal activo distinto ya existente, esta opción reasigna al alumno con el tutor del archivo en vez de omitir la fila. Las filas duplicadas (la misma asignación ya existe exactamente igual) nunca se ven afectadas por esta opción.';
+$string['csv_apply_confirm_checkbox'] = 'Confirmo que quiero aplicar esta importación.';
+$string['csv_apply_button'] = 'Aplicar importación';
+$string['csv_apply_title'] = 'Aplicar esta importación';
+$string['csv_apply_intro'] = 'Esto crea o reasigna asignaciones reales a partir de la previsualización anterior. No se puede deshacer desde esta página.';
+$string['csv_apply_result_title'] = 'Resultado de la importación';
+$string['csv_apply_created'] = 'Creadas: {$a}';
+$string['csv_apply_reassigned'] = 'Reasignadas: {$a}';
+$string['csv_apply_nochange'] = 'Ya estaban al día: {$a}';
+$string['csv_apply_skipped'] = 'Omitidas: {$a}';
+$string['csv_apply_failed'] = 'Fallidas: {$a}';
+$string['csv_apply_status_completed'] = 'La importación se ha completado correctamente.';
+$string['csv_apply_status_completed_with_errors'] = 'La importación se ha completado, pero algunas filas han fallado. Consulta los recuentos anteriores.';
+$string['csv_apply_status_failed'] = 'La importación ha fallado y se ha revertido — no se ha aplicado ningún cambio.';
+
+$string['error_csv_apply_strategy_invalid'] = 'Estrategia de aplicación no válida.';
+$string['error_csv_already_applied'] = 'Esta importación ya se ha aplicado.';
+$string['error_csv_preview_changed'] = 'El archivo o los datos subyacentes han cambiado desde que se generó la previsualización. Genera una nueva previsualización e inténtalo de nuevo.';
+$string['error_csv_apply_row_failed'] = 'Esta fila no se ha podido aplicar.';
+$string['error_csv_apply_not_confirmed'] = 'Debes confirmar antes de aplicar la importación.';
+
+$string['csv_col_outcome'] = 'Resultado';
+$string['csv_apply_result_empty'] = 'Esta importación no ha generado ninguna fila procesada.';
+$string['csv_apply_outcome_created'] = 'Creada';
+$string['csv_apply_outcome_reassigned'] = 'Reasignada';
+$string['csv_apply_outcome_no_change'] = 'Sin cambios';
+$string['csv_apply_outcome_skipped_conflict'] = 'Omitida (conflicto)';
+$string['csv_apply_outcome_skipped_error'] = 'Omitida (error)';
+$string['csv_apply_outcome_skipped_excluded'] = 'Omitida (excluida)';
+$string['csv_apply_outcome_failed'] = 'Fallida';
+
+$string['csv_apply_deferred'] = 'Este archivo tiene muchas filas y se está aplicando en segundo plano mediante una tarea programada. No se aplica nada todavía en esta página; comprueba más tarde el resultado en el registro de eventos.';
+$string['csv_report_download'] = 'Descargar informe de filas no aplicadas (CSV)';
+$string['error_csv_report_not_available'] = 'El informe ya no está disponible. Solo se puede descargar una vez, inmediatamente después de aplicar la importación.';
+
+$string['eventcsverrorreportdownloaded'] = 'Informe de errores de importación CSV descargado';
+$string['task_process_csv_import'] = 'Aplicar una importación CSV grande en segundo plano';
+$string['task_cleanup_bulk_operations'] = 'Limpiar operaciones masivas y archivos temporales abandonados';
+
+$string['privacy:metadata:csvimportfiles'] = 'El archivo CSV de una importación grande, copiado temporalmente para que la tarea en segundo plano pueda leerlo; se elimina en cuanto se procesa o, como máximo, en la siguiente limpieza programada.';
+
+$string['student_summary_title'] = 'Ficha del alumno';
+$string['student_viewficha'] = 'Ver ficha';
+$string['student_field_primarytutor'] = 'Tutor principal';
+$string['student_field_cotutors'] = 'Cotutores';
+$string['student_field_lastassignment'] = 'Última asignación';
+$string['student_field_upcoming'] = 'Próximos cambios';
+$string['student_summary_no_primary'] = 'Sin tutor principal activo para este curso académico.';
+$string['student_summary_no_cotutors'] = 'Sin cotutores activos.';
+$string['student_summary_no_assignments'] = 'Sin asignaciones en este curso académico.';
+$string['student_summary_no_upcoming'] = 'No hay ningún cambio programado.';
+$string['studenttab_summary'] = 'Resumen';
+$string['studenttab_history'] = 'Historial';
+$string['studenttab_tutoring'] = 'Tutorías';
+$string['studenttab_agreements'] = 'Acuerdos';
+$string['studenttab_tutoring_empty'] = 'El registro de tutorías todavía no está disponible — llegará en una fase posterior.';
+$string['studenttab_agreements_empty'] = 'Los acuerdos todavía no están disponibles — llegarán en una fase posterior.';
+$string['student_history_col_reason'] = 'Motivo';
+$string['privacy:metadata:assignment:reassignreason'] = 'El motivo codificado registrado cuando esta asignación se creó al reasignar el tutor principal del alumno.';

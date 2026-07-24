@@ -51,17 +51,22 @@ final class scope_service {
      * logged-in user id.
      *
      * Order of checks:
-     * 1. local/monlaututoria:viewallassignments -> true (global/administrative
+     * 1. $userid IS $studentid, holding local/monlaututoria:viewownfile ->
+     *    true (phase 4.3: a student's access to their own longitudinal file
+     *    is unconditional on tutoring relationships — they are not "their
+     *    own tutor" — and deliberately checked before every other branch,
+     *    including viewallassignments, since it does not depend on it).
+     * 2. local/monlaututoria:viewallassignments -> true (global/administrative
      *    access; also the minimal "extended coordination scope" for this
      *    phase, since there is no scope-configuration page yet).
-     * 2. No local/monlaututoria:viewownstudents and no viewallassignments -> false.
-     * 3. A current ("vigente") primary or co-tutor assignment -> true.
+     * 3. No local/monlaututoria:viewownstudents and no viewallassignments -> false.
+     * 4. A current ("vigente") primary or co-tutor assignment -> true.
      *    support/orientation/other assignment types do NOT grant access.
-     * 4. Otherwise, with local/monlaututoria:viewhistoricalassignments, a past
+     * 5. Otherwise, with local/monlaututoria:viewhistoricalassignments, a past
      *    relationship of $userid with THIS student (any status) -> true. This
      *    is narrow by design: it grants access to one's own tutoring history,
      *    not a global audit capability over any student.
-     * 5. Otherwise -> false.
+     * 6. Otherwise -> false.
      *
      * @param int $userid
      * @param int $studentid
@@ -70,6 +75,10 @@ final class scope_service {
      */
     public function can_user_access_student(int $userid, int $studentid, ?int $academicyearid = null): bool {
         $context = \context_system::instance();
+
+        if ($userid === $studentid && has_capability('local/monlaututoria:viewownfile', $context, $userid)) {
+            return true;
+        }
 
         if (has_capability('local/monlaututoria:viewallassignments', $context, $userid)) {
             return true;

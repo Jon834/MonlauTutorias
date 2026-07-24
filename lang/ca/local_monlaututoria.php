@@ -108,6 +108,9 @@ $string['eventreasonactivated'] = 'Motiu de tutoria activat o desactivat';
 $string['eventmodalitycreated'] = 'Modalitat de contacte creada';
 $string['eventmodalityupdated'] = 'Modalitat de contacte actualitzada';
 $string['eventmodalityactivated'] = 'Modalitat de contacte activada o desactivada';
+$string['eventacademicyeardeleted'] = 'Curs acadèmic eliminat';
+$string['eventreasondeleted'] = 'Motiu de tutoria eliminat';
+$string['eventmodalitydeleted'] = 'Modalitat de contacte eliminada';
 
 $string['reason_seed_acogida_inicial'] = 'Acollida inicial';
 $string['reason_seed_seguimiento_ordinario'] = 'Seguiment ordinari';
@@ -162,6 +165,7 @@ $string['monlaututoria:importassignments'] = 'Importar assignacions des de CSV';
 $string['monlaututoria:reassignstudents'] = 'Reassignar alumnes a un nou tutor';
 $string['monlaututoria:viewallassignments'] = 'Veure totes les assignacions sense restricció d\'àmbit';
 $string['monlaututoria:manageclosedassignments'] = 'Reobrir o modificar assignacions tancades';
+$string['monlaututoria:viewownfile'] = 'Veure la meva pròpia fitxa longitudinal';
 
 $string['error_assignment_self'] = 'Un alumne no pot ser el seu propi tutor.';
 $string['error_assignment_invalid_student'] = 'L\'alumne seleccionat no existeix o ha estat eliminat.';
@@ -288,6 +292,7 @@ $string['closereason_supportended'] = 'Fi de suport o cotutoria';
 $string['closereason_other'] = 'Altre';
 
 $string['error_assignment_closed_no_permission'] = 'No tens permís per editar una assignació tancada o cancel·lada.';
+$string['error_invalidacademicyearid'] = 'El curs acadèmic sol·licitat no existeix.';
 $string['error_assignment_edit_reason_required'] = 'Cal indicar un motiu per modificar una assignació tancada o cancel·lada.';
 $string['error_assignment_close_reason_invalid'] = 'Motiu de tancament no vàlid.';
 $string['error_assignment_close_before_start'] = 'La data de tancament no pot ser anterior a la data d\'inici.';
@@ -382,3 +387,73 @@ $string['csv_message_row_excluded'] = 'Exclosa manualment.';
 
 $string['error_csv_file_not_usable'] = 'No s\'ha pogut llegir el fitxer, o no té files utilitzables. Comprova les capçaleres i torna-ho a provar.';
 $string['error_csv_invalid_parameters'] = 'Paràmetres d\'importació no vàlids o incomplets.';
+
+$string['eventcsvimportqueued'] = 'Importació CSV encuada per a processament en segon pla';
+$string['eventcsvimportstarted'] = 'Importació CSV iniciada';
+$string['eventcsvimportcompleted'] = 'Importació CSV completada';
+$string['eventcsvimportcompletedwitherrors'] = 'Importació CSV completada amb errors';
+$string['eventcsvimportfailed'] = 'Importació CSV fallida';
+
+$string['csv_field_strategy'] = 'Estratègia d\'aplicació';
+$string['csv_strategy_partial_valid'] = 'Aplicar les files vàlides i registrar els errors per fila (recomanat)';
+$string['csv_strategy_atomic_all'] = 'Tot o res: una fila fallida cancel·la tot el lot';
+$string['csv_field_allow_reassign'] = 'Reassignar tutors principals en conflicte';
+$string['csv_field_allow_reassign_help'] = 'Quan una fila entra en conflicte amb un tutor principal actiu diferent ja existent, aquesta opció reassigna l\'alumne amb el tutor del fitxer en lloc d\'ometre la fila. Les files duplicades (la mateixa assignació ja existeix exactament igual) mai es veuen afectades per aquesta opció.';
+$string['csv_apply_confirm_checkbox'] = 'Confirmo que vull aplicar aquesta importació.';
+$string['csv_apply_button'] = 'Aplicar importació';
+$string['csv_apply_title'] = 'Aplicar aquesta importació';
+$string['csv_apply_intro'] = 'Això crea o reassigna assignacions reals a partir de la previsualització anterior. No es pot desfer des d\'aquesta pàgina.';
+$string['csv_apply_result_title'] = 'Resultat de la importació';
+$string['csv_apply_created'] = 'Creades: {$a}';
+$string['csv_apply_reassigned'] = 'Reassignades: {$a}';
+$string['csv_apply_nochange'] = 'Ja estaven al dia: {$a}';
+$string['csv_apply_skipped'] = 'Omeses: {$a}';
+$string['csv_apply_failed'] = 'Fallides: {$a}';
+$string['csv_apply_status_completed'] = 'La importació s\'ha completat correctament.';
+$string['csv_apply_status_completed_with_errors'] = 'La importació s\'ha completat, però algunes files han fallat. Consulta els recomptes anteriors.';
+$string['csv_apply_status_failed'] = 'La importació ha fallat i s\'ha revertit — no s\'ha aplicat cap canvi.';
+
+$string['error_csv_apply_strategy_invalid'] = 'Estratègia d\'aplicació no vàlida.';
+$string['error_csv_already_applied'] = 'Aquesta importació ja s\'ha aplicat.';
+$string['error_csv_preview_changed'] = 'El fitxer o les dades subjacents han canviat des que es va generar la previsualització. Genera una nova previsualització i torna-ho a provar.';
+$string['error_csv_apply_row_failed'] = 'Aquesta fila no s\'ha pogut aplicar.';
+$string['error_csv_apply_not_confirmed'] = 'Cal confirmar abans d\'aplicar la importació.';
+
+$string['csv_col_outcome'] = 'Resultat';
+$string['csv_apply_result_empty'] = 'Aquesta importació no ha generat cap fila processada.';
+$string['csv_apply_outcome_created'] = 'Creada';
+$string['csv_apply_outcome_reassigned'] = 'Reassignada';
+$string['csv_apply_outcome_no_change'] = 'Sense canvis';
+$string['csv_apply_outcome_skipped_conflict'] = 'Omesa (conflicte)';
+$string['csv_apply_outcome_skipped_error'] = 'Omesa (error)';
+$string['csv_apply_outcome_skipped_excluded'] = 'Omesa (exclosa)';
+$string['csv_apply_outcome_failed'] = 'Fallida';
+
+$string['csv_apply_deferred'] = 'Aquest fitxer té moltes files i s\'està aplicant en segon pla mitjançant una tasca programada. Encara no s\'aplica res en aquesta pàgina; consulta més tard el resultat al registre d\'esdeveniments.';
+$string['csv_report_download'] = 'Descarregar informe de files no aplicades (CSV)';
+$string['error_csv_report_not_available'] = 'L\'informe ja no està disponible. Només es pot descarregar una vegada, immediatament després d\'aplicar la importació.';
+
+$string['eventcsverrorreportdownloaded'] = 'Informe d\'errors d\'importació CSV descarregat';
+$string['task_process_csv_import'] = 'Aplicar una importació CSV gran en segon pla';
+$string['task_cleanup_bulk_operations'] = 'Netejar operacions massives i fitxers temporals abandonats';
+
+$string['privacy:metadata:csvimportfiles'] = 'El fitxer CSV d\'una importació gran, copiat temporalment perquè la tasca en segon pla el pugui llegir; s\'elimina tan bon punt es processa o, com a màxim, en la següent neteja programada.';
+
+$string['student_summary_title'] = 'Fitxa de l\'alumne';
+$string['student_viewficha'] = 'Veure fitxa';
+$string['student_field_primarytutor'] = 'Tutor principal';
+$string['student_field_cotutors'] = 'Cotutors';
+$string['student_field_lastassignment'] = 'Última assignació';
+$string['student_field_upcoming'] = 'Propers canvis';
+$string['student_summary_no_primary'] = 'Sense tutor principal actiu per a aquest curs acadèmic.';
+$string['student_summary_no_cotutors'] = 'Sense cotutors actius.';
+$string['student_summary_no_assignments'] = 'Sense assignacions en aquest curs acadèmic.';
+$string['student_summary_no_upcoming'] = 'No hi ha cap canvi programat.';
+$string['studenttab_summary'] = 'Resum';
+$string['studenttab_history'] = 'Historial';
+$string['studenttab_tutoring'] = 'Tutories';
+$string['studenttab_agreements'] = 'Acords';
+$string['studenttab_tutoring_empty'] = 'El registre de tutories encara no està disponible — arribarà en una fase posterior.';
+$string['studenttab_agreements_empty'] = 'Els acords encara no estan disponibles — arribaran en una fase posterior.';
+$string['student_history_col_reason'] = 'Motiu';
+$string['privacy:metadata:assignment:reassignreason'] = 'El motiu codificat registrat quan aquesta assignació es va crear en reassignar el tutor principal de l\'alumne.';

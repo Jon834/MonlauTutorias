@@ -34,17 +34,42 @@ use core_privacy\local\request\writer;
  * reassign_attribution() for why erasure reassigns those fields instead of
  * deleting the catalogue rows.
  *
- * local_tut_assignment (added in phase 3A) is different: studentid/tutorid
- * ARE the personal data, not incidental attribution, and there is no
- * institutional retention policy defined yet for tutoring relationship
- * history (see docs/modelo-datos.md and docs/pruebas.md — "Privacidad:
- * pendiente"). Declaring a context/export/delete path without one would
- * either destroy historically relevant data or falsely claim compliance, so
- * this class deliberately ONLY registers local_tut_assignment's metadata
- * below; it is NOT included in self::TABLES and is untouched by
- * get_contexts_for_userid()/get_users_in_context()/export_user_data()/
- * delete_data_for_user(s)/delete_data_for_all_users_in_context(). This is a
- * known, documented compliance gap to close once that policy exists.
+ * **Retention policy (decided 2026-07-24, phase 3E.6), closing the compliance
+ * gap this class previously left open:**
+ *
+ * - `local_tut_assignment`: studentid/tutorid ARE the personal data, not
+ *   incidental attribution — tutoring relationship history is kept
+ *   indefinitely (no expiry), but a subject access/erasure request is now
+ *   fully honoured. Export returns every row the requesting user appears in,
+ *   as student or tutor, with the other party resolved to a readable name.
+ *   Erasure never deletes a row (that would destroy the other party's own
+ *   history) — it anonymises it instead: studentid/tutorid/createdby/
+ *   modifiedby referencing the erased user are reassigned to the Moodle
+ *   "no-reply" user (same mechanism reassign_attribution() already uses for
+ *   the 3 catalogues), and the free-text `note` on any row the erased user
+ *   appears in (as student or tutor) is cleared, since prose notes can name
+ *   a person even after their id reference is gone. assignmenttype/
+ *   isprimary/status/dates/source/closereason are left untouched — the fact
+ *   that some tutoring relationship existed, when, and why it ended, remains
+ *   available for institutional history once anonymised.
+ * - `local_tut_bulkoperation`: same anonymisation treatment for
+ *   primarytutorid/cotutorid/createdby. On top of that, this table now has an
+ *   actual retention limit: `cleanup_bulk_operations_task` purges operations
+ *   in a terminal status (completed/completed_with_errors/failed/cancelled)
+ *   after 90 days — see TERMINAL_TTL_SECONDS there. Abandoned draft/previewed
+ *   operations were already purged after 1 day (phase 3D.4); this adds the
+ *   missing other half of the policy.
+ *
+ * The local_monlaututoria/csvimport file area (phase 3D.4) is unaffected by
+ * this: it holds the same kind of personal data as local_tut_assignment's
+ * studentid/tutorid (whoever a large CSV import's rows name), but only
+ * transiently — a file only exists there between csv_import_dispatch_service
+ * deferring an import and process_csv_import_task processing it (normally
+ * seconds to minutes), and cleanup_bulk_operations_task removes anything left
+ * behind. Declared via core_files for completeness but still not wired into
+ * export/delete — the file is gone again well before any subject access
+ * request could reasonably reach it, and there is nothing meaningful to
+ * anonymise in a file that is about to be deleted anyway.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
@@ -81,10 +106,12 @@ final class provider implements
             'shortname' => 'privacy:metadata:modality:shortname',
         ], 'privacy:metadata:modality');
 
-        // Metadata only. Much lighter footprint than local_tut_assignment:
-        // this table never stores per-student data (see
-        // cohort_assignment_preview_service's class docblock) — only
-        // attribution (createdby) and the selected tutor(s) as references.
+        // Lighter footprint than local_tut_assignment: this table never
+        // stores per-student data (see cohort_assignment_preview_service's
+        // class docblock) — only attribution (createdby) and the selected
+        // tutor(s) as references. Exported and anonymised on erasure (phase
+        // 3E.6) like every other table below, plus a 90-day retention limit
+        // for finished operations (see the class docblock).
         $collection->add_database_table('local_tut_bulkoperation', [
             'cohortid'       => 'privacy:metadata:bulkoperation:cohortid',
             'academicyearid' => 'privacy:metadata:bulkoperation:academicyearid',
@@ -96,8 +123,8 @@ final class provider implements
             'timemodified'   => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:bulkoperation');
 
-        // Metadata only — see the class docblock for why export/delete do not
-        // yet cover this table.
+        // Exported and anonymised on erasure (phase 3E.6) — see the class
+        // docblock for the retention policy this implements.
         $collection->add_database_table('local_tut_assignment', [
             'studentid'      => 'privacy:metadata:assignment:studentid',
             'tutorid'        => 'privacy:metadata:assignment:tutorid',
@@ -111,11 +138,16 @@ final class provider implements
             'source'         => 'privacy:metadata:assignment:source',
             'note'           => 'privacy:metadata:assignment:note',
             'closereason'    => 'privacy:metadata:assignment:closereason',
+            'reassignreason' => 'privacy:metadata:assignment:reassignreason',
             'createdby'      => 'privacy:metadata:createdby',
             'modifiedby'     => 'privacy:metadata:modifiedby',
             'timecreated'    => 'privacy:metadata:timecreated',
             'timemodified'   => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:assignment');
+
+        // Transient only — see the class docblock. Not wired into
+        // export/delete, same documented reason as local_tut_assignment.
+        $collection->add_subsystem_link('core_files', [], 'privacy:metadata:csvimportfiles');
 
         return $collection;
     }
@@ -129,11 +161,19 @@ final class provider implements
                 UNION
                 SELECT 1 FROM {local_tut_reason} WHERE createdby = :r1 OR modifiedby = :r2
                 UNION
-                SELECT 1 FROM {local_tut_modality} WHERE createdby = :m1 OR modifiedby = :m2';
+                SELECT 1 FROM {local_tut_modality} WHERE createdby = :m1 OR modifiedby = :m2
+                UNION
+                SELECT 1 FROM {local_tut_assignment}
+                    WHERE studentid = :as1 OR tutorid = :as2 OR createdby = :as3 OR modifiedby = :as4
+                UNION
+                SELECT 1 FROM {local_tut_bulkoperation}
+                    WHERE createdby = :bo1 OR primarytutorid = :bo2 OR cotutorid = :bo3';
         $params = [
             'ay1' => $userid, 'ay2' => $userid,
             'r1'  => $userid, 'r2'  => $userid,
             'm1'  => $userid, 'm2'  => $userid,
+            'as1' => $userid, 'as2' => $userid, 'as3' => $userid, 'as4' => $userid,
+            'bo1' => $userid, 'bo2' => $userid, 'bo3' => $userid,
         ];
 
         if ($DB->record_exists_sql($sql, $params)) {
@@ -144,8 +184,6 @@ final class provider implements
     }
 
     public static function get_users_in_context(userlist $userlist): void {
-        global $DB;
-
         if ($userlist->get_context()->contextlevel !== CONTEXT_SYSTEM) {
             return;
         }
@@ -154,6 +192,15 @@ final class provider implements
             $userlist->add_from_sql('createdby', "SELECT createdby FROM {{$table}}", []);
             $userlist->add_from_sql('modifiedby', "SELECT modifiedby FROM {{$table}}", []);
         }
+
+        $userlist->add_from_sql('studentid', 'SELECT studentid FROM {local_tut_assignment}', []);
+        $userlist->add_from_sql('tutorid', 'SELECT tutorid FROM {local_tut_assignment}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_assignment}', []);
+        $userlist->add_from_sql('modifiedby', 'SELECT modifiedby FROM {local_tut_assignment}', []);
+
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_bulkoperation}', []);
+        $userlist->add_from_sql('primarytutorid', 'SELECT primarytutorid FROM {local_tut_bulkoperation}', []);
+        $userlist->add_from_sql('cotutorid', 'SELECT cotutorid FROM {local_tut_bulkoperation}', []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -192,10 +239,105 @@ final class provider implements
             }
         }
 
+        $data['assignments'] = self::export_assignments($userid);
+        $data['bulkoperations'] = self::export_bulk_operations($userid);
+
         writer::with_context(\context_system::instance())->export_data(
             [get_string('pluginname', 'local_monlaututoria')],
             (object) $data
         );
+    }
+
+    /**
+     * @param int $userid
+     * @return array
+     */
+    private static function export_assignments(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'local_tut_assignment',
+            'studentid = :s OR tutorid = :t OR createdby = :c OR modifiedby = :m',
+            ['s' => $userid, 't' => $userid, 'c' => $userid, 'm' => $userid]
+        );
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->studentid === $userid) {
+                $roles[] = 'student';
+            }
+            if ((int) $record->tutorid === $userid) {
+                $roles[] = 'tutor';
+            }
+            if ((int) $record->createdby === $userid) {
+                $roles[] = 'creator';
+            }
+            if ((int) $record->modifiedby === $userid) {
+                $roles[] = 'modifier';
+            }
+
+            // The other party in the relationship, resolved to a readable
+            // name — a raw id would not be intelligible in an export meant
+            // for the data subject to actually read.
+            $counterpartid = (int) $record->studentid === $userid ? (int) $record->tutorid : (int) $record->studentid;
+            $counterpart = \core_user::get_user($counterpartid);
+
+            $export[] = (object) [
+                'yourrole'       => $roles,
+                'counterpart'    => $counterpart ? fullname($counterpart) : null,
+                'assignmenttype' => $record->assignmenttype,
+                'isprimary'      => (bool) $record->isprimary,
+                'status'         => $record->status,
+                'timestart'      => $record->timestart ? userdate($record->timestart) : null,
+                'timeend'        => $record->timeend ? userdate($record->timeend) : null,
+                'source'         => $record->source,
+                'note'           => $record->note,
+                'closereason'    => $record->closereason,
+                'timecreated'    => userdate($record->timecreated),
+                'timemodified'   => userdate($record->timemodified),
+            ];
+        }
+
+        return $export;
+    }
+
+    /**
+     * @param int $userid
+     * @return array
+     */
+    private static function export_bulk_operations(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'local_tut_bulkoperation',
+            'createdby = :c OR primarytutorid = :p OR cotutorid = :co',
+            ['c' => $userid, 'p' => $userid, 'co' => $userid]
+        );
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->createdby === $userid) {
+                $roles[] = 'creator';
+            }
+            if ((int) $record->primarytutorid === $userid) {
+                $roles[] = 'primarytutor';
+            }
+            if ((int) $record->cotutorid === $userid) {
+                $roles[] = 'cotutor';
+            }
+
+            $export[] = (object) [
+                'yourrole'      => $roles,
+                'operationtype' => $record->operationtype,
+                'mode'          => $record->mode,
+                'status'        => $record->status,
+                'timecreated'   => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
@@ -204,12 +346,17 @@ final class provider implements
         }
 
         self::reassign_all_attribution();
+        self::anonymize_all_assignments();
+        self::anonymize_all_bulk_operations();
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         foreach ($contextlist->get_contexts() as $context) {
             if ($context->contextlevel === CONTEXT_SYSTEM) {
-                self::reassign_attribution($contextlist->get_user()->id);
+                $userid = $contextlist->get_user()->id;
+                self::reassign_attribution($userid);
+                self::anonymize_assignments($userid);
+                self::anonymize_bulk_operations($userid);
             }
         }
     }
@@ -221,6 +368,8 @@ final class provider implements
 
         foreach ($userlist->get_userids() as $userid) {
             self::reassign_attribution((int) $userid);
+            self::anonymize_assignments((int) $userid);
+            self::anonymize_bulk_operations((int) $userid);
         }
     }
 
@@ -247,5 +396,84 @@ final class provider implements
             $DB->set_field($table, 'createdby', $noreply, []);
             $DB->set_field($table, 'modifiedby', $noreply, []);
         }
+    }
+
+    /**
+     * Anonymises every local_tut_assignment row where $userid appears as
+     * student, tutor, creator or modifier — never deletes a row, since that
+     * would also destroy the other party's own history. The row ids are
+     * collected before reassigning studentid/tutorid, so the WHERE clause
+     * used to clear `note` still matches after those fields have changed.
+     *
+     * @param int $userid
+     */
+    private static function anonymize_assignments(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $affectedids = $DB->get_fieldset_select(
+            'local_tut_assignment',
+            'id',
+            'studentid = :s OR tutorid = :t',
+            ['s' => $userid, 't' => $userid]
+        );
+
+        $DB->set_field('local_tut_assignment', 'studentid', $noreply, ['studentid' => $userid]);
+        $DB->set_field('local_tut_assignment', 'tutorid', $noreply, ['tutorid' => $userid]);
+
+        if (!empty($affectedids)) {
+            [$insql, $params] = $DB->get_in_or_equal($affectedids, SQL_PARAMS_NAMED);
+            $DB->set_field_select('local_tut_assignment', 'note', null, "id $insql", $params);
+        }
+
+        $DB->set_field('local_tut_assignment', 'createdby', $noreply, ['createdby' => $userid]);
+        $DB->set_field('local_tut_assignment', 'modifiedby', $noreply, ['modifiedby' => $userid]);
+    }
+
+    /**
+     * Anonymises every local_tut_assignment row in the system — used only by
+     * delete_data_for_all_users_in_context() (the whole system context is
+     * being purged, e.g. plugin uninstall), never by a single-user erasure
+     * request. Clears `note` unconditionally: with no single user left to
+     * scope the WHERE clause to, there is no remaining reason to keep any of it.
+     */
+    private static function anonymize_all_assignments(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_assignment', 'studentid', $noreply, []);
+        $DB->set_field('local_tut_assignment', 'tutorid', $noreply, []);
+        $DB->set_field('local_tut_assignment', 'note', null, []);
+        $DB->set_field('local_tut_assignment', 'createdby', $noreply, []);
+        $DB->set_field('local_tut_assignment', 'modifiedby', $noreply, []);
+    }
+
+    /**
+     * Same anonymisation as anonymize_assignments(), for
+     * local_tut_bulkoperation's createdby/primarytutorid/cotutorid. No `note`
+     * field on this table to worry about.
+     *
+     * @param int $userid
+     */
+    private static function anonymize_bulk_operations(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_bulkoperation', 'createdby', $noreply, ['createdby' => $userid]);
+        $DB->set_field('local_tut_bulkoperation', 'primarytutorid', $noreply, ['primarytutorid' => $userid]);
+        $DB->set_field('local_tut_bulkoperation', 'cotutorid', $noreply, ['cotutorid' => $userid]);
+    }
+
+    private static function anonymize_all_bulk_operations(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_bulkoperation', 'createdby', $noreply, []);
+        $DB->set_field('local_tut_bulkoperation', 'primarytutorid', $noreply, []);
+        $DB->set_field('local_tut_bulkoperation', 'cotutorid', $noreply, []);
     }
 }

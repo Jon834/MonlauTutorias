@@ -59,6 +59,36 @@ class stale_primary_assignment_repository extends assignment_repository {
 }
 
 /**
+ * Test double whose get() returns a fixed, stale ("still active") snapshot
+ * on its first call only, then falls back to the real database on every
+ * later call. close()/remove_cotutor() (phase 3E.3) both call get() twice —
+ * once for the initial validation, once for the recheck immediately before
+ * writing — so this simulates a row that was closed by another request in
+ * between those two reads, without needing real concurrent processes.
+ *
+ * @package    local_monlaututoria
+ * @copyright  2026 Monlau Tutoria Project
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class first_call_stale_assignment_repository extends assignment_repository {
+
+    /** @var int */
+    private $calls = 0;
+
+    public function __construct(private \stdClass $stalesnapshot) {
+    }
+
+    public function get(int $id): \stdClass {
+        $this->calls++;
+        if ($this->calls === 1) {
+            return $this->stalesnapshot;
+        }
+
+        return parent::get($id);
+    }
+}
+
+/**
  * Tests for assignment_service.
  *
  * @package    local_monlaututoria
@@ -268,6 +298,54 @@ final class assignment_service_test extends \advanced_testcase {
         $service->close($id, get_admin()->id, assignment_close_reason::OTHER);
     }
 
+    public function test_close_rejects_concurrent_close_detected_by_recheck(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $realrepository = new assignment_repository();
+        $id = $realrepository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+        ]);
+        $stalesnapshot = clone $realrepository->get($id);
+
+        // Another request closes the row for real, between the moment this
+        // call's initial validation read happened (the stale snapshot,
+        // still "active") and the moment its recheck would run.
+        $realrepository->close($id, get_admin()->id, time());
+
+        $service = new assignment_service(new first_call_stale_assignment_repository($stalesnapshot));
+
+        $this->expectException(\moodle_exception::class);
+        $service->close($id, get_admin()->id, assignment_close_reason::OTHER);
+    }
+
+    public function test_remove_cotutor_rejects_concurrent_close_detected_by_recheck(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $cotutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $realrepository = new assignment_repository();
+        $id = $realrepository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $cotutor->id,
+            'academicyearid' => $academicyearid, 'assignmenttype' => 'co_tutor',
+            'createdby' => get_admin()->id,
+        ]);
+        $stalesnapshot = clone $realrepository->get($id);
+
+        $realrepository->close($id, get_admin()->id, time());
+
+        $service = new assignment_service(new first_call_stale_assignment_repository($stalesnapshot));
+
+        $this->expectException(\moodle_exception::class);
+        $service->remove_cotutor($id, get_admin()->id);
+    }
+
     public function test_close_rejects_invalid_reason(): void {
         $this->resetAfterTest();
 
@@ -359,6 +437,37 @@ final class assignment_service_test extends \advanced_testcase {
         $repository = new assignment_repository();
         $this->assertSame('closed', $repository->get($oldid)->status);
         $this->assertSame((int) $tutor2->id, (int) $repository->get($result->newassignmentid)->tutorid);
+    }
+
+    public function test_reassign_persists_reason_on_new_assignment(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor1 = $this->getDataGenerator()->create_user();
+        $tutor2 = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $service = new assignment_service();
+        $oldid = $service->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor1->id,
+            'academicyearid' => $academicyearid, 'isprimary' => true,
+        ], get_admin()->id);
+
+        $result = $service->reassign_primary_tutor(
+            new reassign_assignment_command(
+                $student->id,
+                $tutor2->id,
+                $academicyearid,
+                assignment_reassign_reason::GROUP_CHANGE
+            ),
+            get_admin()->id
+        );
+
+        $repository = new assignment_repository();
+        // Persisted on the new row (phase 4.2, so the history tab can show
+        // it without querying the event log) — never on the one it replaces.
+        $this->assertSame(assignment_reassign_reason::GROUP_CHANGE, $repository->get($result->newassignmentid)->reassignreason);
+        $this->assertNull($repository->get($oldid)->reassignreason);
     }
 
     public function test_reassign_rejects_invalid_reason(): void {

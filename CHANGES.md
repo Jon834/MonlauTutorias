@@ -1,5 +1,190 @@
 # Changelog — local_monlaututoria
 
+## 0.5.3 — 2026-07-24
+
+**Ficha longitudinal del alumno — UX, rendimiento y cierre** — Fase 4.4 (sobre la Fase 4.3). **Cierra la Fase 4 completa** (4.1-4.4). Sin migración de esquema — todos los hallazgos de esta revisión de cierre eran de código de presentación/consulta, no de modelo de datos.
+
+- **Diseño responsive**: las tablas generadas con `html_writer::table()` (`academic_years_list()`, `catalogue_list()`, `student_history_table()`, `csv_import_preview_table()`, `csv_import_apply_result_table()`) y la tabla Mustache `assignments_list` no estaban envueltas en un contenedor `table-responsive` — en una pantalla estrecha, una tabla ancha desbordaba la página entera en vez de desplazarse solo dentro de su propio contenedor. Corregido en las 6 tablas del módulo, no solo en las de la ficha del alumno, porque es el mismo defecto del mismo método de renderizado en cada caso.
+- **Navegación por teclado**: las pestañas de la ficha del alumno (`student_tabs()`) ya eran accesibles por teclado de forma nativa (son enlaces `<a href>` reales, no un widget JS) — añadido `aria-current="page"` en la pestaña activa, la señal de accesibilidad correcta para un conjunto de enlaces de navegación real (mismo patrón que un breadcrumb), no `aria-selected` (que sería para un tablist controlado por JS que no existe aquí).
+- **Errores claros**: un `academicyearid` manipulado en `student/view.php` dependía de `academic_year_repository::get()` (`MUST_EXIST`), que deja burbujear una `dml_missing_record_exception` genérica. Nuevo método `academic_year_repository::find()` (devuelve `null` en vez de lanzar) usado para producir el mismo tipo de mensaje claro que ya existía para un `studentid` inválido en el mismo archivo, en vez de una página de excepción de base de datos.
+- **Revisión N+1**: `renderer::student_summary()` llamaba a `core_user::get_user()` una vez por tutor (principal, cada cotutor, última asignación, cada próximo cambio) — confirmado que este método **no tiene ninguna caché** para ids normales (siempre golpea la base de datos), así que era el mismo patrón N+1 ya corregido en `assignments/index.php` en la Fase 3E.4. Corregido con un único `$DB->get_records_list()` por lote, igual que en el resto del proyecto.
+- Sin cambios de esquema. Como sí cambia código de producción, bump de versión de **parche** (0.5.2 → 0.5.3) — último incremento del bloque de la Fase 4.
+
+**Pruebas**
+- PHPUnit: 1 caso nuevo en `academic_year_repository_test.php` (`find()` devuelve `null` en vez de lanzar), 2 casos nuevos en `renderer_test.php` (recuento de lecturas de BD constante con 1 vs. 5 cotutores; `aria-current="page"` solo en la pestaña activa).
+- Behat: `student_summary.feature` ampliado con 1 escenario nuevo (`academicyearid` inválido muestra el mensaje claro del plugin, no una página de excepción genérica).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Cierra la Fase 4.** Próxima fase según `docs/roadmap.md`: **Fase 5 — registro de tutorías**.
+
+---
+
+## 0.5.2 — 2026-07-24
+
+**Ficha longitudinal del alumno — permisos y vistas** — Fase 4.3 (sobre la Fase 4.2). Sin migración de esquema (solo una capacidad nueva, sincronizada automáticamente por Moodle).
+
+- **Nueva capacidad `local/monlaututoria:viewownfile`**: un alumno puede ver su propia ficha longitudinal, sin necesidad de `viewstudent`/`viewownstudents`/`viewallassignments`. Concedida por defecto al arquetipo **"Usuario autenticado"** (`user`), no al de "Estudiante" (`student`) — el rol Student de Moodle se asigna normalmente a nivel de curso, y esta capacidad es de contexto de sistema, así que un valor por defecto atado al arquetipo `student` nunca se aplicaría de verdad en una instalación típica. Es seguro concederla ampliamente: `scope_service` solo la usa para que un usuario vea **su propio** registro, nunca el de otra persona, sea quien sea.
+- **`scope_service::can_user_access_student()`**: nueva rama, comprobada antes que ninguna otra — si el usuario que consulta ES el propio alumno y tiene `viewownfile`, acceso concedido de forma incondicional (no depende de ninguna relación de tutoría).
+- **Vista limitada del alumno** en `student/view.php`: al ver su propia ficha, se ocultan los enlaces a `assignments/view.php` (página a la que no tiene capacidad de acceder, y que muestra la observación administrativa/motivo/quién creó o modificó la fila) y, en la pestaña Historial, las columnas "Origen" y "Motivo" (categorización administrativa interna).
+- **"Coordinación según ámbito" — explícitamente no abordado**: el modelo de ámbitos de este proyecto sigue siendo binario (`viewallassignments` o nada); no existe el concepto de "coordinador responsable de un subconjunto de alumnos/cohortes", mismo vacío ya documentado desde las Fases 3B.5A/3C.1/3E.1. Construir un ámbito más granular falso habría sido peor que dejarlo pendiente.
+
+**Pruebas**
+- PHPUnit: 3 casos nuevos en `scope_service_test.php` (acceso propio concedido/denegado según la capacidad, y que no se extiende al registro de otro alumno) + 4 casos nuevos en `renderer_test.php` (vista limitada sin enlaces, vista completa con enlaces, historial sin motivo/origen).
+- Behat: `student_summary.feature` ampliado (2 escenarios nuevos: acceso propio sin capacidad concedida manualmente, y ocultación del motivo/enlace en la vista propia).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Fuera de alcance de esta versión** (resto de la Fase 4): diseño responsive, navegación por teclado, estados vacíos y de error, revisión N+1, PHPUnit/Behat/revisión manual de cierre (4.4).
+
+---
+
+## 0.5.1 — 2026-07-24
+
+**Ficha longitudinal del alumno — historial de asignaciones** — Fase 4.2 (sobre la Fase 4.1, ficha del alumno). **Migración de esquema real**: nuevo campo `local_tut_assignment.reassignreason` (char(30), nullable) — ya anticipado en el docblock de `assignment_reassign_reason` desde la Fase 3B.4A ("se revisará si hace falta persistirlo cuando la interfaz necesite mostrarlo en el historial"), mismo criterio que `closereason` (Fase 3B.3A).
+
+- `assignment_repository::search_history_for_student()` (nuevo): reutiliza `build_search_where()`, orden fijo por curso académico y fecha de inicio (cronología, no tabla ordenable).
+- `reassign_primary_tutor()` ahora persiste el motivo de reasignación en la fila nueva (nunca en la que cierra); el evento `student_reassigned` sigue siendo la auditoría, la columna es el dato consultable sin leer el registro de eventos.
+- Nueva pestaña "Historial" en `student/view.php` (que ahora tiene 4 pestañas: Resumen, Historial, Tutorías y Acuerdos — las 2 últimas vacías hasta las fases 5/6): tabla con curso académico, tutor, tipo, estado, fechas, origen y motivo (cierre o reasignación), filtro por estado, paginación.
+- **Bug propio encontrado y corregido antes de cerrar el incremento**: `student_history_table()` usa `html_writer::table()` en vez de Mustache — a diferencia de esta última, no escapa nada automáticamente. El nombre del tutor se pasaba sin `s()`; corregido con su prueba de regresión.
+
+**Pruebas**
+- PHPUnit: 6 casos nuevos en `assignment_repository_test.php`, 1 en `assignment_service_test.php`, 1 en `renderer_test.php`. Behat: `student_history.feature` (nuevo, 3 escenarios).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores) y validación XML de `install.xml`.
+
+**Fuera de alcance de esta versión** (resto de la Fase 4): vistas diferenciadas por rol (4.3); diseño responsive, navegación por teclado, revisión N+1, cierre (4.4).
+
+---
+
+## 0.5.0 — 2026-07-24
+
+**Ficha longitudinal del alumno — cabecera y resumen** — Fase 4.1 (primer incremento de la Fase 4, sobre la Fase 3E ya cerrada). Sin migración de esquema: todo se calcula sobre `local_tut_assignment` ya existente, nunca se persiste.
+
+- Nueva página `student/view.php?id=<studentid>&academicyearid=<opcional>`: capacidad `viewstudent` + `scope_service` desde el primer momento (misma comprobación que `assignments/view.php`, no algo que se añada más adelante en la Fase 4.3).
+- Nuevo `student_summary_service::get_summary()`: tutor principal y cotutores vigentes (reutiliza `find_active_primary()`/`find_active_cotutors()`, ya existentes desde 3B.2/3B.4A), cohorte (resuelta de la asignación principal), última asignación del curso académico y cualquier cambio programado a futuro (asignación activa con `timestart` todavía no llegado).
+- Selector de curso académico en la propia ficha (por defecto, el curso activo).
+- Enlace **Ver ficha** añadido al listado de asignaciones y al detalle de una asignación.
+- Foto del alumno vía `$OUTPUT->user_picture()` (API pública de Moodle).
+
+**Pruebas**
+- PHPUnit: `tests/service/student_summary_service_test.php` (nuevo, 5 casos) + 1 caso nuevo en `tests/output/renderer_test.php` (escapado de un nombre de tutor hostil, mismo patrón de defensa en profundidad de la Fase 3E.2).
+- Behat: `tests/behat/student_summary.feature` (nuevo, 3 escenarios).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Fuera de alcance de esta versión** (resto de la Fase 4): historial de asignaciones (4.2), vistas diferenciadas por rol más allá de la comprobación binaria de `scope_service` — tutor/coordinación/alumno (4.3), rendimiento/revisión N+1/cierre (4.4).
+
+---
+
+## 0.4.8 — 2026-07-24
+
+**Privacy API completa y retención** — Fase 3E.6 (sobre 3E.1-3E.5, cierre integral del módulo de asignaciones). Sin migración de esquema. Cierra el hueco de cumplimiento que este proyecto dejaba explícitamente abierto desde la Fase 3A.
+
+**Decisión funcional previa (el usuario decidió antes de que se tocara ningún código):**
+- `local_tut_assignment`: conservación indefinida (es el historial longitudinal que el proyecto existe para mantener); una solicitud de acceso/borrado se resuelve con exportación completa y **anonimización, nunca borrado físico de la fila** (borrar destruiría también el historial de la otra persona implicada).
+- `local_tut_bulkoperation`: mismo tratamiento de anonimización, más un límite de conservación real de **90 días** para operaciones ya finalizadas.
+
+**Cambios:**
+- `classes/privacy/provider.php`: `get_contexts_for_userid()`/`get_users_in_context()` ahora cubren también `local_tut_assignment` (studentid/tutorid/createdby/modifiedby) y `local_tut_bulkoperation` (createdby/primarytutorid/cotutorid). `export_user_data()` añade `assignments`/`bulkoperations` al export, con la contraparte de cada relación resuelta a un nombre legible. Nuevos métodos privados de anonimización (`anonymize_assignments()`, `anonymize_all_assignments()`, `anonymize_bulk_operations()`, `anonymize_all_bulk_operations()`): reasignan studentid/tutorid/createdby/modifiedby/primarytutorid/cotutorid al usuario "sin respuesta" de Moodle (mismo mecanismo que ya reasignaba atribución en los catálogos desde la Fase 2) y vacían el campo `note` de cualquier fila afectada — nunca borran la fila.
+- `classes/task/cleanup_bulk_operations_task.php`: nuevo `TERMINAL_TTL_SECONDS` (90 días); purga operaciones `completed`/`completed_with_errors`/`failed`/`cancelled` más antiguas, sumado a la purga de operaciones abandonadas ya existente desde 3D.4.
+
+**Pruebas**
+- PHPUnit: `tests/privacy/provider_test.php` (nuevo, 7 casos) + 4 casos nuevos en `tests/task/cleanup_bulk_operations_task_test.php` (uno por estado terminal, con `@dataProvider`).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Fuera de alcance de esta versión** (resto de 3E): manual administrativo (3E.7), prueba de actualización desde cada versión publicada (3E.8).
+
+---
+
+## 0.4.7 — 2026-07-23
+
+**Revisión de eventos y auditoría** — Fase 3E.5 (sobre 3E.1-3E.4, cierre integral del módulo de asignaciones). Sin migración de esquema.
+
+- **Corregido — eliminaciones sin evento:** `academic_year_service::delete()` y `catalogue_service::delete()` (motivos y modalidades) eran las únicas acciones de escritura de sus respectivas clases que no disparaban ningún evento — precisamente la más irreversible de todas. Nuevos eventos `academic_year_deleted`, `reason_deleted`, `modality_deleted` (con el `shortname` de la fila eliminada en `other`, ya que `objectid` deja de poder resolverse a nada tras el borrado). Cambio de firma: `delete()` en ambos servicios ahora exige `$userid` para poder atribuir el evento.
+- **Corregido — importación CSV diferida sin evento propio:** `csv_import_dispatch_service::dispatch()` no disparaba ningún evento en el momento de encolar una importación grande — el único rastro era `csv_import_started`, disparado cuando la tarea en segundo plano se ejecutaba de verdad (que puede ser mucho después, o nunca si la tarea falla antes de llegar tan lejos). Nuevo evento `csv_import_queued`.
+- **Corregido — fallo de tarea ad hoc sin evento:** `process_csv_import_task::execute()` marcaba la operación como `failed` cuando el archivo persistido no aparecía, sin disparar ningún evento — a diferencia del rollback `atomic_all`, que sí dispara `csv_import_failed`. `csv_import_failed::create_from_operation()` acepta ahora `failedrownumber` nulo para cubrir también este caso ("falló antes de intentar ninguna fila").
+- **Revisado, documentado sin cambio:** `catalogue_service::move()` (reordenar motivos/modalidades) no dispara evento — de severidad baja/cosmética, se deja documentado en vez de añadir un evento nuevo. La limpieza automática de operaciones abandonadas (`cleanup_bulk_operations_task`) tampoco dispara evento — es limpieza de sistema sobre datos ya efímeros y agregados, no una acción de usuario.
+- Actualizaciones de llamada: `academicyear_delete.php` y `catalogue_action.php` pasan ahora el `userid` del usuario actual a `delete()`.
+
+**Pruebas**
+- PHPUnit: 1 caso nuevo para `academic_year_deleted`, 2 para `reason_deleted`/`modality_deleted`, 1 para `csv_import_queued` (añadido a una prueba existente), 1 actualizado para el nuevo evento en el fallo de archivo ausente de la tarea ad hoc.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Fuera de alcance de esta versión** (resto de 3E): Privacy API completa (3E.6), manual administrativo (3E.7), prueba de actualización desde cada versión publicada (3E.8).
+
+---
+
+## 0.4.6 — 2026-07-23
+
+**Rendimiento con 2.000 alumnos y revisión de consultas N+1** — Fase 3E.4 (sobre 3E.1-3E.3, cierre integral del módulo de asignaciones). Sin migración de esquema.
+
+- **Revisado, ya bien:** `unassigned_students_service` y `cohort_assignment_preview_service` ya resuelven todos sus datos por lote (una consulta para todos los miembros/asignaciones/cotutores implicados, nunca una consulta por alumno dentro de un bucle) — sin cambios necesarios.
+- **Corregido:** `assignments/index.php` resolvía los cursos académicos de la página actual con una llamada a `academic_year_repository::get()` por cada id distinto dentro de un bucle. Acotado por el tamaño de página (máximo 20), así que de severidad baja, pero un patrón N+1 real y fácil de corregir: nuevo `academic_year_repository::get_many(array $ids): array` (una sola consulta), reemplaza el bucle.
+- **Encontrado y documentado, sin cambio de código:** `csv_import_preview_service::resolve_row()` ejecuta varias consultas por fila del CSV (alumno, tutor, curso académico, cohorte, duplicados) — con un archivo de miles de filas, esto sí escala linealmente. No se reescribe en este incremento: el impacto ya está mitigado a nivel de arquitectura desde la Fase 3D.4 (los archivos de más de 50 filas se difieren a una tarea en segundo plano, así que el coste ya no bloquea la petición HTTP del usuario), y una reescritura para resolver todo por lote tocaría la lógica de resolución de identificadores (correo → usuario → número de identificación) sin cobertura de integración real en este entorno para validar que no se rompe nada. Documentado como oportunidad de optimización futura, no como error.
+- Nuevo `tests/performance/assignment_listing_performance_test.php`: crea 2.000 asignaciones reales y comprueba que el número de consultas de `search()`/`count_search()` no escala con el tamaño de la tabla (idéntico a 50 filas que a 2.000) — la propiedad real que importa, no un tiempo de reloj poco fiable entre máquinas.
+
+**Pruebas**
+- PHPUnit: 1 prueba de rendimiento nueva (2.000 filas reales, lenta de ejecutar a propósito) + 2 casos nuevos para `academic_year_repository::get_many()`.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Fuera de alcance de esta versión** (resto de 3E): revisión de eventos y auditoría (3E.5), Privacy API completa (3E.6), manual administrativo (3E.7), prueba de actualización desde cada versión publicada (3E.8).
+
+---
+
+## 0.4.5 — 2026-07-23
+
+**Concurrencia e idempotencia** — Fase 3E.3 (sobre 3E.1/3E.2, cierre integral del módulo de asignaciones). Sin migración de esquema. A diferencia de 3E.1/3E.2 (revisión y pruebas, sin código de producción), este incremento sí corrige comportamiento real.
+
+- **`csv_import_apply_service::apply()`**: la transición `previewed → processing` ahora usa `bulk_operation_repository::claim()`, una comprobación-y-escritura atómica (dentro de una transacción, releyendo el estado real justo antes de escribir) en vez de una comprobación separada seguida de una escritura incondicional. Corrige una ventana de carrera real: dos clics en "Aplicar importación" (o una petición reintentada) podían pasar ambos la comprobación inicial mientras `preview()` se recalculaba (un trabajo no trivial: reparsea todo el archivo y consulta la base de datos fila por fila), y ambos acabar escribiendo asignaciones duplicadas.
+- **`assignment_service::close()` y `remove_cotutor()`**: mismo patrón ya usado en `reassign_primary_tutor()` desde la Fase 3B.4A — se relee la fila justo antes de escribir, dentro de una transacción, y se aborta si su estado ya no es `active`. Corrige que un cierre doble concurrente pudiera sobrescribir silenciosamente el motivo/nota/fecha del primer cierre.
+- **`bulk_operation_repository::claim(int $id, string $fromstatus, string $tostatus): bool`** (nuevo): primitiva de comparar-y-intercambiar reutilizable para futuras transiciones de estado de operaciones masivas.
+- **Decisión documentada, sin cambio de código:** `assignment_service::create()` tiene una ventana de carrera similar (comprobación de duplicado/conflicto de tutor principal antes de insertar), pero envolverla en una transacción no la cerraría de verdad sin un índice único condicional (no expresable de forma portable en XMLDB) o bloqueo de fila (no disponible portablemente en Moodle DML) — se documenta como limitación conocida en vez de añadir una protección cosmética que no resolvería nada. Ver `docs/seguridad-permisos.md`.
+
+**Pruebas**
+- PHPUnit: 2 casos nuevos en `bulk_operation_repository_test.php` (`claim()` transiciona cuando coincide, falla y no toca el estado cuando ya cambió), 1 caso nuevo en `csv_import_apply_service_test.php` (aplicación concurrente rechazada por el claim atómico, simulada con un doble de prueba que devuelve una instantánea obsoleta), 2 casos nuevos en `assignment_service_test.php` (`close()`/`remove_cotutor()` rechazan un cierre concurrente detectado en la relectura, mismo patrón de doble de prueba que `reassign_primary_tutor()` desde 3B.4A).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Fuera de alcance de esta versión** (resto de 3E): rendimiento con 2.000 alumnos y revisión N+1 (3E.4), revisión de eventos y auditoría (3E.5), Privacy API completa (3E.6), manual administrativo (3E.7), prueba de actualización desde cada versión publicada (3E.8).
+
+---
+
+## 0.4.4 — 2026-07-23
+
+**Informe y cierre de la importación CSV** — Fase 3D.4 (sobre la Fase 3D.3), última de la Fase 3D. Sin migración de esquema.
+- **Corrección de un bug real de 3D.3**: `csv_import_apply_service::apply()` llamaba a `csv_import_preview_summary::from_array()`, un método que no existía (`php -l` no detecta llamadas a métodos estáticos inexistentes). Corregido, con su propio PHPUnit de round-trip.
+- Informe por fila tras aplicar: `csv_import_apply_result_row` gana un campo `values` opcional (valores en bruto), y `assignments/import.php` muestra ahora una tabla de resultado por fila, no solo recuentos.
+- `csv_import_error_export_service`: descarga CSV de las filas no aplicadas tal cual (conflicto, error, excluida, fallida), vía `\core\dataformat::download_data()`. Neutraliza inyección de fórmulas (valores que empiezan por `=`, `+`, `-`, `@` reciben un prefijo de comilla simple). El informe nunca se persiste: vive en `$SESSION` hasta su única descarga (`assignments/import_report.php`, nuevo).
+- `csv_import_dispatch_service` + `process_csv_import_task`: por encima de 50 filas, la importación se difiere a una tarea ad hoc en vez de aplicarse en la misma petición — el archivo se copia temporalmente a un área propia del plugin y la tarea llama al mismo `csv_import_apply_service::apply()` de 3D.3 sin duplicar reglas.
+- `cleanup_bulk_operations_task` (nueva, diaria): purga operaciones `draft`/`previewed` abandonadas y archivos huérfanos del área `csvimport`; no toca operaciones en estado terminal (sin política de conservación institucional todavía).
+- Privacy API: área de archivos `csvimport` declarada vía `add_subsystem_link('core_files', ...)`, sin exportación/borrado — mismo criterio que `local_tut_assignment`.
+- Evento nuevo: `csv_error_report_downloaded`.
+
+**Pruebas**
+- PHPUnit: `csv_import_preview_summary_test.php` (nuevo), `csv_import_error_export_service_test.php` (nuevo, 5 casos), `csv_import_dispatch_service_test.php` (nuevo, 3 casos), `process_csv_import_task_test.php` (nuevo, 3 casos), `cleanup_bulk_operations_task_test.php` (nuevo, 5 casos), `csv_import_integration_test.php` (nuevo, prueba integral parseo→previsualización→despacho→aplicación→informe).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+- Sin Behat nuevo (el flujo diferido requiere un archivo grande, poco practicable en un escenario Behat).
+
+**Cierra la Fase 3D.** Fuera de alcance (sin fecha): pantalla de "operaciones" para consultar el estado de una importación diferida tras abandonar la página.
+
+---
+
+## 0.4.3 — 2026-07-23
+
+**Aplicación real de la importación CSV** — Fase 3D.3 (sobre la Fase 3D.2). Sin informe detallado, exportación de errores, tarea ad hoc ni limpieza de operaciones antiguas en este incremento — eso es la Fase 3D.4. Sin migración de esquema.
+- `csv_import_apply_service::apply()`: crea (`assignment_service::create()`, forzando `source=csv`) o reasigna (`reassign_primary_tutor()`) asignaciones reales a partir de una previsualización, reutilizando servicios existentes sin escribir nunca directamente en `local_tut_assignment`.
+- Reasignar un conflicto de tutor principal duplicado solo ocurre si se activa explícitamente `allowreassignconflicts` (casilla desmarcada por defecto) — nunca de forma automática; un duplicado exacto de la misma asignación nunca se reasigna, se trata siempre como "sin cambios".
+- Idempotencia real: recomprobación de duplicados justo antes de escribir cada fila, y una operación no puede aplicarse dos veces (su estado pasa de `previewed` a un estado terminal).
+- Nunca confía en la previsualización guardada: recalcula la clasificación en el momento de aplicar y rechaza si algo ha cambiado desde que se generó la previsualización.
+- Dos estrategias: `partial_valid` (por defecto, continúa tras un fallo real de una fila) y `atomic_all` (revierte el lote completo si falla una fila, mediante una única transacción).
+- Cuatro eventos nuevos: `csv_import_started`, `csv_import_completed`, `csv_import_completed_with_errors`, `csv_import_failed` — recuentos agregados únicamente.
+- `assignments/import.php` amplía su flujo con un tercer paso ("Aplicar importación": estrategia, permitir reasignar conflictos, confirmación explícita) y un resumen básico del resultado.
+
+**Pruebas**
+- PHPUnit: `csv_import_apply_service_test.php` (nuevo, 9 casos) y `csv_import_apply_events_test.php` (nuevo, 3 casos).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+- Sin Behat nuevo en esta entrega.
+
+**Fuera de alcance de esta versión** (resto de 3D): informe detallado descargable, exportación de errores, tarea ad hoc para archivos grandes, limpieza de operaciones antiguas.
+
+---
+
 ## 0.4.2 — 2026-07-23
 
 **Subida y previsualización de importación CSV** — Fase 3D.2 (sobre la Fase 3D.1). Sin aplicación, informe, exportación ni tarea ad hoc en este incremento — solo subida + previsualización.

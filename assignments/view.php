@@ -96,6 +96,8 @@ $detaildata = (object) ($badge + [
     'timestartformatted'  => userdate($assignment->timestart, $dateformat),
     'timeendformatted'    => !empty($assignment->timeend) ? userdate($assignment->timeend, $dateformat) : '—',
     'sourcelabel'         => $sourceoptions[$assignment->source] ?? $assignment->source,
+    'studentfichaurl'     => (new moodle_url('/local/monlaututoria/student/view.php', ['id' => $assignment->studentid]))->out(false),
+    'studentfichalabel'   => get_string('student_viewficha', 'local_monlaututoria'),
     'noteformatted'       => !empty($assignment->note) ? format_text($assignment->note, FORMAT_PLAIN) : '—',
     'closereasonlabel'    => !empty($assignment->closereason)
         ? ($closereasonoptions[$assignment->closereason] ?? $assignment->closereason)

@@ -44,7 +44,7 @@ $year = $repository->get($id);
 $returnurl = new moodle_url('/local/monlaututoria/academicyears.php');
 
 if ($confirm && confirm_sesskey()) {
-    $service->delete($id);
+    $service->delete($id, (int) $USER->id);
     redirect($returnurl, get_string('academicyear_delete_success', 'local_monlaututoria'));
 }
 

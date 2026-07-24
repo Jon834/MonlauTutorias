@@ -18,9 +18,11 @@ namespace local_monlaututoria\domain;
 
 /**
  * Stable, coded reasons for reassigning a student's primary tutor. Recorded
- * only in the student_reassigned event's "other" data (like the phase 3B.2
- * edit reason), not persisted on local_tut_assignment — there is no approved
- * need yet to show it outside the event log; see docs/modelo-datos.md.
+ * both in the student_reassigned event's "other" data (the audit trail) and,
+ * since phase 4.2, persisted on the new local_tut_assignment row's
+ * reassignreason column — the student file's history tab (phase 4.2) needs
+ * to show it without querying the event log, the same reasoning that put
+ * closereason on the row back in phase 3B.3A.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project

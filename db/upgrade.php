@@ -241,5 +241,21 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026073100, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026080800) {
+        // Coded reassignment reason on the new row created by
+        // reassign_primary_tutor(), introduced in phase 4.2 so the student
+        // file's history tab can show it without querying the event log —
+        // previously it only lived in the student_reassigned event's "other"
+        // data (see assignment_reassign_reason's class docblock before this
+        // phase). Null on every row not created by a reassignment.
+        $table = new xmldb_table('local_tut_assignment');
+        $field = new xmldb_field('reassignreason', XMLDB_TYPE_CHAR, '30', null, null, null, null, 'closereason');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026080800, 'local', 'monlaututoria');
+    }
+
     return true;
 }

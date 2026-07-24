@@ -108,6 +108,9 @@ $string['eventreasonactivated'] = 'Tutoring reason activated or deactivated';
 $string['eventmodalitycreated'] = 'Contact modality created';
 $string['eventmodalityupdated'] = 'Contact modality updated';
 $string['eventmodalityactivated'] = 'Contact modality activated or deactivated';
+$string['eventacademicyeardeleted'] = 'Academic year deleted';
+$string['eventreasondeleted'] = 'Tutoring reason deleted';
+$string['eventmodalitydeleted'] = 'Contact modality deleted';
 
 $string['reason_seed_acogida_inicial'] = 'Initial welcome';
 $string['reason_seed_seguimiento_ordinario'] = 'Routine follow-up';
@@ -162,6 +165,7 @@ $string['monlaututoria:importassignments'] = 'Import assignments from CSV';
 $string['monlaututoria:reassignstudents'] = 'Reassign students to a new tutor';
 $string['monlaututoria:viewallassignments'] = 'View all assignments regardless of scope';
 $string['monlaututoria:manageclosedassignments'] = 'Reopen or modify closed assignments';
+$string['monlaututoria:viewownfile'] = 'View my own longitudinal file';
 
 $string['error_assignment_self'] = 'A student cannot be their own tutor.';
 $string['error_assignment_invalid_student'] = 'The selected student does not exist or has been deleted.';
@@ -288,6 +292,7 @@ $string['closereason_supportended'] = 'End of support or co-tutoring';
 $string['closereason_other'] = 'Other';
 
 $string['error_assignment_closed_no_permission'] = 'You do not have permission to edit a closed or cancelled assignment.';
+$string['error_invalidacademicyearid'] = 'The requested academic year does not exist.';
 $string['error_assignment_edit_reason_required'] = 'You must provide a reason to edit a closed or cancelled assignment.';
 $string['error_assignment_close_reason_invalid'] = 'Invalid closing reason.';
 $string['error_assignment_close_before_start'] = 'The closing date cannot be earlier than the start date.';
@@ -382,3 +387,73 @@ $string['csv_message_row_excluded'] = 'Manually excluded.';
 
 $string['error_csv_file_not_usable'] = 'The file could not be read, or has no usable rows. Check the headers and try again.';
 $string['error_csv_invalid_parameters'] = 'Invalid or missing import parameters.';
+
+$string['eventcsvimportqueued'] = 'CSV import queued for background processing';
+$string['eventcsvimportstarted'] = 'CSV import started';
+$string['eventcsvimportcompleted'] = 'CSV import completed';
+$string['eventcsvimportcompletedwitherrors'] = 'CSV import completed with errors';
+$string['eventcsvimportfailed'] = 'CSV import failed';
+
+$string['csv_field_strategy'] = 'Application strategy';
+$string['csv_strategy_partial_valid'] = 'Apply valid rows, record errors per row (recommended)';
+$string['csv_strategy_atomic_all'] = 'All or nothing: one failing row cancels the whole batch';
+$string['csv_field_allow_reassign'] = 'Reassign conflicting primary tutors';
+$string['csv_field_allow_reassign_help'] = 'When a row conflicts with an existing, different active primary tutor, this option reassigns the student to the tutor in the file instead of skipping the row. Duplicate rows (the exact same assignment already exists) are never affected by this option.';
+$string['csv_apply_confirm_checkbox'] = 'I confirm I want to apply this import.';
+$string['csv_apply_button'] = 'Apply import';
+$string['csv_apply_title'] = 'Apply this import';
+$string['csv_apply_intro'] = 'This creates or reassigns real assignments based on the preview above. This cannot be undone from this page.';
+$string['csv_apply_result_title'] = 'Import result';
+$string['csv_apply_created'] = 'Created: {$a}';
+$string['csv_apply_reassigned'] = 'Reassigned: {$a}';
+$string['csv_apply_nochange'] = 'Already up to date: {$a}';
+$string['csv_apply_skipped'] = 'Skipped: {$a}';
+$string['csv_apply_failed'] = 'Failed: {$a}';
+$string['csv_apply_status_completed'] = 'Import completed successfully.';
+$string['csv_apply_status_completed_with_errors'] = 'Import completed, but some rows failed. See the counts above.';
+$string['csv_apply_status_failed'] = 'Import failed and was rolled back — no changes were made.';
+
+$string['error_csv_apply_strategy_invalid'] = 'Invalid application strategy.';
+$string['error_csv_already_applied'] = 'This import has already been applied.';
+$string['error_csv_preview_changed'] = 'The file or the underlying data changed since the preview was generated. Generate a new preview and try again.';
+$string['error_csv_apply_row_failed'] = 'This row could not be applied.';
+$string['error_csv_apply_not_confirmed'] = 'You must confirm before applying the import.';
+
+$string['csv_col_outcome'] = 'Outcome';
+$string['csv_apply_result_empty'] = 'This import did not produce any processed rows.';
+$string['csv_apply_outcome_created'] = 'Created';
+$string['csv_apply_outcome_reassigned'] = 'Reassigned';
+$string['csv_apply_outcome_no_change'] = 'No change';
+$string['csv_apply_outcome_skipped_conflict'] = 'Skipped (conflict)';
+$string['csv_apply_outcome_skipped_error'] = 'Skipped (error)';
+$string['csv_apply_outcome_skipped_excluded'] = 'Skipped (excluded)';
+$string['csv_apply_outcome_failed'] = 'Failed';
+
+$string['csv_apply_deferred'] = 'This file has many rows and is being applied in the background by a scheduled task. Nothing is applied yet on this page; check the event log later for the result.';
+$string['csv_report_download'] = 'Download report of rows not applied (CSV)';
+$string['error_csv_report_not_available'] = 'The report is no longer available. It can only be downloaded once, immediately after applying the import.';
+
+$string['eventcsverrorreportdownloaded'] = 'CSV import error report downloaded';
+$string['task_process_csv_import'] = 'Apply a large CSV import in the background';
+$string['task_cleanup_bulk_operations'] = 'Clean up abandoned bulk operations and temporary files';
+
+$string['privacy:metadata:csvimportfiles'] = 'The CSV file of a large import, copied temporarily so the background task can read it; removed as soon as it is processed or, at the latest, on the next scheduled cleanup.';
+
+$string['student_summary_title'] = 'Student file';
+$string['student_viewficha'] = 'View file';
+$string['student_field_primarytutor'] = 'Primary tutor';
+$string['student_field_cotutors'] = 'Co-tutors';
+$string['student_field_lastassignment'] = 'Last assignment';
+$string['student_field_upcoming'] = 'Upcoming changes';
+$string['student_summary_no_primary'] = 'No active primary tutor for this academic year.';
+$string['student_summary_no_cotutors'] = 'No active co-tutors.';
+$string['student_summary_no_assignments'] = 'No assignments in this academic year.';
+$string['student_summary_no_upcoming'] = 'No upcoming changes scheduled.';
+$string['studenttab_summary'] = 'Summary';
+$string['studenttab_history'] = 'History';
+$string['studenttab_tutoring'] = 'Tutoring';
+$string['studenttab_agreements'] = 'Agreements';
+$string['studenttab_tutoring_empty'] = 'Tutoring entries are not available yet — coming in a later phase.';
+$string['studenttab_agreements_empty'] = 'Agreements are not available yet — coming in a later phase.';
+$string['student_history_col_reason'] = 'Reason';
+$string['privacy:metadata:assignment:reassignreason'] = 'The coded reason recorded when this assignment was created by reassigning the student\'s primary tutor.';

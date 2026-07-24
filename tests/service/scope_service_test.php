@@ -220,4 +220,36 @@ final class scope_service_test extends \advanced_testcase {
         $this->expectException(\moodle_exception::class);
         $scope->require_user_can_access_student($user->id, $student->id);
     }
+
+    public function test_student_with_viewownfile_accesses_own_record(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $this->grant_capability_to_user('local/monlaututoria:viewownfile', $student->id);
+
+        // No tutoring relationship at all — access is granted purely because
+        // the viewer IS the student, phase 4.3's whole point.
+        $scope = new scope_service();
+        $this->assertTrue($scope->can_user_access_student($student->id, $student->id));
+    }
+
+    public function test_student_with_viewownfile_cannot_access_another_students_record(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $otherstudent = $this->getDataGenerator()->create_user();
+        $this->grant_capability_to_user('local/monlaututoria:viewownfile', $student->id);
+
+        $scope = new scope_service();
+        $this->assertFalse($scope->can_user_access_student($student->id, $otherstudent->id));
+    }
+
+    public function test_student_without_viewownfile_cannot_access_own_record(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+
+        $scope = new scope_service();
+        $this->assertFalse($scope->can_user_access_student($student->id, $student->id));
+    }
 }

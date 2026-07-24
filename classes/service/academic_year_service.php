@@ -21,6 +21,7 @@ use local_monlaututoria\event\academic_year_created;
 use local_monlaututoria\event\academic_year_updated;
 use local_monlaututoria\event\academic_year_activated;
 use local_monlaututoria\event\academic_year_locked;
+use local_monlaututoria\event\academic_year_deleted;
 
 /**
  * Application service enforcing the business rules for academic years:
@@ -139,8 +140,9 @@ final class academic_year_service {
      * by data from a future phase.
      *
      * @param int $id
+     * @param int $userid
      */
-    public function delete(int $id): void {
+    public function delete(int $id, int $userid): void {
         $existing = $this->repository->get($id);
 
         if (!empty($existing->active)) {
@@ -156,6 +158,8 @@ final class academic_year_service {
         }
 
         $this->repository->delete($id);
+
+        academic_year_deleted::create_from_id($id, $userid, $existing->shortname)->trigger();
     }
 
     /**

@@ -136,15 +136,12 @@ $userids = array_unique(array_merge(array_keys($studentids), array_keys($tutorid
 $users = !empty($userids) ? $DB->get_records_list('user', 'id', $userids, '', 'id, firstname, lastname, email') : [];
 $cohorts = !empty($cohortids) ? $DB->get_records_list('cohort', 'id', array_keys($cohortids), '', 'id, name') : [];
 
-$academicyears = [];
-foreach (array_keys($academicyearids) as $ayid) {
-    try {
-        $academicyears[$ayid] = $academicyearrepository->get($ayid);
-    } catch (\dml_missing_record_exception $e) {
-        // A dangling reference should not break the whole listing.
-        continue;
-    }
-}
+// One query for every distinct academic year on this page (phase 3E.4: this
+// used to call get() once per id in a loop — bounded by page size, since
+// $academicyearids only ever holds ids from the current page, but still an
+// easy, safe batch fetch to make instead). Dangling references simply do not
+// come back from get_many(), rather than throwing and breaking the listing.
+$academicyears = $academicyearrepository->get_many(array_keys($academicyearids));
 
 $cotutorrecords = $repository->get_cotutors_for_students(array_keys($studentids));
 $cotutorsbystudent = [];
@@ -191,6 +188,8 @@ foreach ($records as $record) {
         'sourcelabel'        => $sourceoptions[$record->source] ?? $record->source,
         'detailurl'          => (new moodle_url('/local/monlaututoria/assignments/view.php', ['id' => $record->id]))->out(false),
         'viewdetaillabel'    => get_string('assignment_viewdetail', 'local_monlaututoria'),
+        'studentfichaurl'    => (new moodle_url('/local/monlaututoria/student/view.php', ['id' => $record->studentid]))->out(false),
+        'studentfichalabel'  => get_string('student_viewficha', 'local_monlaututoria'),
         'canedit'            => $canedit,
         'editurl'            => $canedit
             ? (new moodle_url('/local/monlaututoria/assignments/edit.php', ['id' => $record->id]))->out(false)

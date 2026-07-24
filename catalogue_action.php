@@ -73,7 +73,7 @@ switch ($action) {
         $service->move($id, 1);
         break;
     case 'delete':
-        $service->delete($id);
+        $service->delete($id, (int) $USER->id);
         break;
     default:
         throw new \moodle_exception('invalidparameter', 'debug');

@@ -35,6 +35,8 @@
     * sourcelabel string
     * detailurl string
     * viewdetaillabel string
+    * studentfichaurl string
+    * studentfichalabel string
     * canedit bool - whether to show the edit link
     * editurl string - only used when canedit is true
     * editlabel string - only used when canedit is true
@@ -56,6 +58,8 @@
         "sourcelabel": "Manual",
         "detailurl": "https://example.org/local/monlaututoria/assignments/view.php?id=1",
         "viewdetaillabel": "View detail",
+        "studentfichaurl": "https://example.org/local/monlaututoria/student/view.php?id=2",
+        "studentfichalabel": "View file",
         "canedit": true,
         "editurl": "https://example.org/local/monlaututoria/assignments/edit.php?id=1",
         "editlabel": "Edit",
@@ -81,6 +85,7 @@
     <td>{{sourcelabel}}</td>
     <td>
         <a href="{{detailurl}}">{{viewdetaillabel}}</a>
+        | <a href="{{studentfichaurl}}">{{studentfichalabel}}</a>
         {{#canedit}} | <a href="{{editurl}}">{{editlabel}}</a>{{/canedit}}
         {{#canclose}} | <a href="{{closeurl}}">{{closelabel}}</a>{{/canclose}}
     </td>

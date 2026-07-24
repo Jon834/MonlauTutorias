@@ -77,6 +77,23 @@ class academic_year_repository {
     }
 
     /**
+     * Same lookup as get(), but returns null instead of throwing when the id
+     * does not exist — for callers that need to turn a missing id into a
+     * clear, plugin-specific error message (phase 4.4) rather than letting a
+     * generic dml_missing_record_exception bubble up.
+     *
+     * @param int $id
+     * @return \stdClass|null
+     */
+    public function find(int $id): ?\stdClass {
+        global $DB;
+
+        $record = $DB->get_record(self::TABLE, ['id' => $id]);
+
+        return $record !== false ? $record : null;
+    }
+
+    /**
      * Returns all academic years ordered by start date.
      *
      * @return \stdClass[]
@@ -85,6 +102,25 @@ class academic_year_repository {
         global $DB;
 
         return $DB->get_records(self::TABLE, null, 'startdate ASC');
+    }
+
+    /**
+     * Batch fetch by id, keyed by id — one query regardless of how many ids
+     * are requested. Used wherever a page needs several academic years at
+     * once (e.g. assignments/index.php's listing) instead of calling get()
+     * once per distinct id in a loop (phase 3E.4).
+     *
+     * @param int[] $ids
+     * @return \stdClass[] keyed by id; missing ids are simply absent, never an error
+     */
+    public function get_many(array $ids): array {
+        global $DB;
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $DB->get_records_list(self::TABLE, 'id', array_unique(array_map('intval', $ids)));
     }
 
     /**

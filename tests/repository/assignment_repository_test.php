@@ -427,4 +427,124 @@ final class assignment_repository_test extends \advanced_testcase {
 
         $this->assertSame([], $repository->find_primary_rows_for_students([], $this->create_academic_year()));
     }
+
+    public function test_create_persists_reassignreason(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $id = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'reassignreason' => 'group_change',
+            'createdby' => get_admin()->id,
+        ]);
+
+        $this->assertSame('group_change', $repository->get($id)->reassignreason);
+    }
+
+    public function test_create_without_reassignreason_leaves_it_null(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $id = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'createdby' => get_admin()->id,
+        ]);
+
+        $this->assertNull($repository->get($id)->reassignreason);
+    }
+
+    public function test_search_history_for_student_orders_by_academicyear_then_timestart(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $olderyear = $this->create_academic_year();
+        $neweryear = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $inolderyear = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $olderyear, 'createdby' => get_admin()->id,
+        ]);
+        $innewer1 = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $neweryear, 'assignmenttype' => 'support',
+            'timestart' => strtotime('2026-09-01'), 'createdby' => get_admin()->id,
+        ]);
+        $innewer2 = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $neweryear, 'assignmenttype' => 'orientation',
+            'timestart' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+
+        $results = array_values($repository->search_history_for_student($student->id, []));
+
+        // Newer academic year first; within it, latest timestart first.
+        $this->assertCount(3, $results);
+        $this->assertSame($innewer2, (int) $results[0]->id);
+        $this->assertSame($innewer1, (int) $results[1]->id);
+        $this->assertSame($inolderyear, (int) $results[2]->id);
+    }
+
+    public function test_search_history_for_student_filters_by_status_and_forces_studentid(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $otherstudent = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $activeid = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'createdby' => get_admin()->id,
+        ]);
+        $closedid = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'assignmenttype' => 'support', 'createdby' => get_admin()->id,
+        ]);
+        $repository->close($closedid, get_admin()->id, time());
+        // Another student's row, with studentid deliberately (and uselessly)
+        // overridden in $filters — must never leak into this student's history.
+        $repository->create((object) [
+            'studentid' => $otherstudent->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'createdby' => get_admin()->id,
+        ]);
+
+        $results = $repository->search_history_for_student($student->id, ['studentid' => $otherstudent->id]);
+        $this->assertCount(2, $results);
+
+        $closedonly = $repository->search_history_for_student($student->id, ['status' => 'closed']);
+        $this->assertCount(1, $closedonly);
+        $this->assertSame($closedid, (int) array_values($closedonly)[0]->id);
+    }
+
+    public function test_search_history_for_student_pagination(): void {
+        $this->resetAfterTest();
+
+        $tutor = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+        $repository = new assignment_repository();
+
+        for ($i = 0; $i < 5; $i++) {
+            $repository->create((object) [
+                'studentid' => $student->id, 'tutorid' => $tutor->id,
+                'academicyearid' => $year, 'assignmenttype' => 'support',
+                'timestart' => strtotime('2026-09-01') + $i * DAYSECS, 'createdby' => get_admin()->id,
+            ]);
+        }
+
+        $this->assertCount(2, $repository->search_history_for_student($student->id, [], 0, 2));
+        $this->assertCount(2, $repository->search_history_for_student($student->id, [], 2, 2));
+        $this->assertCount(1, $repository->search_history_for_student($student->id, [], 4, 2));
+    }
 }

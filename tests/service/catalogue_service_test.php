@@ -110,7 +110,7 @@ final class catalogue_service_test extends \advanced_testcase {
         $userid = get_admin()->id;
 
         $id = $service->create((object) ['name' => 'Uno', 'shortname' => 'uno'], $userid);
-        $service->delete($id);
+        $service->delete($id, $userid);
 
         $this->expectException(\dml_missing_record_exception::class);
         $repository->get($id);

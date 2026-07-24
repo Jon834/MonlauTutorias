@@ -148,4 +148,59 @@ final class academic_year_repository_test extends \advanced_testcase {
         $this->expectException(\dml_missing_record_exception::class);
         $repository->get($id);
     }
+
+    public function test_get_many_batch_fetches_and_ignores_missing_ids(): void {
+        $this->resetAfterTest();
+
+        $repository = new academic_year_repository();
+        $userid = get_admin()->id;
+
+        $id1 = $repository->create((object) [
+            'name' => '2026-2027', 'shortname' => '2026-2027-' . uniqid(),
+            'startdate' => strtotime('2026-09-01'), 'enddate' => strtotime('2027-06-30'),
+            'createdby' => $userid,
+        ]);
+        $id2 = $repository->create((object) [
+            'name' => '2027-2028', 'shortname' => '2027-2028-' . uniqid(),
+            'startdate' => strtotime('2027-09-01'), 'enddate' => strtotime('2028-06-30'),
+            'createdby' => $userid,
+        ]);
+
+        // 999999 does not exist — get_many() must simply omit it, never throw
+        // (unlike get(), used in a loop this used to replace in
+        // assignments/index.php).
+        $records = $repository->get_many([$id1, $id2, 999999]);
+
+        $this->assertCount(2, $records);
+        $this->assertSame('2026-2027', $records[$id1]->name);
+        $this->assertSame('2027-2028', $records[$id2]->name);
+    }
+
+    public function test_get_many_with_empty_array_returns_empty_array(): void {
+        $this->resetAfterTest();
+
+        $repository = new academic_year_repository();
+
+        $this->assertSame([], $repository->get_many([]));
+    }
+
+    public function test_find_returns_null_instead_of_throwing_for_missing_id(): void {
+        $this->resetAfterTest();
+
+        $repository = new academic_year_repository();
+        $userid = get_admin()->id;
+
+        $id = $repository->create((object) [
+            'name' => '2026-2027', 'shortname' => '2026-2027-' . uniqid(),
+            'startdate' => strtotime('2026-09-01'), 'enddate' => strtotime('2027-06-30'),
+            'createdby' => $userid,
+        ]);
+
+        $this->assertSame('2026-2027', $repository->find($id)->name);
+        // Unlike get(), which throws dml_missing_record_exception (phase
+        // 4.4: student/view.php needs a null-safe lookup to turn a
+        // manipulated academicyearid param into a clear plugin error rather
+        // than a generic DB exception page).
+        $this->assertNull($repository->find(999999));
+    }
 }

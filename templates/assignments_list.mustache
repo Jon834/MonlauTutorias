@@ -37,6 +37,7 @@
     }
 }}
 {{#hasrows}}
+<div class="table-responsive">
 <table class="table table-striped generaltable">
     <thead>
         <tr>
@@ -59,6 +60,7 @@
         {{/rows}}
     </tbody>
 </table>
+</div>
 {{/hasrows}}
 {{^hasrows}}
     {{> local_monlaututoria/empty_state}}

@@ -1,0 +1,120 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_monlaututoria/student_summary
+
+    "Cabecera y resumen" of a student's longitudinal file (phase 4.1).
+
+    Classes required for JS: none
+    Data attributes required for JS: none
+
+    Context variables required for this template:
+    * studentname string
+    * academicyearname string
+    * cohortname string
+    * showlinks bool - false when the viewer is the student themselves
+      (phase 4.3): they have no capability to open assignments/view.php, so
+      names are shown as plain text instead of links to it
+    * haveprimary bool
+    * primarytutorname string - only used when haveprimary is true
+    * primaryassignmenturl string - only used when haveprimary and showlinks are true
+    * hascotutors bool
+    * cotutors array - {name, url}
+    * haslast bool
+    * last object - {tutorname, statuslabel, timestartformatted, url}, only used when haslast is true
+    * hasupcoming bool
+    * upcoming array - {tutorname, timestartformatted, url}
+
+    Example context (json):
+    {
+        "studentname": "Jane Student",
+        "academicyearname": "2026-2027",
+        "cohortname": "1r ESO A",
+        "showlinks": true,
+        "haveprimary": true,
+        "primarytutorname": "John Tutor",
+        "primaryassignmenturl": "https://example.org/local/monlaututoria/assignments/view.php?id=1",
+        "hascotutors": false,
+        "cotutors": [],
+        "haslast": true,
+        "last": {
+            "tutorname": "John Tutor",
+            "statuslabel": "Active",
+            "timestartformatted": "1 September 2026",
+            "url": "https://example.org/local/monlaututoria/assignments/view.php?id=1"
+        },
+        "hasupcoming": false,
+        "upcoming": []
+    }
+}}
+<dl class="row">
+    <dt class="col-sm-3">{{#str}} assignment_col_academicyear, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{academicyearname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_cohort, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{cohortname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} student_field_primarytutor, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#haveprimary}}
+            {{#showlinks}}<a href="{{primaryassignmenturl}}">{{primarytutorname}}</a>{{/showlinks}}
+            {{^showlinks}}{{primarytutorname}}{{/showlinks}}
+        {{/haveprimary}}
+        {{^haveprimary}}{{#str}} student_summary_no_primary, local_monlaututoria {{/str}}{{/haveprimary}}
+    </dd>
+
+    <dt class="col-sm-3">{{#str}} student_field_cotutors, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#hascotutors}}
+            <ul class="mb-0">
+                {{#cotutors}}
+                <li>
+                    {{#showlinks}}<a href="{{url}}">{{name}}</a>{{/showlinks}}
+                    {{^showlinks}}{{name}}{{/showlinks}}
+                </li>
+                {{/cotutors}}
+            </ul>
+        {{/hascotutors}}
+        {{^hascotutors}}{{#str}} student_summary_no_cotutors, local_monlaututoria {{/str}}{{/hascotutors}}
+    </dd>
+
+    <dt class="col-sm-3">{{#str}} student_field_lastassignment, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#haslast}}
+            {{#showlinks}}<a href="{{last.url}}">{{last.tutorname}}</a>{{/showlinks}}
+            {{^showlinks}}{{last.tutorname}}{{/showlinks}}
+            — {{last.statuslabel}} ({{last.timestartformatted}})
+        {{/haslast}}
+        {{^haslast}}{{#str}} student_summary_no_assignments, local_monlaututoria {{/str}}{{/haslast}}
+    </dd>
+
+    <dt class="col-sm-3">{{#str}} student_field_upcoming, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#hasupcoming}}
+            <ul class="mb-0">
+                {{#upcoming}}
+                <li>
+                    {{#showlinks}}<a href="{{url}}">{{tutorname}}</a>{{/showlinks}}
+                    {{^showlinks}}{{tutorname}}{{/showlinks}}
+                    — {{timestartformatted}}
+                </li>
+                {{/upcoming}}
+            </ul>
+        {{/hasupcoming}}
+        {{^hasupcoming}}{{#str}} student_summary_no_upcoming, local_monlaututoria {{/str}}{{/hasupcoming}}
+    </dd>
+</dl>

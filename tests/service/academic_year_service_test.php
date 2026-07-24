@@ -157,7 +157,7 @@ final class academic_year_service_test extends \advanced_testcase {
         $service->activate($id, $userid);
 
         $this->expectException(\moodle_exception::class);
-        $service->delete($id);
+        $service->delete($id, $userid);
     }
 
     public function test_delete_allows_inactive_unlocked_year(): void {
@@ -172,7 +172,7 @@ final class academic_year_service_test extends \advanced_testcase {
             'startdate' => strtotime('2025-09-01'), 'enddate' => strtotime('2026-06-30'),
         ], $userid);
 
-        $service->delete($id);
+        $service->delete($id, $userid);
 
         $this->expectException(\dml_missing_record_exception::class);
         $repository->get($id);

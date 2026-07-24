@@ -115,6 +115,42 @@ final class bulk_operation_repository_test extends \advanced_testcase {
         $this->assertTrue($repository->is_expired($record->operationuuid, -1));
     }
 
+    public function test_claim_transitions_status_when_it_matches(): void {
+        $this->resetAfterTest();
+
+        $repository = new bulk_operation_repository();
+        $id = $repository->create((object) [
+            'operationuuid' => 'test-uuid-claim-1',
+            'operationtype' => 'csv_import',
+            'status'        => bulk_operation_status::PREVIEWED,
+            'createdby'     => get_admin()->id,
+        ]);
+
+        $result = $repository->claim($id, bulk_operation_status::PREVIEWED, bulk_operation_status::PROCESSING);
+
+        $this->assertTrue($result);
+        $this->assertSame(bulk_operation_status::PROCESSING, $repository->get($id)->status);
+    }
+
+    public function test_claim_fails_and_leaves_status_untouched_when_it_no_longer_matches(): void {
+        $this->resetAfterTest();
+
+        $repository = new bulk_operation_repository();
+        $id = $repository->create((object) [
+            'operationuuid' => 'test-uuid-claim-2',
+            'operationtype' => 'csv_import',
+            'status'        => bulk_operation_status::COMPLETED,
+            'createdby'     => get_admin()->id,
+        ]);
+
+        // Simulates a concurrent request that already won the race and moved
+        // the operation past PREVIEWED before this call's claim() runs.
+        $result = $repository->claim($id, bulk_operation_status::PREVIEWED, bulk_operation_status::PROCESSING);
+
+        $this->assertFalse($result);
+        $this->assertSame(bulk_operation_status::COMPLETED, $repository->get($id)->status);
+    }
+
     public function test_generate_uuid_produces_distinct_valid_uuids(): void {
         $uuid1 = bulk_operation_repository::generate_uuid();
         $uuid2 = bulk_operation_repository::generate_uuid();

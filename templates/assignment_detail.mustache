@@ -37,6 +37,8 @@
     * createdonformatted string
     * modifiedbyname string
     * modifiedonformatted string
+    * studentfichaurl string
+    * studentfichalabel string
     * canedit bool - whether to show the edit action
     * editurl string - only used when canedit is true
     * editlabel string - only used when canedit is true
@@ -55,6 +57,8 @@
         "timestartformatted": "1 September 2026",
         "timeendformatted": "—",
         "sourcelabel": "Manual",
+        "studentfichaurl": "https://example.org/local/monlaututoria/student/view.php?id=2",
+        "studentfichalabel": "View file",
         "noteformatted": "—",
         "closereasonlabel": "—",
         "createdbyname": "Admin User",
@@ -75,7 +79,7 @@
 }}
 <dl class="row">
     <dt class="col-sm-3">{{#str}} assignment_col_student, local_monlaututoria {{/str}}</dt>
-    <dd class="col-sm-9">{{studentname}}</dd>
+    <dd class="col-sm-9">{{studentname}} — <a href="{{studentfichaurl}}">{{studentfichalabel}}</a></dd>
 
     <dt class="col-sm-3">{{#str}} assignment_col_tutor, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">{{tutorname}}</dd>

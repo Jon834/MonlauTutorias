@@ -95,6 +95,49 @@ class bulk_operation_repository {
     }
 
     /**
+     * Atomic compare-and-swap for the one status transition that genuinely
+     * needs it (phase 3E.3): moving a previewed CSV import to "processing".
+     * Unlike update_status() (an unconditional write, safe everywhere else
+     * because by the time it runs the caller already holds an exclusive
+     * claim), this re-reads the row from the database immediately before
+     * writing and only transitions it if its status still matches
+     * $fromstatus — closing the window where two concurrent "Apply" clicks
+     * (or a retried request) could both pass an earlier, separate status
+     * check and both proceed to write duplicate assignments. Same
+     * best-effort philosophy already documented for
+     * assignment_service::reassign_primary_tutor(): Moodle DML has no
+     * portable row-level locking, so this narrows the race window rather
+     * than eliminating it outright.
+     *
+     * @param int $id
+     * @param string $fromstatus required current status for the transition to happen
+     * @param string $tostatus new status, only written if $fromstatus still matches
+     * @return bool true if this call performed the transition, false if the
+     *              row's status no longer matched $fromstatus (someone else
+     *              already claimed or changed it)
+     */
+    public function claim(int $id, string $fromstatus, string $tostatus): bool {
+        global $DB;
+
+        $transaction = $DB->start_delegated_transaction();
+
+        $record = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        if ($record->status !== $fromstatus) {
+            $transaction->allow_commit();
+
+            return false;
+        }
+
+        $record->status = $tostatus;
+        $record->timemodified = time();
+        $DB->update_record(self::TABLE, $record);
+
+        $transaction->allow_commit();
+
+        return true;
+    }
+
+    /**
      * Whether the operation identified by $operationuuid is older than
      * $ttlseconds. Shared by every bulk-operation preview service
      * (cohort-based and CSV import) so the "how stale is too stale" rule
@@ -123,6 +166,64 @@ class bulk_operation_repository {
         $record->timemodified = time();
 
         return $DB->update_record(self::TABLE, $record);
+    }
+
+    /**
+     * Used by csv_import_dispatch_service (phase 3D.4) to record the apply
+     * parameters (strategy, allowreassignconflicts) on the operation itself
+     * when execution is deferred to an ad hoc task, since the task runs later
+     * with no HTTP request context to read them from.
+     *
+     * @param int $id
+     * @param string $parametersjson
+     * @return bool
+     */
+    public function update_parameters(int $id, string $parametersjson): bool {
+        global $DB;
+
+        $record = $this->get($id);
+        $record->parametersjson = $parametersjson;
+        $record->timemodified = time();
+
+        return $DB->update_record(self::TABLE, $record);
+    }
+
+    /**
+     * Operations older than $ttlseconds, used by cleanup_bulk_operations_task
+     * (phase 3D.4) to purge abandoned draft/previewed operations and
+     * old terminal ones. Ordered oldest first purely for predictable test
+     * assertions; the task itself does not rely on ordering.
+     *
+     * @param int $ttlseconds
+     * @param string[] $statuses
+     * @return \stdClass[]
+     */
+    public function get_older_than(int $ttlseconds, array $statuses): array {
+        global $DB;
+
+        if (empty($statuses)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
+        $params['cutoff'] = time() - $ttlseconds;
+
+        return $DB->get_records_select(
+            self::TABLE,
+            "status {$insql} AND timecreated < :cutoff",
+            $params,
+            'timecreated ASC'
+        );
+    }
+
+    /**
+     * @param int $id
+     * @return bool
+     */
+    public function delete(int $id): bool {
+        global $DB;
+
+        return $DB->delete_records(self::TABLE, ['id' => $id]);
     }
 
     /**

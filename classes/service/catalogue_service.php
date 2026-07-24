@@ -22,9 +22,11 @@ use local_monlaututoria\repository\modality_repository;
 use local_monlaututoria\event\reason_created;
 use local_monlaututoria\event\reason_updated;
 use local_monlaututoria\event\reason_activated;
+use local_monlaututoria\event\reason_deleted;
 use local_monlaututoria\event\modality_created;
 use local_monlaututoria\event\modality_updated;
 use local_monlaututoria\event\modality_activated;
+use local_monlaututoria\event\modality_deleted;
 
 /**
  * Single application service shared by the reason and modality catalogues,
@@ -119,13 +121,17 @@ final class catalogue_service {
 
     /**
      * @param int $id
+     * @param int $userid
      */
-    public function delete(int $id): void {
+    public function delete(int $id, int $userid): void {
         if ($this->repository->has_dependent_data($id)) {
             throw new \moodle_exception($this->type . '_delete_blocked_used', 'local_monlaututoria');
         }
 
+        $existing = $this->repository->get($id);
         $this->repository->delete($id);
+
+        $this->trigger_deleted($id, $userid, $existing->shortname);
     }
 
     /**
@@ -164,5 +170,15 @@ final class catalogue_service {
     private function trigger_activated(int $id, int $userid, bool $active): void {
         $class = $this->type === self::TYPE_REASON ? reason_activated::class : modality_activated::class;
         $class::create_from_id($id, $userid, $active)->trigger();
+    }
+
+    /**
+     * @param int $id
+     * @param int $userid
+     * @param string $shortname
+     */
+    private function trigger_deleted(int $id, int $userid, string $shortname): void {
+        $class = $this->type === self::TYPE_REASON ? reason_deleted::class : modality_deleted::class;
+        $class::create_from_id($id, $userid, $shortname)->trigger();
     }
 }

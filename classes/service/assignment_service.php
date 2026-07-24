@@ -232,6 +232,13 @@ final class assignment_service {
      * reports, via the fired event, whether the student is now left without
      * an active primary tutor for the academic year.
      *
+     * Concurrency: same best-effort guard as reassign_primary_tutor() (phase
+     * 3E.3) — Moodle DML has no portable row-level locking, so $existing is
+     * re-read from the database immediately before writing, inside a
+     * transaction; if its status is no longer active (another request
+     * already closed it in between), this aborts without touching anything
+     * instead of silently overwriting the first closure's reason/note/date.
+     *
      * @param int $id
      * @param int $userid
      * @param string $closereason one of assignment_close_reason::values()
@@ -246,6 +253,8 @@ final class assignment_service {
         ?int $timeend = null,
         ?string $note = null
     ): bool {
+        global $DB;
+
         $existing = $this->repository->get($id);
 
         if ($existing->status !== assignment_status::ACTIVE) {
@@ -261,7 +270,16 @@ final class assignment_service {
             throw new \moodle_exception('error_assignment_close_before_start', 'local_monlaututoria');
         }
 
+        $transaction = $DB->start_delegated_transaction();
+
+        $recheck = $this->repository->get($id);
+        if ($recheck->status !== assignment_status::ACTIVE) {
+            throw new \moodle_exception('error_assignment_already_closed', 'local_monlaututoria');
+        }
+
         $result = $this->repository->close($id, $userid, $timeend, $closereason, $note);
+
+        $transaction->allow_commit();
 
         if ($existing->assignmenttype === assignment_type::CO_TUTOR) {
             co_tutor_removed::create_from_id($id, $userid, (int) $existing->studentid)->trigger();
@@ -287,12 +305,18 @@ final class assignment_service {
      * Closes an active co-tutor assignment specifically, guarding that the
      * target row really is one (close() alone would also accept a primary row).
      *
+     * Same concurrency guard as close() (phase 3E.3): re-read immediately
+     * before writing, inside a transaction, aborting if another request
+     * already closed/changed this row in between.
+     *
      * @param int $id
      * @param int $userid
      * @param int|null $timeend
      * @return bool
      */
     public function remove_cotutor(int $id, int $userid, ?int $timeend = null): bool {
+        global $DB;
+
         $existing = $this->repository->get($id);
 
         if ($existing->assignmenttype !== assignment_type::CO_TUTOR || $existing->status !== assignment_status::ACTIVE) {
@@ -300,7 +324,17 @@ final class assignment_service {
         }
 
         $timeend = $timeend ?? time();
+
+        $transaction = $DB->start_delegated_transaction();
+
+        $recheck = $this->repository->get($id);
+        if ($recheck->status !== assignment_status::ACTIVE) {
+            throw new \moodle_exception('error_assignment_not_active_cotutor', 'local_monlaututoria');
+        }
+
         $result = $this->repository->close($id, $userid, $timeend);
+
+        $transaction->allow_commit();
 
         co_tutor_removed::create_from_id($id, $userid, (int) $existing->studentid)->trigger();
 
@@ -426,6 +460,7 @@ final class assignment_service {
             'isprimary'      => true,
             'timestart'      => $effectivedate,
             'source'         => assignment_source::MANUAL,
+            'reassignreason' => $command->reassignreason,
             'createdby'      => $actorid,
         ]);
 

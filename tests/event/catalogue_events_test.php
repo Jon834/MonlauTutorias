@@ -61,4 +61,42 @@ final class catalogue_events_test extends \advanced_testcase {
         $this->assertInstanceOf(modality_activated::class, $events[0]);
         $this->assertFalse($events[0]->other['active']);
     }
+
+    public function test_reason_delete_triggers_reason_deleted_event_with_shortname(): void {
+        $this->resetAfterTest();
+
+        $service = new catalogue_service(catalogue_service::TYPE_REASON);
+        $userid = get_admin()->id;
+
+        $id = $service->create((object) ['name' => 'Uno', 'shortname' => 'uno'], $userid);
+
+        $sink = $this->redirectEvents();
+        $service->delete($id, $userid);
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(reason_deleted::class, $events[0]);
+        $this->assertEquals($id, $events[0]->objectid);
+        $this->assertSame('uno', $events[0]->other['shortname']);
+    }
+
+    public function test_modality_delete_triggers_modality_deleted_event_with_shortname(): void {
+        $this->resetAfterTest();
+
+        $service = new catalogue_service(catalogue_service::TYPE_MODALITY);
+        $userid = get_admin()->id;
+
+        $id = $service->create((object) ['name' => 'Uno', 'shortname' => 'uno'], $userid);
+
+        $sink = $this->redirectEvents();
+        $service->delete($id, $userid);
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(modality_deleted::class, $events[0]);
+        $this->assertEquals($id, $events[0]->objectid);
+        $this->assertSame('uno', $events[0]->other['shortname']);
+    }
 }

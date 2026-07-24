@@ -101,4 +101,27 @@ final class academic_year_events_test extends \advanced_testcase {
         $this->assertInstanceOf(academic_year_locked::class, $events[0]);
         $this->assertTrue($events[0]->other['locked']);
     }
+
+    public function test_delete_triggers_deleted_event_with_shortname(): void {
+        $this->resetAfterTest();
+
+        $repository = new academic_year_repository();
+        $service = new academic_year_service($repository);
+        $userid = get_admin()->id;
+
+        $id = $service->create((object) [
+            'name' => 'Primero', 'shortname' => 'primero',
+            'startdate' => strtotime('2025-09-01'), 'enddate' => strtotime('2026-06-30'),
+        ], $userid);
+
+        $sink = $this->redirectEvents();
+        $service->delete($id, $userid);
+        $events = $sink->get_events();
+        $sink->close();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(academic_year_deleted::class, $events[0]);
+        $this->assertEquals($id, $events[0]->objectid);
+        $this->assertSame('primero', $events[0]->other['shortname']);
+    }
 }

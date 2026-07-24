@@ -49,4 +49,19 @@ final class csv_import_preview_summary {
             'excludedcount' => $this->excludedcount,
         ];
     }
+
+    /**
+     * @param array<string, int> $data
+     * @return self
+     */
+    public static function from_array(array $data): self {
+        return new self(
+            (int) ($data['totalrows'] ?? 0),
+            (int) ($data['validcount'] ?? 0),
+            (int) ($data['warningcount'] ?? 0),
+            (int) ($data['conflictcount'] ?? 0),
+            (int) ($data['errorcount'] ?? 0),
+            (int) ($data['excludedcount'] ?? 0)
+        );
+    }
 }
