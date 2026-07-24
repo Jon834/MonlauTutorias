@@ -104,6 +104,24 @@ use core_privacy\local\request\writer;
  * and are squarely the kind of record a subject access request should
  * surface.
  *
+ * **`local_tut_agreement`/`local_tut_followup`/`local_tut_referral` (phase
+ * 6.1/6.2/6.4), same retention policy as `local_tut_entry`:** all 3 are
+ * conserved indefinitely; erasure anonymises identity fields (studentid,
+ * plus `responsibleuserid` on agreements, `assignedto` on referrals,
+ * createdby/modifiedby throughout) to the "no-reply" user, but leaves the
+ * institutional content untouched — `description` (agreement), `reason`/
+ * `resolution` (referral). This is the same content-vs-identity split
+ * already applied to `local_tut_entry`'s own note fields; the "no duplicar
+ * contenido sensible" rule for referrals (docs/fases/phase-6.md) is a
+ * content-origin constraint on referral_create_form.php, not a privacy
+ * classification — it does not change how `reason`/`resolution` are treated
+ * here. `local_tut_followup` has no free-text field of its own (see
+ * followup_service's class docblock for why) — only identity to anonymise.
+ * Export includes all 3 exactly as far as each entity is visible per
+ * get_for_viewer() would show it to its own creator (unmasked, same
+ * "subject access is not gated by ordinary viewing capability" reasoning as
+ * `local_tut_entry`).
+ *
  * The local_monlaututoria/csvimport file area (phase 3D.4) is unaffected by
  * this: it holds the same kind of personal data as local_tut_assignment's
  * studentid/tutorid (whoever a large CSV import's rows name), but only
@@ -242,6 +260,50 @@ final class provider implements
         // docblock and export_entry_attachments()).
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:entryattachmentfiles');
 
+        // Exported and anonymised on erasure (phase 6.1) — see the class docblock.
+        $collection->add_database_table('local_tut_agreement', [
+            'studentid'                => 'privacy:metadata:agreement:studentid',
+            'description'              => 'privacy:metadata:agreement:description',
+            'responsibletype'          => 'privacy:metadata:agreement:responsibletype',
+            'responsibleuserid'        => 'privacy:metadata:agreement:responsibleuserid',
+            'responsibleexternalname'  => 'privacy:metadata:agreement:responsibleexternalname',
+            'duedate'                  => 'privacy:metadata:agreement:duedate',
+            'status'                   => 'privacy:metadata:agreement:status',
+            'visibletostudent'         => 'privacy:metadata:agreement:visibletostudent',
+            'createdby'                => 'privacy:metadata:createdby',
+            'modifiedby'               => 'privacy:metadata:modifiedby',
+            'timecreated'              => 'privacy:metadata:timecreated',
+            'timemodified'             => 'privacy:metadata:timemodified',
+        ], 'privacy:metadata:agreement');
+
+        // Exported and anonymised on erasure (phase 6.2) — see the class docblock.
+        $collection->add_database_table('local_tut_followup', [
+            'studentid'      => 'privacy:metadata:followup:studentid',
+            'duedate'        => 'privacy:metadata:followup:duedate',
+            'priority'       => 'privacy:metadata:followup:priority',
+            'status'         => 'privacy:metadata:followup:status',
+            'closingentryid' => 'privacy:metadata:followup:closingentryid',
+            'createdby'      => 'privacy:metadata:createdby',
+            'modifiedby'     => 'privacy:metadata:modifiedby',
+            'timecreated'    => 'privacy:metadata:timecreated',
+            'timemodified'   => 'privacy:metadata:timemodified',
+        ], 'privacy:metadata:followup');
+
+        // Exported and anonymised on erasure (phase 6.4) — see the class docblock.
+        $collection->add_database_table('local_tut_referral', [
+            'studentid'    => 'privacy:metadata:referral:studentid',
+            'destination'  => 'privacy:metadata:referral:destination',
+            'reason'       => 'privacy:metadata:referral:reason',
+            'priority'     => 'privacy:metadata:referral:priority',
+            'assignedto'   => 'privacy:metadata:referral:assignedto',
+            'status'       => 'privacy:metadata:referral:status',
+            'resolution'   => 'privacy:metadata:referral:resolution',
+            'createdby'    => 'privacy:metadata:createdby',
+            'modifiedby'   => 'privacy:metadata:modifiedby',
+            'timecreated'  => 'privacy:metadata:timecreated',
+            'timemodified' => 'privacy:metadata:timemodified',
+        ], 'privacy:metadata:referral');
+
         // Transient only — see the class docblock. Not wired into
         // export/delete, same documented reason as local_tut_assignment.
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:csvimportfiles');
@@ -273,7 +335,16 @@ final class provider implements
                 UNION
                 SELECT 1 FROM {local_tut_entryversion} WHERE createdby = :ev1
                 UNION
-                SELECT 1 FROM {local_tut_entryattachment} WHERE createdby = :ea1';
+                SELECT 1 FROM {local_tut_entryattachment} WHERE createdby = :ea1
+                UNION
+                SELECT 1 FROM {local_tut_agreement}
+                    WHERE studentid = :ag1 OR responsibleuserid = :ag2 OR createdby = :ag3 OR modifiedby = :ag4
+                UNION
+                SELECT 1 FROM {local_tut_followup}
+                    WHERE studentid = :fu1 OR createdby = :fu2 OR modifiedby = :fu3
+                UNION
+                SELECT 1 FROM {local_tut_referral}
+                    WHERE studentid = :rf1 OR assignedto = :rf2 OR createdby = :rf3 OR modifiedby = :rf4';
         $params = [
             'ay1' => $userid, 'ay2' => $userid,
             'r1'  => $userid, 'r2'  => $userid,
@@ -284,6 +355,9 @@ final class provider implements
             'ep1' => $userid,
             'ev1' => $userid,
             'ea1' => $userid,
+            'ag1' => $userid, 'ag2' => $userid, 'ag3' => $userid, 'ag4' => $userid,
+            'fu1' => $userid, 'fu2' => $userid, 'fu3' => $userid,
+            'rf1' => $userid, 'rf2' => $userid, 'rf3' => $userid, 'rf4' => $userid,
         ];
 
         if ($DB->record_exists_sql($sql, $params)) {
@@ -320,6 +394,20 @@ final class provider implements
 
         $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_entryversion}', []);
         $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_entryattachment}', []);
+
+        $userlist->add_from_sql('studentid', 'SELECT studentid FROM {local_tut_agreement}', []);
+        $userlist->add_from_sql('responsibleuserid', 'SELECT responsibleuserid FROM {local_tut_agreement}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_agreement}', []);
+        $userlist->add_from_sql('modifiedby', 'SELECT modifiedby FROM {local_tut_agreement}', []);
+
+        $userlist->add_from_sql('studentid', 'SELECT studentid FROM {local_tut_followup}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_followup}', []);
+        $userlist->add_from_sql('modifiedby', 'SELECT modifiedby FROM {local_tut_followup}', []);
+
+        $userlist->add_from_sql('studentid', 'SELECT studentid FROM {local_tut_referral}', []);
+        $userlist->add_from_sql('assignedto', 'SELECT assignedto FROM {local_tut_referral}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_referral}', []);
+        $userlist->add_from_sql('modifiedby', 'SELECT modifiedby FROM {local_tut_referral}', []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -363,6 +451,9 @@ final class provider implements
         $data['entries'] = self::export_entries($userid);
         $data['entryversions'] = self::export_entry_versions($userid);
         $data['entryattachments'] = self::export_entry_attachments($userid);
+        $data['agreements'] = self::export_agreements($userid);
+        $data['followups'] = self::export_followups($userid);
+        $data['referrals'] = self::export_referrals($userid);
 
         writer::with_context(\context_system::instance())->export_data(
             [get_string('pluginname', 'local_monlaututoria')],
@@ -589,6 +680,148 @@ final class provider implements
         return $export;
     }
 
+    /**
+     * Exports every agreement where the requesting user is student,
+     * responsible party, creator or modifier. Unmasked, same reasoning as
+     * export_entries().
+     *
+     * @param int $userid
+     * @return array
+     */
+    private static function export_agreements(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'local_tut_agreement',
+            'studentid = :s OR responsibleuserid = :r OR createdby = :c OR modifiedby = :m',
+            ['s' => $userid, 'r' => $userid, 'c' => $userid, 'm' => $userid]
+        );
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->studentid === $userid) {
+                $roles[] = 'student';
+            }
+            if ((int) $record->responsibleuserid === $userid) {
+                $roles[] = 'responsible';
+            }
+            if ((int) $record->createdby === $userid) {
+                $roles[] = 'creator';
+            }
+            if ((int) $record->modifiedby === $userid) {
+                $roles[] = 'modifier';
+            }
+
+            $export[] = (object) [
+                'yourrole'         => $roles,
+                'entryid'          => (int) $record->entryid,
+                'description'      => $record->description,
+                'responsibletype'  => $record->responsibletype,
+                'duedate'          => userdate($record->duedate),
+                'status'           => $record->status,
+                'visibletostudent' => (bool) $record->visibletostudent,
+                'timecreated'      => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
+    }
+
+    /**
+     * Exports every follow-up where the requesting user is student, creator
+     * or modifier. Unmasked, same reasoning as export_entries().
+     *
+     * @param int $userid
+     * @return array
+     */
+    private static function export_followups(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'local_tut_followup',
+            'studentid = :s OR createdby = :c OR modifiedby = :m',
+            ['s' => $userid, 'c' => $userid, 'm' => $userid]
+        );
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->studentid === $userid) {
+                $roles[] = 'student';
+            }
+            if ((int) $record->createdby === $userid) {
+                $roles[] = 'creator';
+            }
+            if ((int) $record->modifiedby === $userid) {
+                $roles[] = 'modifier';
+            }
+
+            $export[] = (object) [
+                'yourrole'    => $roles,
+                'entryid'     => (int) $record->entryid,
+                'duedate'     => userdate($record->duedate),
+                'priority'    => $record->priority,
+                'status'      => $record->status,
+                'timecreated' => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
+    }
+
+    /**
+     * Exports every referral where the requesting user is student, assignee,
+     * creator or modifier. Unmasked, same reasoning as export_entries() —
+     * this is the one export in this method where "unmasked" specifically
+     * means it does NOT go through referral_service::get_for_viewer()'s
+     * capability check, since a subject access request is about what the
+     * platform holds about the requester, not about what they are entitled
+     * to browse day-to-day.
+     *
+     * @param int $userid
+     * @return array
+     */
+    private static function export_referrals(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'local_tut_referral',
+            'studentid = :s OR assignedto = :a OR createdby = :c OR modifiedby = :m',
+            ['s' => $userid, 'a' => $userid, 'c' => $userid, 'm' => $userid]
+        );
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->studentid === $userid) {
+                $roles[] = 'student';
+            }
+            if ((int) $record->assignedto === $userid) {
+                $roles[] = 'assignee';
+            }
+            if ((int) $record->createdby === $userid) {
+                $roles[] = 'creator';
+            }
+            if ((int) $record->modifiedby === $userid) {
+                $roles[] = 'modifier';
+            }
+
+            $export[] = (object) [
+                'yourrole'    => $roles,
+                'entryid'     => (int) $record->entryid,
+                'destination' => $record->destination,
+                'reason'      => $record->reason,
+                'priority'    => $record->priority,
+                'status'      => $record->status,
+                'resolution'  => $record->resolution,
+                'timecreated' => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
+    }
+
     public static function delete_data_for_all_users_in_context(\context $context): void {
         if ($context->contextlevel !== CONTEXT_SYSTEM) {
             return;
@@ -600,6 +833,9 @@ final class provider implements
         self::anonymize_all_entries();
         self::anonymize_all_entry_versions();
         self::anonymize_all_entry_attachments();
+        self::anonymize_all_agreements();
+        self::anonymize_all_followups();
+        self::anonymize_all_referrals();
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -612,6 +848,9 @@ final class provider implements
                 self::anonymize_entries($userid);
                 self::anonymize_entry_versions($userid);
                 self::anonymize_entry_attachments($userid);
+                self::anonymize_agreements($userid);
+                self::anonymize_followups($userid);
+                self::anonymize_referrals($userid);
             }
         }
     }
@@ -628,6 +867,9 @@ final class provider implements
             self::anonymize_entries((int) $userid);
             self::anonymize_entry_versions((int) $userid);
             self::anonymize_entry_attachments((int) $userid);
+            self::anonymize_agreements((int) $userid);
+            self::anonymize_followups((int) $userid);
+            self::anonymize_referrals((int) $userid);
         }
     }
 
@@ -831,5 +1073,101 @@ final class provider implements
 
         $DB->set_field('local_tut_entryattachment', 'description', null, []);
         $DB->set_field('local_tut_entryattachment', 'createdby', $noreply, []);
+    }
+
+    /**
+     * Anonymises local_tut_agreement rows where $userid is student,
+     * responsible user, creator or modifier — never touches `description`
+     * (see the class docblock).
+     *
+     * @param int $userid
+     */
+    private static function anonymize_agreements(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_agreement', 'studentid', $noreply, ['studentid' => $userid]);
+        $DB->set_field('local_tut_agreement', 'responsibleuserid', $noreply, ['responsibleuserid' => $userid]);
+        $DB->set_field('local_tut_agreement', 'createdby', $noreply, ['createdby' => $userid]);
+        $DB->set_field('local_tut_agreement', 'modifiedby', $noreply, ['modifiedby' => $userid]);
+    }
+
+    /**
+     * Same anonymisation as anonymize_agreements(), for every row in the
+     * system — used only by delete_data_for_all_users_in_context().
+     */
+    private static function anonymize_all_agreements(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_agreement', 'studentid', $noreply, []);
+        $DB->set_field('local_tut_agreement', 'responsibleuserid', $noreply, []);
+        $DB->set_field('local_tut_agreement', 'createdby', $noreply, []);
+        $DB->set_field('local_tut_agreement', 'modifiedby', $noreply, []);
+    }
+
+    /**
+     * Anonymises local_tut_followup rows where $userid is student, creator
+     * or modifier. No free-text field on this table (see the class docblock).
+     *
+     * @param int $userid
+     */
+    private static function anonymize_followups(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_followup', 'studentid', $noreply, ['studentid' => $userid]);
+        $DB->set_field('local_tut_followup', 'createdby', $noreply, ['createdby' => $userid]);
+        $DB->set_field('local_tut_followup', 'modifiedby', $noreply, ['modifiedby' => $userid]);
+    }
+
+    /**
+     * Same anonymisation as anonymize_followups(), for every row in the
+     * system — used only by delete_data_for_all_users_in_context().
+     */
+    private static function anonymize_all_followups(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_followup', 'studentid', $noreply, []);
+        $DB->set_field('local_tut_followup', 'createdby', $noreply, []);
+        $DB->set_field('local_tut_followup', 'modifiedby', $noreply, []);
+    }
+
+    /**
+     * Anonymises local_tut_referral rows where $userid is student, assignee,
+     * creator or modifier — never touches `reason`/`resolution` (see the
+     * class docblock).
+     *
+     * @param int $userid
+     */
+    private static function anonymize_referrals(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_referral', 'studentid', $noreply, ['studentid' => $userid]);
+        $DB->set_field('local_tut_referral', 'assignedto', $noreply, ['assignedto' => $userid]);
+        $DB->set_field('local_tut_referral', 'createdby', $noreply, ['createdby' => $userid]);
+        $DB->set_field('local_tut_referral', 'modifiedby', $noreply, ['modifiedby' => $userid]);
+    }
+
+    /**
+     * Same anonymisation as anonymize_referrals(), for every row in the
+     * system — used only by delete_data_for_all_users_in_context().
+     */
+    private static function anonymize_all_referrals(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_referral', 'studentid', $noreply, []);
+        $DB->set_field('local_tut_referral', 'assignedto', $noreply, []);
+        $DB->set_field('local_tut_referral', 'createdby', $noreply, []);
+        $DB->set_field('local_tut_referral', 'modifiedby', $noreply, []);
     }
 }

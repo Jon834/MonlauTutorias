@@ -59,6 +59,11 @@ final class entry_full_form extends \moodleform {
         $mform->addElement('hidden', 'academicyearid');
         $mform->setType('academicyearid', PARAM_INT);
 
+        // Phase 6.2: same as entry_quick_form — carries the follow-up this
+        // entry is meant to close, if any.
+        $mform->addElement('hidden', 'followupid');
+        $mform->setType('followupid', PARAM_INT);
+
         $mform->addElement('date_selector', 'entrydate', get_string('entry_field_entrydate', 'local_monlaututoria'));
         $mform->setDefault('entrydate', time());
 

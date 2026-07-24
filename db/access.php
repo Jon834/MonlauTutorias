@@ -162,4 +162,46 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [],
     ],
+
+    // Phase 6.1/6.3 — agreements. createagreement gates agreements/create.php;
+    // manageagreements gates the quick actions (complete/reopen/postpone/
+    // cancel), which ship in the same increment (see agreement_service's
+    // class docblock for why, unlike entry's own create/edit split).
+    'local/monlaututoria:createagreement' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:manageagreements' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+
+    // Phase 6.2/6.3 — follow-ups. Same createX/manageX split as agreements.
+    'local/monlaututoria:createfollowup' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:managefollowups' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+
+    // Phase 6.4 — referrals. managereferrals is also the READ capability for
+    // anyone other than a referral's own creator/assignee — see
+    // referral_service's class docblock for why this is scope-free, unlike
+    // every other capability pair in this plugin.
+    'local/monlaututoria:createreferral' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:managereferrals' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
 ];

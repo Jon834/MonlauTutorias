@@ -70,6 +70,16 @@ if ($hassiteconfig
         ['local/monlaututoria:importassignments']
     ));
 
+    // Phase 6.4: referrals have no ficha tab (see referral_service's class
+    // docblock) — coordination/orientation/management reach their queue from
+    // here instead, same as the assignments listing above.
+    $ADMIN->add('local_monlaututoria', new admin_externalpage(
+        'local_monlaututoria_referrals',
+        get_string('referrals_title', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/referrals/index.php'),
+        ['local/monlaututoria:managereferrals']
+    ));
+
     // Phase 5.5: first real setting this plugin has ever needed — every page
     // above is an admin_externalpage instead. "Ventana de edición
     // configurable" (docs/fases/phase-5.md) means exactly this: how long

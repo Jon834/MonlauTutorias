@@ -15,9 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Student longitudinal file. "Resumen" (phase 4.1) and "Historial" (phase
- * 4.2) tabs have real content; "Tutorías"/"Acuerdos" stay empty until phases
- * 5/6 (see "Pestañas iniciales" in docs/fases/phase-4.md).
+ * Student longitudinal file. All 4 tabs have real content as of phase 6.1:
+ * "Resumen" (4.1), "Historial" (4.2), "Tutorías" (5.4) and "Acuerdos" (6.1)
+ * (see "Pestañas iniciales" in docs/fases/phase-4.md for the original
+ * placeholder plan).
  *
  * Phase 4.3 ("Permisos y vistas"): a student viewing their OWN file
  * (local/monlaututoria:viewownfile, granted to every authenticated user by
@@ -59,7 +60,7 @@ $islimitedview = $isself;
 
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
 $tab = optional_param('tab', 'resumen', PARAM_ALPHA);
-if (!in_array($tab, ['resumen', 'historial', 'tutorias', 'acuerdos'], true)) {
+if (!in_array($tab, ['resumen', 'historial', 'tutorias', 'acuerdos', 'seguimientos'], true)) {
     $tab = 'resumen';
 }
 
@@ -284,12 +285,79 @@ if ($academicyear === null) {
     echo $renderer->entry_history_table($entries, $entrytutors, $allmodalities, $reasonsbyentry, $allreasons, $islimitedview);
 
     echo $OUTPUT->paging_bar($entrytotalcount, $entrypage, $entryperpage, $PAGE->url);
-} else {
-    // 'acuerdos': empty until phase 6.
-    echo $OUTPUT->notification(
-        get_string('studenttab_agreements_empty', 'local_monlaututoria'),
-        \core\output\notification::NOTIFY_INFO
+} else if ($tab === 'acuerdos') {
+    // 'acuerdos' (phase 6.1/6.3): real listing, filterable by "vencidos".
+    $overduefilter = optional_param('agreementoverdue', 0, PARAM_BOOL);
+    $agreementfilters = $overduefilter ? ['overdue' => true] : [];
+
+    $agreementservice = new \local_monlaututoria\service\agreement_service();
+    $agreements = $agreementservice->list_for_student(
+        $studentid, (int) $academicyear->id, $agreementfilters, (int) $USER->id
     );
+
+    $responsibleuserids = array_filter(array_map(
+        static fn ($agreement) => $agreement->responsibleuserid, $agreements
+    ));
+    $responsibleusers = !empty($responsibleuserids)
+        ? $DB->get_records_list('user', 'id', array_unique($responsibleuserids), '', 'id, firstname, lastname, email')
+        : [];
+
+    $canmanageagreements = !$islimitedview && has_capability('local/monlaututoria:manageagreements', $context);
+
+    if (!$islimitedview) {
+        // There is no "create a standalone agreement" flow (it always
+        // originates from a specific tutoring entry, see agreements/create.php's
+        // docblock) — this tab only offers the "vencidos" filter, creation
+        // happens from entries/view.php's own "Crear acuerdo" link.
+        $overdueurl = new moodle_url('/local/monlaututoria/student/view.php', array_filter([
+            'id' => $studentid, 'tab' => 'acuerdos', 'academicyearid' => $requestedacademicyearid ?: null,
+        ]));
+        echo $OUTPUT->single_select(
+            $overdueurl,
+            'agreementoverdue',
+            [0 => get_string('choosedots'), 1 => get_string('agreements_filter_overdue', 'local_monlaututoria')],
+            $overduefilter ? 1 : 0,
+            [],
+            'agreementoverdueselector'
+        );
+    }
+
+    echo $renderer->agreements_table($agreements, $responsibleusers, $canmanageagreements);
+} else {
+    // 'seguimientos' (phase 6.2/6.3): staff-only, no student-visible tier —
+    // see followup_service's class docblock. The tab link itself is still
+    // shown to the student (student_tabs() renders all 5 unconditionally,
+    // same as the other tabs), but its content is never queried for them.
+    if ($islimitedview) {
+        echo $OUTPUT->notification(
+            get_string('followups_empty', 'local_monlaututoria'),
+            \core\output\notification::NOTIFY_INFO
+        );
+    } else {
+        $followupoverduefilter = optional_param('followupoverdue', 0, PARAM_BOOL);
+        $followupfilters = $followupoverduefilter ? ['overdue' => true] : [];
+
+        $followupservice = new \local_monlaututoria\service\followup_service();
+        $followups = $followupservice->list_for_student(
+            $studentid, (int) $academicyear->id, $followupfilters, (int) $USER->id
+        );
+
+        $canmanagefollowups = has_capability('local/monlaututoria:managefollowups', $context);
+
+        $followupoverdueurl = new moodle_url('/local/monlaututoria/student/view.php', array_filter([
+            'id' => $studentid, 'tab' => 'seguimientos', 'academicyearid' => $requestedacademicyearid ?: null,
+        ]));
+        echo $OUTPUT->single_select(
+            $followupoverdueurl,
+            'followupoverdue',
+            [0 => get_string('choosedots'), 1 => get_string('followups_filter_overdue', 'local_monlaututoria')],
+            $followupoverduefilter ? 1 : 0,
+            [],
+            'followupoverdueselector'
+        );
+
+        echo $renderer->followups_table($followups, $canmanagefollowups);
+    }
 }
 
 echo $OUTPUT->footer();

@@ -27,7 +27,12 @@ use local_monlaututoria\repository\entry_repository;
 use local_monlaututoria\repository\entry_participant_repository;
 use local_monlaututoria\repository\entry_version_repository;
 use local_monlaututoria\repository\entry_attachment_repository;
+use local_monlaututoria\repository\agreement_repository;
+use local_monlaututoria\repository\followup_repository;
+use local_monlaututoria\repository\referral_repository;
 use local_monlaututoria\domain\entry_participant_type;
+use local_monlaututoria\domain\agreement_responsible_type;
+use local_monlaututoria\domain\referral_destination;
 use local_monlaututoria\service\entry_attachment_service;
 
 /**
@@ -501,5 +506,158 @@ final class provider_test extends \advanced_testcase {
         $this->assertNull($records[0]->description);
         // category and the file itself are left untouched.
         $this->assertSame('report', $records[0]->category);
+    }
+
+    public function test_get_contexts_for_userid_finds_agreement_followup_and_referral_involvement(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $bystander = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        (new agreement_repository())->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'description' => 'A',
+            'responsibletype' => agreement_responsible_type::TUTOR, 'responsibleuserid' => $tutor->id,
+            'duedate' => time(), 'createdby' => get_admin()->id,
+        ]);
+        (new followup_repository())->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'duedate' => time(), 'createdby' => get_admin()->id,
+        ]);
+        (new referral_repository())->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'destination' => referral_destination::COORDINATION,
+            'reason' => 'A', 'createdby' => get_admin()->id,
+        ]);
+
+        $this->assertCount(1, provider::get_contexts_for_userid($student->id)->get_contexts());
+        $this->assertCount(1, provider::get_contexts_for_userid($tutor->id)->get_contexts());
+        $this->assertCount(0, provider::get_contexts_for_userid($bystander->id)->get_contexts());
+    }
+
+    public function test_export_user_data_includes_agreements_followups_and_referrals(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        (new agreement_repository())->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'description' => 'Attend weekly review',
+            'responsibletype' => agreement_responsible_type::STUDENT, 'responsibleuserid' => $student->id,
+            'duedate' => time(), 'createdby' => get_admin()->id,
+        ]);
+        (new followup_repository())->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'duedate' => time(), 'createdby' => get_admin()->id,
+        ]);
+        (new referral_repository())->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'destination' => referral_destination::ORIENTATION,
+            'reason' => 'Repeated absences', 'createdby' => get_admin()->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($student, 'local_monlaututoria', [$context->id]);
+        provider::export_user_data($approved);
+
+        $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_monlaututoria')]);
+
+        $this->assertNotEmpty($data->agreements);
+        $this->assertSame('Attend weekly review', $data->agreements[0]->description);
+        $this->assertNotEmpty($data->followups);
+        $this->assertNotEmpty($data->referrals);
+        $this->assertSame('Repeated absences', $data->referrals[0]->reason);
+    }
+
+    public function test_delete_data_for_user_anonymizes_agreement_but_keeps_description(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $agreementrepository = new agreement_repository();
+        $agreementid = $agreementrepository->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'description' => 'Mentions Juan',
+            'responsibletype' => agreement_responsible_type::TUTOR, 'responsibleuserid' => $tutor->id,
+            'duedate' => time(), 'createdby' => get_admin()->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($student, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $record = $agreementrepository->get($agreementid);
+        $this->assertSame($noreply, (int) $record->studentid);
+        $this->assertSame($tutor->id, (int) $record->responsibleuserid);
+        $this->assertSame('Mentions Juan', $record->description);
+    }
+
+    public function test_delete_data_for_user_anonymizes_followup(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $followuprepository = new followup_repository();
+        $followupid = $followuprepository->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'duedate' => time(), 'createdby' => get_admin()->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($student, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $record = $followuprepository->get($followupid);
+        $this->assertSame($noreply, (int) $record->studentid);
+    }
+
+    public function test_delete_data_for_user_anonymizes_referral_but_keeps_reason_and_resolution(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $staff = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $referralrepository = new referral_repository();
+        $referralid = $referralrepository->create((object) [
+            'entryid' => $entryid, 'studentid' => $student->id, 'destination' => referral_destination::COORDINATION,
+            'reason' => 'Mentions Juan', 'createdby' => get_admin()->id,
+        ]);
+        $referralrepository->assign($referralid, $staff->id, get_admin()->id);
+        $referralrepository->resolve($referralid, 'Met with the family', get_admin()->id);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($staff, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $record = $referralrepository->get($referralid);
+        $this->assertSame($noreply, (int) $record->assignedto);
+        // Institutional-history content conserved for both fields.
+        $this->assertSame('Mentions Juan', $record->reason);
+        $this->assertSame('Met with the family', $record->resolution);
     }
 }

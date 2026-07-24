@@ -1,6 +1,6 @@
 # local_monlaututoria
 
-**Versión:** 0.6.6 · **Moodle:** 5.1.x (instalación verificada ✅) · **Licencia:** GPL v3+
+**Versión:** 0.7.3 · **Moodle:** 5.1.x (instalación verificada ✅) · **Licencia:** GPL v3+
 
 ## Objetivo
 
@@ -10,11 +10,49 @@ Toda la lógica de negocio reside en este plugin. El bloque complementario `bloc
 
 ## Estado del proyecto
 
-**Fase 5.7 — Cierre de la Fase 5.** ✅ **Fase 5 completa (5.1-5.7).** Auditoría de cierre, no funcionalidad nueva: corrige un hueco real encontrado en la Privacy API (`local_tut_entryversion`/`local_tut_entryattachment`, creadas en 5.5/5.6, nunca se habían declarado en `classes/privacy/provider.php`) y revisa seguridad (IDOR/XSS/CSRF), rendimiento y accesibilidad sobre toda la Fase 5, sin hallazgos de código nuevos más allá de ese hueco. Próximo bloque de fase: Fase 6 — Acuerdos y seguimientos (no iniciada).
+**Fase 6.5 — Cierre de la Fase 6.** ✅ **Fase 6 completa (6.1-6.5): acuerdos, seguimientos y derivaciones.** Sobre la Fase 5 ya completa (5.1-5.7). Las derivaciones (6.4) son la única entidad de todo el plugin cuyo acceso de lectura no pasa por `scope_service`: coordinación/orientación/dirección las ven por capacidad (`managereferrals`) o por ser quien las creó/tiene asignadas, nunca por ámbito de tutoría — decisión deliberada, ver `docs/seguridad-permisos.md`. Próximo bloque de fase: Fase 7 — Panel del tutor (no iniciada).
 
 > **La migración de esquema de 3D.2 falló una primera vez en un Moodle 5.1 real sobre PostgreSQL** (`ddl_dependency_exception` por índices dependientes); corregida en `db/upgrade.php` y **confirmada por el usuario: la actualización completa se instala sin errores**. A partir de la Fase 3D.1, el seguimiento detallado usa `docs/roadmap.md`/`docs/project-status.md` (decisión explícita: se sigue ese roadmap, que no incluye todavía las interfaces pendientes de cotutores, reasignación, alumnos sin tutor ni cohortes).
 
-Esta versión (0.6.6) añade:
+Esta versión (0.7.3) añade:
+
+| Área | Contenido |
+|---|---|
+| Privacy API | `local_tut_agreement`/`local_tut_followup`/`local_tut_referral` ampliadas en metadata, contextos, exportación sin enmascarar y anonimización de identidad (`studentid`, `responsibleuserid`/`assignedto`, `createdby`/`modifiedby`), conservando `description`/`reason`/`resolution` — misma política que `local_tut_entry` |
+| Revisión | Seguridad (IDOR/XSS/CSRF), rendimiento y accesibilidad sobre las 15 páginas nuevas de la Fase 6 — sin más hallazgos que el IDOR de `followupid` ya corregido en 6.2 |
+| Pruebas | PHPUnit: 5 casos nuevos en `tests/privacy/provider_test.php` + 1 caso nuevo en `tests/upgrade_test.php` (actualización 0.6.6 → actual) |
+| Cierre | **Cierra la Fase 6 completa (6.1-6.5)** |
+
+Versión previa 0.7.2 añadía:
+
+| Área | Contenido |
+|---|---|
+| Esquema | `local_tut_referral` (creada ya en 6.1, sin escritor hasta ahora): destino, motivo siempre de nueva redacción, prioridad, asignado, estado, resolución |
+| Servicio | `referral_service::get_for_viewer()` — el único mecanismo de lectura de todo el plugin sin `scope_service`: visibilidad por `managereferrals` o por ser creador/asignado |
+| Seguridad | `referral_updated` nunca lleva el texto de `resolution` en los datos del evento, mismo criterio que `note` en `local_tut_assignment` |
+| Interfaz | `referrals/index.php`/`view.php`/`create.php`/`assign.php`/`resolve.php`/`action.php` (nuevos), con entrada propia en *Administración del sitio*, sin pestaña en la ficha del alumno |
+| Pruebas | PHPUnit: 4+6+2 casos nuevos. Behat: `referral_management.feature` (3 escenarios) |
+
+Versión previa 0.7.1 añadía:
+
+| Área | Contenido |
+|---|---|
+| Esquema | `local_tut_followup` (creada ya en 6.1, sin escritor hasta ahora): fecha prevista, prioridad, estado, tutoría de cierre opcional |
+| Servicio | `followup_service::close_with_entry()`: cierra un seguimiento mediante una nueva tutoría vinculada, reutilizando `entries/create.php`/`create_full.php` con un parámetro `followupid` |
+| Corrección propia | El parámetro `followupid` no comprobaba pertenecer al mismo alumno de la nueva tutoría — IDOR real, corregido antes de cerrar el incremento |
+| Interfaz | `followups/create.php`/`action.php`/`postpone.php` (nuevos); nueva pestaña "Seguimientos" en la ficha del alumno |
+| Pruebas | PHPUnit: 4+6+2 casos nuevos. Behat: `followup_management.feature` (2 escenarios) |
+
+Versión previa 0.7.0 añadía:
+
+| Área | Contenido |
+|---|---|
+| Esquema | `local_tut_agreement` (nueva), `local_tut_followup`/`local_tut_referral` (creadas de una vez, sin escritor hasta 6.2/6.4) |
+| Servicio | `agreement_service`: crear + completar/reabrir/posponer/cancelar en el mismo incremento (decisión deliberada, ver el docblock de la clase) |
+| Interfaz | `agreements/create.php`/`action.php`/`postpone.php` (nuevos); pestaña "Acuerdos" de la ficha del alumno con listado real y filtro "vencidos" |
+| Pruebas | PHPUnit: 5+9+2 casos nuevos. Behat: `agreement_management.feature` (3 escenarios) |
+
+Versión previa 0.6.6 añadía:
 
 | Área | Contenido |
 |---|---|
@@ -213,11 +251,11 @@ Versión previa 0.4.0 añadía:
 | Reutilización | 4 validaciones de `assignment_service` (tutor, cohorte, curso bloqueado) pasan de `private` a `public` para evitar duplicarlas |
 | Pruebas | PHPUnit: los 13 escenarios de previsualización del prompt (incluidos los 4 modos), más caducidad, cambio detectado y validaciones |
 
-Versiones previas: 0.6.5 (Fase 5.6 — adjuntos de tutorías), 0.6.4 (Fase 5.5 — edición, versionado y anulación de tutorías), 0.6.3 (Fase 5.4 — historial y detalle de tutorías), 0.6.2 (Fase 5.3 — registro completo de tutorías), 0.6.1 (Fase 5.2 — registro rápido de tutorías), 0.6.0 (Fase 5.1 — registro de tutorías: dominio y datos), 0.5.3 (Fase 4.4 — UX, rendimiento y cierre; cierra la Fase 4 completa), 0.5.2 (Fase 4.3 — permisos y vistas), 0.5.1 (Fase 4.2 — historial de asignaciones), 0.5.0 (Fase 4.1 — ficha del alumno: cabecera y resumen), 0.4.8 (Fase 3E.6 — Privacy API completa y retención; cierra la Fase 3E con 3E.7/3E.8), 0.4.7 (Fase 3E.5 — revisión de eventos y auditoría), 0.4.6 (Fase 3E.4 — rendimiento y revisión N+1), 0.4.5 (Fase 3E.3 — concurrencia e idempotencia), 0.4.4 (Fase 3D.4 — informe y cierre de la importación CSV), 0.4.3 (Fase 3D.3 — aplicación real de la importación CSV), 0.3.5 (Fase 3B.5A — servicio de detección de alumnos sin tutor), 0.3.4 (Fase 3B.4A — servicio de reasignación), 0.3.3 (Fase 3B.3A — cierre de asignaciones), 0.3.2 (Fase 3B.2 — creación y edición manual), 0.3.1 (Fase 3B.1 — listado y detalle, confirmada en Moodle real), 0.3.0 (Fase 3A — modelo y servicios de asignación), 0.2.0 (Fase 2 — cursos académicos y catálogos).
+Versiones previas: 0.6.6 (Fase 5.7 — cierre de la Fase 5 completa), 0.6.5 (Fase 5.6 — adjuntos de tutorías), 0.6.4 (Fase 5.5 — edición, versionado y anulación de tutorías), 0.6.3 (Fase 5.4 — historial y detalle de tutorías), 0.6.2 (Fase 5.3 — registro completo de tutorías), 0.6.1 (Fase 5.2 — registro rápido de tutorías), 0.6.0 (Fase 5.1 — registro de tutorías: dominio y datos), 0.5.3 (Fase 4.4 — UX, rendimiento y cierre; cierra la Fase 4 completa), 0.5.2 (Fase 4.3 — permisos y vistas), 0.5.1 (Fase 4.2 — historial de asignaciones), 0.5.0 (Fase 4.1 — ficha del alumno: cabecera y resumen), 0.4.8 (Fase 3E.6 — Privacy API completa y retención; cierra la Fase 3E con 3E.7/3E.8), 0.4.7 (Fase 3E.5 — revisión de eventos y auditoría), 0.4.6 (Fase 3E.4 — rendimiento y revisión N+1), 0.4.5 (Fase 3E.3 — concurrencia e idempotencia), 0.4.4 (Fase 3D.4 — informe y cierre de la importación CSV), 0.4.3 (Fase 3D.3 — aplicación real de la importación CSV), 0.3.5 (Fase 3B.5A — servicio de detección de alumnos sin tutor), 0.3.4 (Fase 3B.4A — servicio de reasignación), 0.3.3 (Fase 3B.3A — cierre de asignaciones), 0.3.2 (Fase 3B.2 — creación y edición manual), 0.3.1 (Fase 3B.1 — listado y detalle, confirmada en Moodle real), 0.3.0 (Fase 3A — modelo y servicios de asignación), 0.2.0 (Fase 2 — cursos académicos y catálogos).
 
 **Todavía sin implementar:** interfaz de asignación masiva desde cohortes (formulario, previsualización en pantalla, confirmación, ejecución, cierre de ausentes, sustitución), interfaz del informe de alumnos sin tutor, formulario e interfaz de reasignación, gestión de cotutores como funcionalidad propia, vistas diferenciadas por rol en la ficha del alumno (Fase 4.3, la cabecera/resumen e historial de 4.1/4.2 ya existen), registro de tutorías, acuerdos, seguimientos, dashboards, notificaciones, derivaciones, pantalla de "operaciones" para consultar el estado de una importación CSV diferida a tarea ad hoc.
 
-Ver [`docs/roadmap.md`](../../docs/roadmap.md) y [`docs/project-status.md`](../../docs/project-status.md) en la raíz del repositorio para el roadmap y estado actuales; [`docs/plan-desarrollo.md`](../../docs/plan-desarrollo.md) recoge la narrativa detallada de las fases 1-5.7 (**las Fases 4 y 5 quedan completas**).
+Ver [`docs/roadmap.md`](../../docs/roadmap.md) y [`docs/project-status.md`](../../docs/project-status.md) en la raíz del repositorio para el roadmap y estado actuales; [`docs/plan-desarrollo.md`](../../docs/plan-desarrollo.md) recoge la narrativa detallada de las fases 1-6.5 (**las Fases 4, 5 y 6 quedan completas**).
 
 ## Requisitos
 
@@ -229,12 +267,16 @@ Ver [`docs/roadmap.md`](../../docs/roadmap.md) y [`docs/project-status.md`](../.
 1. Copiar/enlazar este directorio en `<moodle>/local/monlaututoria`.
 2. Visitar *Administración del sitio → Notificaciones* para completar la instalación, o ejecutar `php admin/cli/upgrade.php`.
 
-> **Nota:** verificado en un Moodle 5.1 de pruebas real hasta la Fase 3B.1 inclusive a nivel de interfaz (incluido el selector AJAX de usuario). **La actualización de esquema completa (3B.2 → 3D.2, incluida la corrección del fallo de índice en PostgreSQL) se ha instalado sin errores en esa misma instancia** — confirmado por el usuario. 3D.3/3D.4/4.1 no añaden esquema; 4.2 sí añadió una migración real (`local_tut_assignment.reassignreason`, nullable); 4.3 y 4.4 no añadieron esquema; 5.1 sí añade una migración real (4 tablas nuevas de tutorías); 5.2-5.5 no añaden esquema (interfaces nuevas y, en 5.5, la primera opción de configuración real del plugin); 5.6 sí añade una migración real (tabla de metadatos de adjuntos); **5.7 no añade esquema** (auditoría de cierre, Privacy API completa). Ninguna de las migraciones desde 4.2 en adelante se ha probado todavía contra esa instancia. Lo que falta todavía por probar manualmente en el navegador: la interfaz de las Fases 3B.2/3B.3A/3C.1/3D.2/3D.3/3D.4/4.1/4.2/4.3/4.4/5.2/5.3/5.4/5.5/5.6, y ejecutar PHPUnit/Behat (los servicios de 3B.4A/3B.5A no tienen interfaz que probar).
+> **Nota:** verificado en un Moodle 5.1 de pruebas real hasta la Fase 3B.1 inclusive a nivel de interfaz (incluido el selector AJAX de usuario). **La actualización de esquema completa (3B.2 → 3D.2, incluida la corrección del fallo de índice en PostgreSQL) se ha instalado sin errores en esa misma instancia** — confirmado por el usuario. 3D.3/3D.4/4.1 no añaden esquema; 4.2 sí añadió una migración real (`local_tut_assignment.reassignreason`, nullable); 4.3 y 4.4 no añadieron esquema; 5.1 sí añade una migración real (4 tablas nuevas de tutorías); 5.2-5.5 no añaden esquema (interfaces nuevas y, en 5.5, la primera opción de configuración real del plugin); 5.6 sí añade una migración real (tabla de metadatos de adjuntos); 5.7 no añade esquema; 6.1 sí añade una migración real (3 tablas nuevas de acuerdos/seguimientos/derivaciones, creadas de una vez); **6.2-6.5 no añaden esquema propio** (las 2 tablas restantes ya existían desde 6.1). Ninguna de las migraciones desde 4.2 en adelante se ha probado todavía contra esa instancia. Lo que falta todavía por probar manualmente en el navegador: la interfaz de las Fases 3B.2/3B.3A/3C.1/3D.2/3D.3/3D.4/4.1/4.2/4.3/4.4/5.2/5.3/5.4/5.5/5.6/6.1/6.2/6.4, y ejecutar PHPUnit/Behat (los servicios de 3B.4A/3B.5A no tienen interfaz que probar).
 
 ## Versiones compatibles
 
 | Versión del plugin | Moodle |
 |---|---|
+| 0.7.3 | 5.1.x (sin esquema nuevo sobre 0.7.2; cierre de la Fase 6 completa — Privacy API ampliada para acuerdos/seguimientos/derivaciones, PHPUnit pendiente de probar) |
+| 0.7.2 | 5.1.x (migración de esquema ya aplicada en 6.1 — sin esquema nuevo propio; derivaciones de la Fase 6.4, PHPUnit/Behat pendientes de probar) |
+| 0.7.1 | 5.1.x (sin esquema nuevo propio; seguimientos de la Fase 6.2, PHPUnit/Behat pendientes de probar) |
+| 0.7.0 | 5.1.x (nueva migración de esquema — 3 tablas de acuerdos/seguimientos/derivaciones — todavía sin probar contra la instancia real; acuerdos de la Fase 6.1, PHPUnit/Behat pendientes de probar) |
 | 0.6.6 | 5.1.x (sin esquema nuevo sobre 0.6.5; cierre de la Fase 5 completa — Privacy API ampliada para `entryversion`/`entryattachment`, PHPUnit pendiente de probar) |
 | 0.6.5 | 5.1.x (nueva migración de esquema — tabla de metadatos de adjuntos — todavía sin probar contra la instancia real; primer uso de la File API y `pluginfile.php`, PHPUnit/Behat pendientes de probar) |
 | 0.6.4 | 5.1.x (sin esquema nuevo sobre 0.6.3; primera opción de configuración real del plugin — ventana de edición — PHPUnit/Behat pendientes de probar) |

@@ -400,10 +400,11 @@ final class renderer extends \plugin_renderer_base {
      */
     public function student_tabs(string $active, int $studentid, ?int $academicyearid): string {
         $tabs = [
-            'resumen'   => get_string('studenttab_summary', 'local_monlaututoria'),
-            'historial' => get_string('studenttab_history', 'local_monlaututoria'),
-            'tutorias'  => get_string('studenttab_tutoring', 'local_monlaututoria'),
-            'acuerdos'  => get_string('studenttab_agreements', 'local_monlaututoria'),
+            'resumen'      => get_string('studenttab_summary', 'local_monlaututoria'),
+            'historial'    => get_string('studenttab_history', 'local_monlaututoria'),
+            'tutorias'     => get_string('studenttab_tutoring', 'local_monlaututoria'),
+            'acuerdos'     => get_string('studenttab_agreements', 'local_monlaututoria'),
+            'seguimientos' => get_string('studenttab_followups', 'local_monlaututoria'),
         ];
 
         $links = '';
@@ -734,6 +735,283 @@ final class renderer extends \plugin_renderer_base {
         }
 
         return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * Renders the "Acuerdos" tab listing (phase 6.1/6.3). $canmanage gates
+     * the complete/reopen/postpone/cancel action links — a student viewing
+     * their own visible-to-them agreements never sees them, regardless of
+     * any capability, same "whose file is this" reasoning already applied
+     * elsewhere in this renderer.
+     *
+     * @param \local_monlaututoria\domain\agreement[] $agreements
+     * @param array $responsibleusers keyed by user id, from core_user::get_user() batches
+     * @param bool $canmanage
+     * @return string
+     */
+    public function agreements_table(array $agreements, array $responsibleusers, bool $canmanage): string {
+        if (empty($agreements)) {
+            return $this->output->notification(
+                get_string('agreements_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $statusoptions = \local_monlaututoria\domain\agreement_status::get_options();
+        $responsibletypeoptions = \local_monlaututoria\domain\agreement_responsible_type::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('agreement_field_description', 'local_monlaututoria'),
+            get_string('agreement_field_responsibletype', 'local_monlaututoria'),
+            get_string('agreement_field_duedate', 'local_monlaututoria'),
+            get_string('agreement_field_status', 'local_monlaututoria'),
+        ];
+        if ($canmanage) {
+            $table->head[] = '';
+        }
+
+        foreach ($agreements as $agreement) {
+            $responsiblelabel = $responsibletypeoptions[$agreement->responsibletype] ?? $agreement->responsibletype;
+            if ($agreement->responsibleuserid !== null) {
+                $responsibleuser = $responsibleusers[$agreement->responsibleuserid] ?? null;
+                $responsiblelabel .= ': ' . ($responsibleuser ? s(fullname($responsibleuser)) : '#' . $agreement->responsibleuserid);
+            } else if ($agreement->responsibleexternalname !== null) {
+                $responsiblelabel .= ': ' . s($agreement->responsibleexternalname);
+            }
+
+            $statuslabel = $statusoptions[$agreement->status] ?? $agreement->status;
+            if ($agreement->is_overdue()) {
+                $statuslabel = get_string('agreementstatus_overdue', 'local_monlaututoria') . ' (' . $statuslabel . ')';
+            }
+
+            $cells = [
+                s($agreement->description),
+                $responsiblelabel,
+                userdate($agreement->duedate, $dateformat),
+                $statuslabel,
+            ];
+
+            if ($canmanage) {
+                $cells[] = $this->agreement_action_links($agreement);
+            }
+
+            $table->data[] = $cells;
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * @param \local_monlaututoria\domain\agreement $agreement
+     * @return string
+     */
+    private function agreement_action_links(\local_monlaututoria\domain\agreement $agreement): string {
+        $openvalues = \local_monlaututoria\domain\agreement_status::open_values();
+        if (!in_array($agreement->status, $openvalues, true)) {
+            return '';
+        }
+
+        $links = [
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/agreements/action.php', ['id' => $agreement->id, 'action' => 'complete']),
+                get_string('agreement_complete', 'local_monlaututoria')
+            ),
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/agreements/postpone.php', ['id' => $agreement->id]),
+                get_string('agreement_postpone', 'local_monlaututoria')
+            ),
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/agreements/action.php', ['id' => $agreement->id, 'action' => 'cancel']),
+                get_string('agreement_cancel', 'local_monlaututoria')
+            ),
+        ];
+
+        return implode(' | ', $links);
+    }
+
+    /**
+     * Renders the "Seguimientos" tab listing (phase 6.2/6.3). Staff-only —
+     * unlike agreements_table(), never called for a student's own limited
+     * view (see followup_service's class docblock for why).
+     *
+     * @param \local_monlaututoria\domain\followup[] $followups
+     * @param bool $canmanage
+     * @return string
+     */
+    public function followups_table(array $followups, bool $canmanage): string {
+        if (empty($followups)) {
+            return $this->output->notification(
+                get_string('followups_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $statusoptions = \local_monlaututoria\domain\followup_status::get_options();
+        $priorityoptions = \local_monlaututoria\domain\priority_level::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('followup_field_duedate', 'local_monlaututoria'),
+            get_string('followup_field_priority', 'local_monlaututoria'),
+            get_string('followup_field_status', 'local_monlaututoria'),
+        ];
+        if ($canmanage) {
+            $table->head[] = '';
+        }
+
+        foreach ($followups as $followup) {
+            $statuslabel = $statusoptions[$followup->status] ?? $followup->status;
+            if ($followup->is_overdue()) {
+                $statuslabel = get_string('followupstatus_overdue', 'local_monlaututoria') . ' (' . $statuslabel . ')';
+            }
+
+            $cells = [
+                userdate($followup->duedate, $dateformat),
+                $priorityoptions[$followup->priority] ?? $followup->priority,
+                $statuslabel,
+            ];
+
+            if ($canmanage) {
+                $cells[] = $this->followup_action_links($followup);
+            }
+
+            $table->data[] = $cells;
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * @param \local_monlaututoria\domain\followup $followup
+     * @return string
+     */
+    private function followup_action_links(\local_monlaututoria\domain\followup $followup): string {
+        if (!in_array($followup->status, \local_monlaututoria\domain\followup_status::open_values(), true)) {
+            return '';
+        }
+
+        $links = [
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/followups/action.php', ['id' => $followup->id, 'action' => 'complete']),
+                get_string('followup_complete', 'local_monlaututoria')
+            ),
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/followups/postpone.php', ['id' => $followup->id]),
+                get_string('agreement_postpone', 'local_monlaututoria')
+            ),
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/followups/action.php', ['id' => $followup->id, 'action' => 'cancel']),
+                get_string('followup_cancel', 'local_monlaututoria')
+            ),
+            // "Cierre... mediante nueva tutoría vinculada" (docs/fases/phase-6.md):
+            // reuses the quick registration page rather than a dedicated flow.
+            \html_writer::link(
+                new \moodle_url('/local/monlaututoria/entries/create.php', [
+                    'studentid' => $followup->studentid, 'followupid' => $followup->id,
+                ]),
+                get_string('entry_field_followup', 'local_monlaututoria')
+            ),
+        ];
+
+        return implode(' | ', $links);
+    }
+
+    /**
+     * Renders the referrals listing for coordination/orientation/management
+     * (phase 6.4, referrals/index.php). Never called for a student's own
+     * view — there is no such view, referrals have no ficha tab.
+     *
+     * @param \local_monlaututoria\domain\referral[] $referrals
+     * @param array $students keyed by user id
+     * @return string
+     */
+    public function referrals_table(array $referrals, array $students): string {
+        if (empty($referrals)) {
+            return $this->output->notification(
+                get_string('referrals_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $destinationoptions = \local_monlaututoria\domain\referral_destination::get_options();
+        $statusoptions = \local_monlaututoria\domain\referral_status::get_options();
+        $priorityoptions = \local_monlaututoria\domain\priority_level::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('referral_field_destination', 'local_monlaututoria'),
+            get_string('followup_field_priority', 'local_monlaututoria'),
+            get_string('referral_field_status', 'local_monlaututoria'),
+            '',
+        ];
+
+        foreach ($referrals as $referral) {
+            $student = $students[$referral->studentid] ?? null;
+
+            $table->data[] = [
+                $student ? s(fullname($student)) : '#' . $referral->studentid,
+                $destinationoptions[$referral->destination] ?? $referral->destination,
+                $priorityoptions[$referral->priority] ?? $referral->priority,
+                $statusoptions[$referral->status] ?? $referral->status,
+                \html_writer::link(
+                    new \moodle_url('/local/monlaututoria/referrals/view.php', ['id' => $referral->id]),
+                    get_string('referral_viewdetail', 'local_monlaututoria')
+                ),
+            ];
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * Renders the detail view of a single referral (phase 6.4). Plain
+     * html_writer, not a Mustache template like entry_detail() — a
+     * definition list with no repeating/conditional structure complex
+     * enough to warrant one.
+     *
+     * @param \local_monlaututoria\domain\referral $referral
+     * @param \stdClass $student
+     * @param \stdClass|null $entry raw local_tut_entry row it originated from
+     * @param \stdClass|null $assignee
+     * @return string
+     */
+    public function referral_detail(\local_monlaututoria\domain\referral $referral, \stdClass $student, ?\stdClass $entry, ?\stdClass $assignee): string {
+        $destinationoptions = \local_monlaututoria\domain\referral_destination::get_options();
+        $statusoptions = \local_monlaututoria\domain\referral_status::get_options();
+        $priorityoptions = \local_monlaututoria\domain\priority_level::get_options();
+
+        $rows = [
+            [get_string('assignment_col_student', 'local_monlaututoria'), \html_writer::link(
+                new \moodle_url('/local/monlaututoria/student/view.php', ['id' => $student->id]),
+                s(fullname($student))
+            )],
+            [get_string('referral_field_destination', 'local_monlaututoria'), $destinationoptions[$referral->destination] ?? $referral->destination],
+            [get_string('referral_field_reason', 'local_monlaututoria'), \html_writer::tag('div', s($referral->reason))],
+            [get_string('followup_field_priority', 'local_monlaututoria'), $priorityoptions[$referral->priority] ?? $referral->priority],
+            [get_string('referral_field_status', 'local_monlaututoria'), $statusoptions[$referral->status] ?? $referral->status],
+            [get_string('referral_field_assignedto', 'local_monlaututoria'), $assignee ? s(fullname($assignee)) : '—'],
+            [get_string('referral_field_resolution', 'local_monlaututoria'), $referral->resolution !== null ? \html_writer::tag('div', s($referral->resolution)) : '—'],
+        ];
+        if ($entry !== null) {
+            $rows[] = [get_string('referral_field_originentry', 'local_monlaututoria'), \html_writer::link(
+                new \moodle_url('/local/monlaututoria/entries/view.php', ['id' => $entry->id]),
+                get_string('entry_viewdetail', 'local_monlaututoria')
+            )];
+        }
+
+        $html = \html_writer::start_tag('dl', ['class' => 'row']);
+        foreach ($rows as [$label, $value]) {
+            $html .= \html_writer::tag('dt', $label, ['class' => 'col-sm-3']);
+            $html .= \html_writer::tag('dd', $value, ['class' => 'col-sm-9']);
+        }
+        $html .= \html_writer::end_tag('dl');
+
+        return $html;
     }
 
     /**

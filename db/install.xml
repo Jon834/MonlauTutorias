@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/monlaututoria/db" VERSION="20260816" COMMENT="XMLDB file for Moodle local/monlaututoria"
+<XMLDB PATH="local/monlaututoria/db" VERSION="20260818" COMMENT="XMLDB file for Moodle local/monlaututoria"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -226,6 +226,82 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_agreement" COMMENT="Agreements arising from a tutoring entry (phase 6.1) — a concrete action with a responsible party and a due date">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Origin tutoring entry; FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Denormalized from the origin entry, for querying without a join; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="responsibletype" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="student, tutor, family, teacher, coordination, orientation, company, other — see agreement_responsible_type"/>
+        <FIELD NAME="responsibleuserid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Set when the responsible party is a Moodle user (internal); FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="responsibleexternalname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Set when the responsible party is not a Moodle user (external). Exactly one of responsibleuserid/responsibleexternalname is set, enforced in agreement_service, not at DB level"/>
+        <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false" COMMENT="pending, in_progress, completed, cancelled — see agreement_status. 'vencido'/overdue from the phase doc is computed at read time (status still pending/in_progress and duedate passed), not a 5th persisted value"/>
+        <FIELD NAME="visibletostudent" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+        <INDEX NAME="ix_student_status" UNIQUE="false" FIELDS="studentid, status"/>
+        <INDEX NAME="ix_duedate" UNIQUE="false" FIELDS="duedate"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_followup" COMMENT="Follow-ups arising from a tutoring entry (phase 6.2) — formalizes local_tut_entry.nextfollowupdate into its own tracked entity with priority, status and a closing mechanism">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Origin tutoring entry; FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="closingentryid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Set when this follow-up was closed via a new linked tutoring entry rather than manually; FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Denormalized from the origin entry; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="duedate" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="priority" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="medium" SEQUENCE="false" COMMENT="low, medium, high — see priority_level"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false" COMMENT="pending, completed, cancelled — see followup_status. 'vencido'/overdue computed at read time, same as local_tut_agreement"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+        <INDEX NAME="ix_closingentryid" UNIQUE="false" FIELDS="closingentryid"/>
+        <INDEX NAME="ix_student_status" UNIQUE="false" FIELDS="studentid, status"/>
+        <INDEX NAME="ix_duedate" UNIQUE="false" FIELDS="duedate"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_referral" COMMENT="Basic referrals from a tutoring entry to coordination, orientation or management (phase 6.4). reason is always fresh text, never a copy of the origin entry's internal/restricted notes">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Origin tutoring entry; FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Denormalized from the origin entry; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="destination" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="coordination, orientation, management — see referral_destination"/>
+        <FIELD NAME="reason" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Freshly authored motive, deliberately never pre-filled from the entry's noteinternal/noterestricted"/>
+        <FIELD NAME="priority" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="medium" SEQUENCE="false" COMMENT="low, medium, high — see priority_level"/>
+        <FIELD NAME="assignedto" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Staff member handling the referral, set via referrals/assign.php; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false" COMMENT="pending, in_progress, resolved, cancelled — see referral_status"/>
+        <FIELD NAME="resolution" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Set when the referral is resolved via referrals/resolve.php"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+        <INDEX NAME="ix_studentid" UNIQUE="false" FIELDS="studentid"/>
+        <INDEX NAME="ix_status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="ix_assignedto" UNIQUE="false" FIELDS="assignedto"/>
       </INDEXES>
     </TABLE>
   </TABLES>

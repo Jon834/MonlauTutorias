@@ -37,6 +37,11 @@ require_capability('local/monlaututoria:createentry', $context);
 
 $studentid = required_param('studentid', PARAM_INT);
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
+// Phase 6.2: reached with this param when the tutor is registering a new
+// entry specifically to close an existing follow-up ("cierre... mediante
+// nueva tutoría vinculada", docs/fases/phase-6.md) — no dedicated page for
+// this, the existing quick/full registration flow is reused as-is.
+$followupid = optional_param('followupid', 0, PARAM_INT);
 
 $academicyearrepository = new \local_monlaututoria\repository\academic_year_repository();
 $academicyear = $requestedacademicyearid > 0
@@ -74,7 +79,7 @@ $form = new \local_monlaututoria\form\entry_quick_form(null, [
     'modalities' => $modalityoptions,
     'reasons'    => $reasonoptions,
 ]);
-$form->set_data((object) ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id]);
+$form->set_data((object) ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id, 'followupid' => $followupid]);
 
 $returnurl = new moodle_url('/local/monlaututoria/student/view.php', ['id' => $studentid, 'academicyearid' => $academicyear->id]);
 
@@ -97,7 +102,25 @@ if ($form->is_cancelled()) {
     );
 
     $service = new \local_monlaututoria\service\entry_service();
-    $service->create($command, (int) $USER->id);
+    $newentryid = $service->create($command, (int) $USER->id);
+
+    if (!empty($data->followupid)) {
+        // followup_service's write methods (like entry_service::update()/
+        // annul()) rely on the calling page for scope, they do not re-check
+        // it themselves — so this page must verify the follow-up actually
+        // belongs to the same student the scope check above already
+        // covered, or a tutor with scope over $studentid could pass an
+        // arbitrary followupid belonging to an unrelated student (IDOR).
+        $followuprepository = new \local_monlaututoria\repository\followup_repository();
+        $followup = $followuprepository->get((int) $data->followupid);
+        if ((int) $followup->studentid !== $studentid) {
+            throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
+        }
+
+        (new \local_monlaututoria\service\followup_service())->close_with_entry(
+            (int) $data->followupid, $newentryid, (int) $USER->id
+        );
+    }
 
     redirect(
         $returnurl,

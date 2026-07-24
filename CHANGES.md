@@ -1,5 +1,59 @@
 # Changelog — local_monlaututoria
 
+## 0.7.3 — 2026-07-24
+
+**Cierre de la Fase 6** — Fase 6.5, la última de la Fase 6 (6.1-6.4 ya completas). Auditoría, no funcionalidad nueva. **Cierra la Fase 6 completa.**
+
+- Privacy API ampliada para `local_tut_agreement`/`local_tut_followup`/`local_tut_referral`: metadata, contextos, exportación sin enmascarar, y anonimización de identidad (`studentid`, `responsibleuserid`/`assignedto`, `createdby`/`modifiedby`) conservando el contenido institucional (`description`/`reason`/`resolution`) — misma política que `local_tut_entry`.
+- Revisión de seguridad (IDOR/XSS/CSRF), rendimiento y accesibilidad sobre las 15 páginas nuevas de la Fase 6: sin más hallazgos que el IDOR de `followupid` ya corregido durante 6.2.
+- `tests/upgrade_test.php` ampliado con un caso de actualización 0.6.6 → actual.
+- Sin migración de esquema.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+---
+
+## 0.7.2 — 2026-07-24
+
+**Derivaciones básicas** — Fase 6.4 (sobre 6.1-6.3). La única entidad de todo el plugin cuyo acceso de lectura no pasa por `scope_service`.
+
+- **`local_tut_referral`** (tabla nueva): `entryid`, `studentid`, `destination` (coordinación/orientación/dirección), `reason` (siempre de nueva redacción, nunca copiado de las notas de la tutoría), `priority`, `assignedto`, `status`, `resolution`.
+- **`referral_service::get_for_viewer()`**: visibilidad decidida por `managereferrals` o por ser el creador/asignado — nunca por ámbito. Crear sí exige ámbito sobre la tutoría de origen.
+- `referral_updated` nunca lleva el texto de `resolution` en los datos del evento.
+- 2 capacidades nuevas: `createreferral`, `managereferrals`.
+- `referrals/index.php`/`view.php`/`create.php`/`assign.php`/`resolve.php`/`action.php` (nuevos), con entrada propia en *Administración del sitio*, sin pestaña en la ficha del alumno.
+- Migración de esquema real (1 tabla, creada ya en 6.1), pero salto de versión de **parche** — sigue dentro del bloque de la Fase 6.
+- PHPUnit: 4+6+2 casos nuevos. Behat: `referral_management.feature` (3 escenarios).
+
+---
+
+## 0.7.1 — 2026-07-24
+
+**Seguimientos** — Fase 6.2 (sobre 6.1). Formaliza `local_tut_entry.nextfollowupdate` en una entidad propia.
+
+- **`local_tut_followup`** (tabla nueva, creada ya en 6.1): `entryid`, `closingentryid` (opcional), `studentid`, `duedate`, `priority`, `status`.
+- Acciones rápidas (completar/reabrir/posponer/cancelar) incluidas ya en este incremento.
+- `entries/create.php`/`create_full.php` ganan un parámetro opcional `followupid` para cerrar un seguimiento mediante una nueva tutoría vinculada.
+- **Hallazgo real corregido**: el parámetro `followupid` permitía cerrar el seguimiento de un alumno distinto sin comprobación — IDOR corregido verificando que el seguimiento pertenece al mismo alumno que la nueva tutoría.
+- 2 capacidades nuevas: `createfollowup`, `managefollowups`.
+- Nueva pestaña "Seguimientos" en `student/view.php`.
+- PHPUnit: 4+6+2 casos nuevos. Behat: `followup_management.feature` (2 escenarios).
+
+---
+
+## 0.7.0 — 2026-07-24
+
+**Acuerdos** — Fase 6.1, abre la Fase 6 completa ("Acuerdos, seguimientos y derivaciones"). Crea de una vez el esquema de las 3 tablas de toda la fase.
+
+- **`local_tut_agreement`** (tabla nueva): `entryid`, `studentid`, `description`, `responsibletype` + responsable interno/externo, `duedate`, `status` (4 valores — "vencido" se calcula en lectura, nunca se persiste), `visibletostudent` (visibilidad de fila completa, no por campo).
+- **`local_tut_followup`/`local_tut_referral`** (tablas nuevas, sin escritor todavía — igual que `local_tut_entryversion` entre las Fases 5.1 y 5.5).
+- Acciones rápidas (completar/reabrir/posponer/cancelar) incluidas ya en este incremento — decisión deliberada, ver `agreement_service`.
+- 2 capacidades nuevas: `createagreement`, `manageagreements`.
+- `agreements/create.php`/`action.php`/`postpone.php` (nuevos). Pestaña "Acuerdos" de `student/view.php` con listado real y filtro "vencidos".
+- Salto de versión **menor** (0.6.6 → 0.7.0) — abre el bloque de la Fase 6.
+- PHPUnit: 5+9+2 casos nuevos. Behat: `agreement_management.feature` (3 escenarios).
+
+---
+
 ## 0.6.6 — 2026-07-24
 
 **Cierre de la Fase 5** — Fase 5.7, la última de la Fase 5 (5.1-5.6 ya completas). Auditoría, no funcionalidad nueva — mismo tipo de incremento que la Fase 3E sobre el módulo de asignaciones. **Cierra la Fase 5 completa.**

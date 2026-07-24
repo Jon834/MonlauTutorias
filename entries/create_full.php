@@ -34,6 +34,7 @@ require_capability('local/monlaututoria:createentry', $context);
 
 $studentid = required_param('studentid', PARAM_INT);
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
+$followupid = optional_param('followupid', 0, PARAM_INT);
 
 $academicyearrepository = new \local_monlaututoria\repository\academic_year_repository();
 $academicyear = $requestedacademicyearid > 0
@@ -77,7 +78,7 @@ $form = new \local_monlaututoria\form\entry_full_form(null, [
     'reasons'        => $reasonoptions,
     'showrestricted' => $showrestricted,
 ]);
-$form->set_data((object) ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id]);
+$form->set_data((object) ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id, 'followupid' => $followupid]);
 
 $returnurl = new moodle_url('/local/monlaututoria/student/view.php', ['id' => $studentid, 'academicyearid' => $academicyear->id]);
 
@@ -120,7 +121,20 @@ if ($form->is_cancelled()) {
     );
 
     $service = new \local_monlaututoria\service\entry_service();
-    $service->create($command, (int) $USER->id);
+    $newentryid = $service->create($command, (int) $USER->id);
+
+    if (!empty($data->followupid)) {
+        // Same IDOR guard as entries/create.php — see its comment.
+        $followuprepository = new \local_monlaututoria\repository\followup_repository();
+        $followup = $followuprepository->get((int) $data->followupid);
+        if ((int) $followup->studentid !== $studentid) {
+            throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
+        }
+
+        (new \local_monlaututoria\service\followup_service())->close_with_entry(
+            (int) $data->followupid, $newentryid, (int) $USER->id
+        );
+    }
 
     redirect(
         $returnurl,

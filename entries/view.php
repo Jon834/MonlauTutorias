@@ -132,6 +132,16 @@ $data = (object) [
     // class docblock for why there is no student-visible attachment tier.
     'canseeattachments'    => !$isself && has_capability('local/monlaututoria:viewinternalnotes', $context),
     'attachmentsurl'       => (new moodle_url('/local/monlaututoria/entries/attachments.php', ['id' => $id]))->out(false),
+    // Phase 6.1: staff-only, same reasoning as attachments — an agreement is
+    // created by tutoring staff, never by the student themselves.
+    'cancreateagreement'   => !$isself && has_capability('local/monlaututoria:createagreement', $context),
+    'createagreementurl'   => (new moodle_url('/local/monlaututoria/agreements/create.php', ['entryid' => $id]))->out(false),
+    // Phase 6.2: same reasoning as agreements.
+    'cancreatefollowup'    => !$isself && has_capability('local/monlaututoria:createfollowup', $context),
+    'createfollowupurl'    => (new moodle_url('/local/monlaututoria/followups/create.php', ['entryid' => $id]))->out(false),
+    // Phase 6.4: same reasoning as agreements/follow-ups.
+    'cancreatereferral'    => !$isself && has_capability('local/monlaututoria:createreferral', $context),
+    'createreferralurl'    => (new moodle_url('/local/monlaututoria/referrals/create.php', ['entryid' => $id]))->out(false),
 ];
 
 /** @var \local_monlaututoria\output\renderer $renderer */

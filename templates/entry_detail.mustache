@@ -52,6 +52,12 @@
     * annulurl string - only used when canannul is true
     * canseeattachments bool - whether to show the attachments link (phase 5.6)
     * attachmentsurl string - only used when canseeattachments is true
+    * cancreateagreement bool - whether to show the "create agreement" link (phase 6.1)
+    * createagreementurl string - only used when cancreateagreement is true
+    * cancreatefollowup bool - whether to show the "create follow-up" link (phase 6.2)
+    * createfollowupurl string - only used when cancreatefollowup is true
+    * cancreatereferral bool - whether to show the "create referral" link (phase 6.4)
+    * createreferralurl string - only used when cancreatereferral is true
 
     Example context (json):
     {
@@ -78,7 +84,13 @@
         "canannul": true,
         "annulurl": "https://example.org/local/monlaututoria/entries/annul.php?id=1",
         "canseeattachments": true,
-        "attachmentsurl": "https://example.org/local/monlaututoria/entries/attachments.php?id=1"
+        "attachmentsurl": "https://example.org/local/monlaututoria/entries/attachments.php?id=1",
+        "cancreateagreement": true,
+        "createagreementurl": "https://example.org/local/monlaututoria/agreements/create.php?entryid=1",
+        "cancreatefollowup": true,
+        "createfollowupurl": "https://example.org/local/monlaututoria/followups/create.php?entryid=1",
+        "cancreatereferral": true,
+        "createreferralurl": "https://example.org/local/monlaututoria/referrals/create.php?entryid=1"
     }
 }}
 <dl class="row">
@@ -143,6 +155,15 @@
 {{#canseeattachments}}
 <p><a class="btn btn-secondary" href="{{attachmentsurl}}">{{#str}} entry_attachments_title, local_monlaututoria {{/str}}</a></p>
 {{/canseeattachments}}
+{{#cancreateagreement}}
+<p><a class="btn btn-secondary" href="{{createagreementurl}}">{{#str}} agreement_create, local_monlaututoria {{/str}}</a></p>
+{{/cancreateagreement}}
+{{#cancreatefollowup}}
+<p><a class="btn btn-secondary" href="{{createfollowupurl}}">{{#str}} followup_create, local_monlaututoria {{/str}}</a></p>
+{{/cancreatefollowup}}
+{{#cancreatereferral}}
+<p><a class="btn btn-secondary" href="{{createreferralurl}}">{{#str}} referral_create, local_monlaututoria {{/str}}</a></p>
+{{/cancreatereferral}}
 {{#canannul}}
 <p><a class="btn btn-outline-danger" href="{{annulurl}}">{{#str}} entry_annul_title, local_monlaututoria {{/str}}</a></p>
 {{/canannul}}
