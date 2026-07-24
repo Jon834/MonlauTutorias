@@ -14,21 +14,44 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_monlaututoria\repository;
+
 /**
- * Version details for local_monlaututoria.
+ * Read-only access to Moodle core's cohort table.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class cohort_repository {
 
-defined('MOODLE_INTERNAL') || die();
+    /**
+     * @return \stdClass[] keyed by id
+     */
+    public function get_all(): array {
+        global $DB;
 
-$plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026090100;
-// Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
-// este valor es compatible con esa instancia; sigue sin confirmarse el número
-// exacto del core (no bloqueante, solo pendiente de precisión).
-$plugin->requires  = 2025100600;
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.9.0';
+        return $DB->get_records('cohort', null, 'name ASC, id ASC');
+    }
+
+    /**
+     * @param int[] $ids
+     * @return \stdClass[] keyed by id
+     */
+    public function get_many(array $ids): array {
+        global $DB;
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $DB->get_records_list('cohort', 'id', array_unique(array_map('intval', $ids)));
+    }
+
+    /**
+     * @return int[]
+     */
+    public function get_all_ids(): array {
+        return array_map('intval', array_keys($this->get_all()));
+    }
+}

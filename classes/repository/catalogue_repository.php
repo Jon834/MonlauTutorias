@@ -144,6 +144,20 @@ abstract class catalogue_repository {
     }
 
     /**
+     * Returns the raw record for a catalogue item identified by shortname.
+     *
+     * @param string $shortname
+     * @return \stdClass|null
+     */
+    public function find_by_shortname(string $shortname): ?\stdClass {
+        global $DB;
+
+        $record = $DB->get_record($this->get_table(), ['shortname' => $shortname]);
+
+        return $record ?: null;
+    }
+
+    /**
      * Returns true if another item with the same shortname already exists.
      *
      * @param string $shortname

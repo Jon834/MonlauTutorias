@@ -446,5 +446,26 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026082700, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026090100) {
+        // Phase 8.1: explicit cohort-based coordination scopes.
+        $table = new xmldb_table('local_tut_coordscope');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('modifiedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_user_cohort', XMLDB_KEY_UNIQUE, ['userid', 'cohortid']);
+        $table->add_index('ix_userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+        $table->add_index('ix_cohortid', XMLDB_INDEX_NOTUNIQUE, ['cohortid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026090100, 'local', 'monlaututoria');
+    }
+
     return true;
 }

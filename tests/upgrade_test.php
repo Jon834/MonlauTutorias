@@ -65,6 +65,7 @@ final class upgrade_test extends \advanced_testcase {
         'local_tut_agreement',
         'local_tut_followup',
         'local_tut_referral',
+        'local_tut_coordscope',
     ];
 
     /** @var string[] the 5 tables phase 5 introduced (2026081100/2026081600) */
@@ -81,6 +82,7 @@ final class upgrade_test extends \advanced_testcase {
         'local_tut_agreement',
         'local_tut_followup',
         'local_tut_referral',
+        'local_tut_coordscope',
     ];
 
     /**
@@ -317,6 +319,23 @@ final class upgrade_test extends \advanced_testcase {
             'duedate' => time(), 'createdby' => get_admin()->id,
         ]);
         $this->assertNotNull($agreementrepository->get($agreementid));
+    }
+
+    public function test_upgrade_from_0_8_4_pre_phase8_adds_coordination_scope_table(): void {
+        $this->resetAfterTest();
+        $this->require_upgrade_script();
+
+        $dbman = $this->dbman();
+        foreach (self::PHASE8_TABLES as $tablename) {
+            $table = new \xmldb_table($tablename);
+            if ($dbman->table_exists($table)) {
+                $dbman->drop_table($table);
+            }
+        }
+
+        $result = xmldb_local_monlaututoria_upgrade(2026082700);
+        $this->assertTrue($result);
+        $this->assertTrue($dbman->table_exists(new \xmldb_table('local_tut_coordscope')));
     }
 
     public function test_upgrade_from_already_current_version_is_a_safe_noop(): void {

@@ -193,6 +193,21 @@ final class referral_service {
     }
 
     /**
+     * Visible open referrals for a batch of students. The same creator/assignee/
+     * managereferrals rule as get_for_viewer(), but applied in bulk for dashboards.
+     *
+     * @param int[] $studentids
+     * @param int $viewerid
+     * @return referral[]
+     */
+    public function list_open_for_students(array $studentids, int $viewerid): array {
+        $records = array_values($this->repository->find_open_by_students($studentids));
+        $visible = array_filter($records, fn (\stdClass $record): bool => $this->can_view($record, $viewerid));
+
+        return array_map(static fn (\stdClass $record): referral => referral::from_record($record), array_values($visible));
+    }
+
+    /**
      * @param int $id
      * @param int $userid
      * @return bool

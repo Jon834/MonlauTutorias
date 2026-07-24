@@ -1286,4 +1286,71 @@ final class renderer extends \plugin_renderer_base {
 
         return implode('; ', $labels);
     }
+
+    public function coordination_summary_cards(\local_monlaututoria\domain\coordination_dashboard_summary $summary): string {
+        $cards = [
+            ['label' => get_string('coordination_summary_population', 'local_monlaututoria'), 'value' => $summary->populationcount],
+            ['label' => get_string('coordination_summary_withinitial', 'local_monlaututoria'), 'value' => $summary->withinitialcount],
+            ['label' => get_string('coordination_summary_withoutentry', 'local_monlaututoria'), 'value' => $summary->withoutentrycount],
+            ['label' => get_string('coordination_summary_overduefollowups', 'local_monlaututoria'), 'value' => $summary->overduefollowupcount],
+            ['label' => get_string('coordination_summary_opencases', 'local_monlaututoria'), 'value' => $summary->opencasecount],
+        ];
+        $html = '';
+        foreach ($cards as $card) {
+            $html .= \html_writer::div(\html_writer::div(s((string) $card['value']), 'h3 mb-1') . \html_writer::div(s($card['label']), 'text-muted'), 'border rounded p-3');
+        }
+        return \html_writer::div($html, 'local-monlaututoria-dashboard-summary d-grid gap-3 mb-4');
+    }
+
+    public function coordination_quality_cards(\local_monlaututoria\domain\coordination_quality_summary $quality): string {
+        $cards = [
+            ['label' => get_string('coordination_quality_timetofirst', 'local_monlaututoria'), 'value' => format_float($quality->averagedaystofirstentry, 2) . ' d'],
+            ['label' => get_string('coordination_quality_agreements', 'local_monlaututoria'), 'value' => format_float($quality->agreementcompletionpercent, 2) . ' %'],
+            ['label' => get_string('coordination_quality_followups', 'local_monlaututoria'), 'value' => format_float($quality->followupontimepercent, 2) . ' %'],
+            ['label' => get_string('coordination_quality_familycontacts', 'local_monlaututoria'), 'value' => $quality->familycontactcount],
+            ['label' => get_string('coordination_quality_continuity', 'local_monlaututoria'), 'value' => format_float($quality->continuitypercent, 2) . ' %'],
+        ];
+        $html = '';
+        foreach ($cards as $card) {
+            $html .= \html_writer::div(\html_writer::div(s((string) $card['value']), 'h3 mb-1') . \html_writer::div(s($card['label']), 'text-muted'), 'border rounded p-3');
+        }
+        return \html_writer::div($html, 'local-monlaututoria-dashboard-summary d-grid gap-3 mb-4');
+    }
+
+    public function coordination_breakdown_table(array $rows): string {
+        if (empty($rows)) {
+            return $this->output->notification(get_string('coordination_dashboard_empty', 'local_monlaututoria'), \core\output\notification::NOTIFY_INFO);
+        }
+        $table = new \html_table();
+        $table->head = [
+            get_string('coordination_breakdown_label', 'local_monlaututoria'),
+            get_string('coordination_breakdown_population', 'local_monlaututoria'),
+            get_string('coordination_breakdown_withinitial', 'local_monlaututoria'),
+            get_string('coordination_breakdown_withoutentry', 'local_monlaututoria'),
+            get_string('coordination_breakdown_overduefollowups', 'local_monlaututoria'),
+            get_string('coordination_breakdown_opencases', 'local_monlaututoria'),
+        ];
+        foreach ($rows as $row) {
+            $table->data[] = [format_string($row->label), $row->studentcount, $row->withinitialcount, $row->withoutentrycount, $row->overduefollowupcount, $row->opencasecount];
+        }
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    public function coordination_scope_assignments_table(array $users, array $scopecohortids, array $cohorts): string {
+        if (empty($scopecohortids)) {
+            return $this->output->notification(get_string('coordination_scope_empty', 'local_monlaututoria'), \core\output\notification::NOTIFY_INFO);
+        }
+        $table = new \html_table();
+        $table->head = [get_string('coordination_scope_user', 'local_monlaututoria'), get_string('coordination_scope_availablecohorts', 'local_monlaututoria')];
+        foreach ($scopecohortids as $userid => $cohortids) {
+            $labels = [];
+            foreach ($cohortids as $cohortid) {
+                $labels[] = isset($cohorts[$cohortid]) ? format_string($cohorts[$cohortid]->name) : ('#' . $cohortid);
+            }
+            $user = $users[$userid] ?? null;
+            $table->data[] = [$user ? fullname($user) : ('#' . $userid), s(implode(', ', $labels))];
+        }
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
 }

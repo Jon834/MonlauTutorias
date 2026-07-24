@@ -78,6 +78,20 @@ final class entry_repository {
     }
 
     /**
+     * @param int[] $ids
+     * @return \stdClass[] keyed by id
+     */
+    public function get_many(array $ids): array {
+        global $DB;
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $DB->get_records_list(self::TABLE, 'id', array_unique(array_map('intval', $ids)));
+    }
+
+    /**
      * @param int $studentid
      * @param int|null $academicyearid
      * @return \stdClass[] ordered most recent entrydate first
@@ -251,6 +265,53 @@ final class entry_repository {
         }
 
         return $latest;
+    }
+
+    /**
+     * Returns all active tutoring entries for a batch of students in one academic year.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return \stdClass[]
+     */
+    public function find_active_by_students(array $studentids, int $academicyearid): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED);
+        $params['academicyearid'] = $academicyearid;
+        $params['status'] = entry_status::ACTIVE;
+
+        $sql = 'studentid ' . $insql . ' AND academicyearid = :academicyearid AND status = :status';
+
+        return $DB->get_records_select(self::TABLE, $sql, $params, 'studentid ASC, entrydate ASC, id ASC');
+    }
+
+    /**
+     * Returns the earliest active tutoring entry for each student in one academic year.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return array<int, \stdClass> keyed by student id
+     */
+    public function get_first_active_by_students(array $studentids, int $academicyearid): array {
+        if (empty($studentids)) {
+            return [];
+        }
+
+        $rows = $this->find_active_by_students($studentids, $academicyearid);
+        $first = [];
+        foreach ($rows as $row) {
+            $studentid = (int) $row->studentid;
+            if (!isset($first[$studentid])) {
+                $first[$studentid] = $row;
+            }
+        }
+
+        return $first;
     }
 
     /**

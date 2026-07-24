@@ -304,5 +304,25 @@
         <INDEX NAME="ix_assignedto" UNIQUE="false" FIELDS="assignedto"/>
       </INDEXES>
     </TABLE>
+
+    <TABLE NAME="local_tut_coordscope" COMMENT="Explicit cohort-based scope assignments for coordination users (phase 8.1)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Coordinator user id; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Allowed Moodle cohort id; FK to cohort.id, not enforced at DB level"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_user_cohort" TYPE="unique" FIELDS="userid, cohortid"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="ix_cohortid" UNIQUE="false" FIELDS="cohortid"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

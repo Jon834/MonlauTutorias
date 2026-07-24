@@ -146,6 +146,40 @@ final class agreement_repository {
     }
 
     /**
+     * @param int[] $studentids
+     * @return \stdClass[]
+     */
+    public function find_by_students(array $studentids): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED, 'student');
+
+        return $DB->get_records_select(self::TABLE, 'studentid ' . $insql, $params, 'duedate ASC, id ASC');
+    }
+
+    /**
+     * @param int[] $studentids
+     * @return \stdClass[]
+     */
+    public function find_open_by_students(array $studentids): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$studentsql, $studentparams] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED, 'student');
+        [$statussql, $statusparams] = $DB->get_in_or_equal(agreement_status::open_values(), SQL_PARAMS_NAMED, 'status');
+        $sql = 'studentid ' . $studentsql . ' AND status ' . $statussql;
+
+        return $DB->get_records_select(self::TABLE, $sql, $studentparams + $statusparams, 'duedate ASC, id ASC');
+    }
+
+    /**
      * @param array $filters see search()
      * @return array{0: string, 1: array}
      */
