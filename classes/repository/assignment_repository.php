@@ -447,6 +447,35 @@ class assignment_repository {
      * @param int $academicyearid
      * @return \stdClass[] ordered by studentid, timestart DESC
      */
+    /**
+     * Current (vigente) primary assignments owned by one tutor in one academic year.
+     * Used by the tutor dashboard (phase 7.1) to list only the tutor's own
+     * students, never future or expired rows.
+     *
+     * @param int $tutorid
+     * @param int $academicyearid
+     * @param int|null $now defaults to time(), injectable for tests
+     * @return \stdClass[]
+     */
+    public function find_current_primary_by_tutor(int $tutorid, int $academicyearid, ?int $now = null): array {
+        global $DB;
+
+        $now = $now ?? time();
+        $params = [
+            'tutorid' => $tutorid,
+            'academicyearid' => $academicyearid,
+            'assignmenttype' => assignment_type::PRIMARY,
+            'status' => assignment_status::ACTIVE,
+            'now1' => $now,
+            'now2' => $now,
+        ];
+        $sql = 'tutorid = :tutorid AND academicyearid = :academicyearid AND assignmenttype = :assignmenttype '
+            . 'AND isprimary = 1 AND status = :status AND timestart <= :now1 '
+            . 'AND (timeend IS NULL OR timeend > :now2)';
+
+        return $DB->get_records_select(self::TABLE, $sql, $params, 'studentid ASC, id ASC');
+    }
+
     public function find_primary_rows_for_students(array $studentids, int $academicyearid): array {
         global $DB;
 

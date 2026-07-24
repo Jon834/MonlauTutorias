@@ -436,5 +436,15 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026081800, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026082400) {
+        // Phase 7.1 adds the tutor dashboard page/service only - no schema changes.
+        upgrade_plugin_savepoint(true, 2026082400, 'local', 'monlaututoria');
+    }
+
+    if ($oldversion < 2026082700) {
+        // Phase 7.2-7.5 complete the tutor dashboard and add the companion block - no schema changes.
+        upgrade_plugin_savepoint(true, 2026082700, 'local', 'monlaututoria');
+    }
+
     return true;
 }

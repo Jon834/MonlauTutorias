@@ -57,6 +57,13 @@ if ($hassiteconfig
     ));
 
     $ADMIN->add('local_monlaututoria', new admin_externalpage(
+        'local_monlaututoria_dashboard',
+        get_string('dashboard_title', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/dashboard.php'),
+        ['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments']
+    ));
+
+    $ADMIN->add('local_monlaututoria', new admin_externalpage(
         'local_monlaututoria_assignments',
         get_string('assignments', 'local_monlaututoria'),
         new moodle_url('/local/monlaututoria/assignments/index.php'),

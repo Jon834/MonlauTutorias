@@ -188,6 +188,72 @@ final class entry_repository {
     }
 
     /**
+     * Counts active tutoring entries by student, in one academic year.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return array<int, int> keyed by student id
+     */
+    public function count_active_by_students(array $studentids, int $academicyearid): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED);
+        $params['academicyearid'] = $academicyearid;
+        $params['status'] = entry_status::ACTIVE;
+
+        $sql = 'SELECT studentid, COUNT(1) AS entrycount
+                  FROM {' . self::TABLE . '}
+                 WHERE studentid ' . $insql . '
+                   AND academicyearid = :academicyearid
+                   AND status = :status
+              GROUP BY studentid';
+
+        $rows = $DB->get_records_sql($sql, $params);
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row->studentid] = (int) $row->entrycount;
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Returns the latest active tutoring entry for each student in one academic year.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return array<int, \stdClass> keyed by student id
+     */
+    public function get_latest_active_by_students(array $studentids, int $academicyearid): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED);
+        $params['academicyearid'] = $academicyearid;
+        $params['status'] = entry_status::ACTIVE;
+
+        $sql = 'studentid ' . $insql . ' AND academicyearid = :academicyearid AND status = :status';
+        $rows = $DB->get_records_select(self::TABLE, $sql, $params, 'studentid ASC, entrydate DESC, id DESC');
+
+        $latest = [];
+        foreach ($rows as $row) {
+            $studentid = (int) $row->studentid;
+            if (!isset($latest[$studentid])) {
+                $latest[$studentid] = $row;
+            }
+        }
+
+        return $latest;
+    }
+
+    /**
      * @param array $filters see search()
      * @return int
      */

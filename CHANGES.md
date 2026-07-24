@@ -1,5 +1,18 @@
 # Changelog — local_monlaututoria
 
+## 0.8.4 ??? 2026-07-24
+
+**Panel del tutor ??? cierre de la Fase 7.** Completa 7.1-7.5 sobre la Fase 6 ya cerrada. **Cierra la Fase 7 completa.**
+
+- **Dashboard del tutor** (`dashboard.php` + `dashboard_service`): lista alumnos principales vigentes del tutor para el curso acad??mico seleccionado, cobertura de tutor??as activas, seguimientos pr??ximos/vencidos, acuerdos pendientes/vencidos, derivaciones visibles y alumnos prioritarios.
+- **Acciones r??pidas reales** en el panel: registrar tutor??a, ver ficha, crear seguimiento y ejecutar acciones de seguimiento/acuerdo desde sus tablas; filtros persistentes (`studentfilter`/`pendingfilter`) guardados en preferencias de usuario.
+- **Resumen ampliado**: cobertura, pendientes, derivaciones, prioridad y contactos con familias calculados sin esquema nuevo.
+- **Bloque complementario `block_monlaututoria`**: deja de ser esqueleto y consume `dashboard_service` para mostrar solo resumen y enlaces, sin acceso directo a tablas.
+- **Pruebas/documentaci??n**: `dashboard_service_test.php` ampliado a 6 casos; `blocks/monlaututoria/tests/plugin_test.php` presente para el bloque. Cierre documental y bump de versi??n a `0.8.4` / `2026082700`.
+  - ?????? No ejecutado todav??a en este entorno; validado con `php -l`, queda pendiente la ejecuci??n real de PHPUnit/Behat/Moodle navegador.
+
+---
+
 ## 0.7.3 — 2026-07-24
 
 **Cierre de la Fase 6** — Fase 6.5, la última de la Fase 6 (6.1-6.4 ya completas). Auditoría, no funcionalidad nueva. **Cierra la Fase 6 completa.**

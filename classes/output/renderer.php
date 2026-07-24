@@ -211,15 +211,261 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
-     * Computes the display data for a status badge, distinguishing "upcoming"
-     * (active but timestart in the future) from the 4 stored status values.
-     * Shared by the list, detail and history templates via the
-     * assignment_status partial — never colour-only, always label + icon.
-     *
-     * @param string $status one of assignment_status::values()
-     * @param int $timestart
-     * @return array
+     * @param \local_monlaututoria\domain\tutor_dashboard_summary $summary
+     * @return string
      */
+    public function dashboard_summary_cards(\local_monlaututoria\domain\tutor_dashboard_summary $summary): string {
+        $cards = [
+            ['label' => get_string('dashboard_summary_assigned', 'local_monlaututoria'), 'value' => $summary->assignedcount],
+            ['label' => get_string('dashboard_summary_attended', 'local_monlaututoria'), 'value' => $summary->attendedcount],
+            ['label' => get_string('dashboard_summary_pendinginitial', 'local_monlaututoria'), 'value' => $summary->pendinginitialcount],
+            ['label' => get_string('dashboard_summary_coverage', 'local_monlaututoria'), 'value' => format_float($summary->coveragepercent, 2) . ' %'],
+            ['label' => get_string('dashboard_summary_followupsoverdue', 'local_monlaututoria'), 'value' => $summary->overduefollowupcount],
+            ['label' => get_string('dashboard_summary_agreementspending', 'local_monlaututoria'), 'value' => $summary->pendingagreementcount + $summary->overdueagreementcount],
+            ['label' => get_string('dashboard_summary_referrals', 'local_monlaututoria'), 'value' => $summary->openreferralcount],
+            ['label' => get_string('dashboard_summary_priority', 'local_monlaututoria'), 'value' => $summary->prioritystudentcount],
+            ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount],
+        ];
+
+        $html = '';
+        foreach ($cards as $card) {
+            $html .= \html_writer::div(
+                \html_writer::div(s($card['value']), 'h3 mb-1')
+                . \html_writer::div(s($card['label']), 'text-muted'),
+                'border rounded p-3'
+            );
+        }
+
+        return \html_writer::div($html, 'local-monlaututoria-dashboard-summary d-grid gap-3 mb-4');
+    }
+
+    /**
+     * @param \local_monlaututoria\domain\tutor_dashboard_student[] $students
+     * @param array<int, \stdClass> $studentusers keyed by student id
+     * @param int $academicyearid
+     * @param bool $cancreateentry
+     * @param bool $cancreatefollowup
+     * @return string
+     */
+    public function dashboard_students_table(
+        array $students,
+        array $studentusers,
+        int $academicyearid,
+        bool $cancreateentry,
+        bool $cancreatefollowup
+    ): string {
+        if (empty($students)) {
+            return $this->output->notification(
+                get_string('dashboard_students_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('dashboard_col_lastentry', 'local_monlaututoria'),
+            get_string('dashboard_col_entrycount', 'local_monlaututoria'),
+            get_string('dashboard_col_missinginitial', 'local_monlaututoria'),
+            get_string('dashboard_col_coverage', 'local_monlaututoria'),
+            get_string('dashboard_col_pendingbundle', 'local_monlaututoria'),
+            get_string('dashboard_col_priority', 'local_monlaututoria'),
+            get_string('assignment_col_actions', 'local_monlaututoria'),
+        ];
+
+        foreach ($students as $student) {
+            $user = $studentusers[$student->studentid] ?? null;
+            $studentname = $user ? fullname($user) : '#' . $student->studentid;
+            $studenturl = new \moodle_url('/local/monlaututoria/student/view.php', [
+                'id' => $student->studentid,
+                'academicyearid' => $academicyearid,
+            ]);
+            $lastentry = $student->latestactiveentry !== null
+                ? userdate((int) $student->latestactiveentry->entrydate, get_string('strftimedatefullshort', 'langconfig'))
+                : '-';
+            $missinginitial = $student->missinginitial ? get_string('yes') : get_string('no');
+            $coveragestring = $student->covered
+                ? get_string('dashboard_coveragestatus_covered', 'local_monlaututoria')
+                : get_string('dashboard_coveragestatus_pending_initial', 'local_monlaututoria');
+            $pendingbundle = 'Seg. ' . $student->openfollowupcount
+                . ' / Acu. ' . $student->openagreementcount
+                . ' / Der. ' . $student->openreferralcount;
+
+            $actions = [
+                \html_writer::link($studenturl, get_string('dashboard_action_viewstudent', 'local_monlaututoria')),
+            ];
+            if ($cancreateentry) {
+                $actions[] = \html_writer::link(
+                    new \moodle_url('/local/monlaututoria/entries/create.php', [
+                        'studentid' => $student->studentid,
+                        'academicyearid' => $academicyearid,
+                    ]),
+                    get_string('dashboard_action_createentry', 'local_monlaututoria')
+                );
+            }
+            if ($cancreatefollowup && $student->latestactiveentry !== null) {
+                $actions[] = \html_writer::link(
+                    new \moodle_url('/local/monlaututoria/followups/create.php', [
+                        'entryid' => $student->latestactiveentry->id,
+                    ]),
+                    get_string('dashboard_action_createfollowup', 'local_monlaututoria')
+                );
+            }
+
+            $table->data[] = [
+                \html_writer::link($studenturl, format_string($studentname)),
+                $lastentry,
+                $student->activeentrycount,
+                $missinginitial,
+                $coveragestring,
+                s($pendingbundle),
+                $student->ispriority ? get_string('yes') : get_string('no'),
+                implode(' | ', $actions),
+            ];
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * @param \local_monlaututoria\domain\followup[] $followups
+     * @param array<int, \stdClass> $students keyed by student id
+     * @param bool $canmanage
+     * @return string
+     */
+    public function dashboard_followups_table(array $followups, array $students, bool $canmanage): string {
+        if (empty($followups)) {
+            return $this->output->notification(
+                get_string('dashboard_followups_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $priorityoptions = \local_monlaututoria\domain\priority_level::get_options();
+        $statusoptions = \local_monlaututoria\domain\followup_status::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('followup_field_duedate', 'local_monlaututoria'),
+            get_string('followup_field_priority', 'local_monlaututoria'),
+            get_string('followup_field_status', 'local_monlaututoria'),
+            '',
+        ];
+
+        foreach ($followups as $followup) {
+            $student = $students[$followup->studentid] ?? null;
+            $statuslabel = $statusoptions[$followup->status] ?? $followup->status;
+            if ($followup->is_overdue()) {
+                $statuslabel = get_string('followupstatus_overdue', 'local_monlaututoria') . ' (' . $statuslabel . ')';
+            }
+
+            $table->data[] = [
+                $student ? s(fullname($student)) : '#' . $followup->studentid,
+                userdate($followup->duedate, $dateformat),
+                $priorityoptions[$followup->priority] ?? $followup->priority,
+                $statuslabel,
+                $canmanage ? $this->followup_action_links($followup) : '',
+            ];
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * @param \local_monlaututoria\domain\agreement[] $agreements
+     * @param array<int, \stdClass> $students keyed by student id
+     * @param array<int, \stdClass> $responsibleusers keyed by user id
+     * @param bool $canmanage
+     * @return string
+     */
+    public function dashboard_agreements_table(array $agreements, array $students, array $responsibleusers, bool $canmanage): string {
+        if (empty($agreements)) {
+            return $this->output->notification(
+                get_string('dashboard_agreements_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $responsibletypeoptions = \local_monlaututoria\domain\agreement_responsible_type::get_options();
+        $statusoptions = \local_monlaututoria\domain\agreement_status::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('agreement_field_description', 'local_monlaututoria'),
+            get_string('agreement_field_responsibletype', 'local_monlaututoria'),
+            get_string('agreement_field_duedate', 'local_monlaututoria'),
+            get_string('agreement_field_status', 'local_monlaututoria'),
+            '',
+        ];
+
+        foreach ($agreements as $agreement) {
+            $student = $students[$agreement->studentid] ?? null;
+            $responsiblelabel = $responsibletypeoptions[$agreement->responsibletype] ?? $agreement->responsibletype;
+            if ($agreement->responsibleuserid !== null) {
+                $responsibleuser = $responsibleusers[$agreement->responsibleuserid] ?? null;
+                $responsiblelabel .= ': ' . ($responsibleuser ? s(fullname($responsibleuser)) : '#' . $agreement->responsibleuserid);
+            } else if ($agreement->responsibleexternalname !== null) {
+                $responsiblelabel .= ': ' . s($agreement->responsibleexternalname);
+            }
+
+            $statuslabel = $statusoptions[$agreement->status] ?? $agreement->status;
+            if ($agreement->is_overdue()) {
+                $statuslabel = get_string('agreementstatus_overdue', 'local_monlaututoria') . ' (' . $statuslabel . ')';
+            }
+
+            $table->data[] = [
+                $student ? s(fullname($student)) : '#' . $agreement->studentid,
+                s($agreement->description),
+                $responsiblelabel,
+                userdate($agreement->duedate, $dateformat),
+                $statuslabel,
+                $canmanage ? $this->agreement_action_links($agreement) : '',
+            ];
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * @param \local_monlaututoria\domain\tutor_dashboard_student[] $students
+     * @param array<int, \stdClass> $studentusers keyed by student id
+     * @param int $academicyearid
+     * @return string
+     */
+    public function dashboard_priority_students_list(array $students, array $studentusers, int $academicyearid): string {
+        if (empty($students)) {
+            return $this->output->notification(
+                get_string('dashboard_priority_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $items = [];
+        foreach ($students as $student) {
+            $user = $studentusers[$student->studentid] ?? null;
+            $label = $user ? fullname($user) : '#' . $student->studentid;
+            $details = 'Seg. ' . $student->openfollowupcount
+                . ' / Acu. ' . $student->openagreementcount
+                . ' / Der. ' . $student->openreferralcount;
+            $items[] = \html_writer::tag(
+                'li',
+                \html_writer::link(
+                    new \moodle_url('/local/monlaututoria/student/view.php', [
+                        'id' => $student->studentid,
+                        'academicyearid' => $academicyearid,
+                    ]),
+                    s($label)
+                ) . ' - ' . s($details)
+            );
+        }
+
+        return \html_writer::tag('ul', implode('', $items));
+    }
+
     public function status_badge_data(string $status, int $timestart): array {
         if ($status === \local_monlaututoria\domain\assignment_status::ACTIVE && $timestart > time()) {
             return [

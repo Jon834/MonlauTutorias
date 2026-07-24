@@ -76,7 +76,7 @@ final class upgrade_test extends \advanced_testcase {
         'local_tut_entryattachment',
     ];
 
-    /** @var string[] the 3 tables phase 6.1 introduced (2026081800) */
+    /** @var string[] the 3 tables phase 6.1 introduced (2026081800); phase 7.1 (2026082400) is page/service only */
     private const PHASE6_TABLES = [
         'local_tut_agreement',
         'local_tut_followup',
