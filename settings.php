@@ -101,6 +101,18 @@ if ($hassiteconfig
         ['local/monlaututoria:managecoordinationscopes']
     ));
 
+    $ADMIN->add('local_monlaututoria', new admin_externalpage(
+        'local_monlaututoria_notifications',
+        get_string('notification_preferences_title', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/notifications.php'),
+        [
+            'local/monlaututoria:viewownstudents',
+            'local/monlaututoria:viewallassignments',
+            'local/monlaututoria:viewcoordinationdashboard',
+            'local/monlaututoria:managereferrals'
+        ]
+    ));
+
     // Phase 5.5: first real setting this plugin has ever needed — every page
     // above is an admin_externalpage instead. "Ventana de edición
     // configurable" (docs/fases/phase-5.md) means exactly this: how long

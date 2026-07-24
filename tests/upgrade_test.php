@@ -66,6 +66,7 @@ final class upgrade_test extends \advanced_testcase {
         'local_tut_followup',
         'local_tut_referral',
         'local_tut_coordscope',
+        'local_tut_notification',
     ];
 
     /** @var string[] the 5 tables phase 5 introduced (2026081100/2026081600) */
@@ -83,6 +84,7 @@ final class upgrade_test extends \advanced_testcase {
         'local_tut_followup',
         'local_tut_referral',
         'local_tut_coordscope',
+        'local_tut_notification',
     ];
 
     /**

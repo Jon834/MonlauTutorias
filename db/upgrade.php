@@ -467,5 +467,34 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026090100, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026090500) {
+        // Phase 9.1-9.5: notification outbox and deduplication log.
+        $table = new xmldb_table('local_tut_notification');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('notificationtype', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('recipientid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('actorid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('entitytype', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('entityid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('digestkey', XMLDB_TYPE_CHAR, '80', null, XMLDB_NOTNULL, null, '');
+        $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'pending');
+        $table->add_field('attempts', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('lasterror', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('timesent', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_dispatch', XMLDB_KEY_UNIQUE, ['notificationtype', 'recipientid', 'entitytype', 'entityid', 'digestkey']);
+        $table->add_index('ix_recipient_status', XMLDB_INDEX_NOTUNIQUE, ['recipientid', 'status']);
+        $table->add_index('ix_actorid', XMLDB_INDEX_NOTUNIQUE, ['actorid']);
+        $table->add_index('ix_timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026090500, 'local', 'monlaututoria');
+    }
+
     return true;
 }
+

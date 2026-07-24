@@ -324,5 +324,32 @@
         <INDEX NAME="ix_cohortid" UNIQUE="false" FIELDS="cohortid"/>
       </INDEXES>
     </TABLE>
+
+    <TABLE NAME="local_tut_notification" COMMENT="Notification outbox and deduplication log for phase 9">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="notificationtype" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="recipientid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Recipient user id; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="actorid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User who triggered the notification when applicable"/>
+        <FIELD NAME="entitytype" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" COMMENT="assignment, referral, followup, agreement or digest"/>
+        <FIELD NAME="entityid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="digestkey" TYPE="char" LENGTH="80" NOTNULL="true" DEFAULT="" SEQUENCE="false" COMMENT="Per-day or per-week deduplication bucket"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" SEQUENCE="false"/>
+        <FIELD NAME="attempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lasterror" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_dispatch" TYPE="unique" FIELDS="notificationtype, recipientid, entitytype, entityid, digestkey"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_recipient_status" UNIQUE="false" FIELDS="recipientid, status"/>
+        <INDEX NAME="ix_actorid" UNIQUE="false" FIELDS="actorid"/>
+        <INDEX NAME="ix_timemodified" UNIQUE="false" FIELDS="timemodified"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

@@ -344,7 +344,10 @@ final class provider implements
                     WHERE studentid = :fu1 OR createdby = :fu2 OR modifiedby = :fu3
                 UNION
                 SELECT 1 FROM {local_tut_referral}
-                    WHERE studentid = :rf1 OR assignedto = :rf2 OR createdby = :rf3 OR modifiedby = :rf4';
+                    WHERE studentid = :rf1 OR assignedto = :rf2 OR createdby = :rf3 OR modifiedby = :rf4
+                UNION
+                SELECT 1 FROM {local_tut_notification}
+                    WHERE recipientid = :nt1 OR actorid = :nt2';
         $params = [
             'ay1' => $userid, 'ay2' => $userid,
             'r1'  => $userid, 'r2'  => $userid,
@@ -358,6 +361,7 @@ final class provider implements
             'ag1' => $userid, 'ag2' => $userid, 'ag3' => $userid, 'ag4' => $userid,
             'fu1' => $userid, 'fu2' => $userid, 'fu3' => $userid,
             'rf1' => $userid, 'rf2' => $userid, 'rf3' => $userid, 'rf4' => $userid,
+            'nt1' => $userid, 'nt2' => $userid,
         ];
 
         if ($DB->record_exists_sql($sql, $params)) {
@@ -408,6 +412,9 @@ final class provider implements
         $userlist->add_from_sql('assignedto', 'SELECT assignedto FROM {local_tut_referral}', []);
         $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_referral}', []);
         $userlist->add_from_sql('modifiedby', 'SELECT modifiedby FROM {local_tut_referral}', []);
+
+        $userlist->add_from_sql('recipientid', 'SELECT recipientid FROM {local_tut_notification}', []);
+        $userlist->add_from_sql('actorid', 'SELECT actorid FROM {local_tut_notification}', []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -454,6 +461,7 @@ final class provider implements
         $data['agreements'] = self::export_agreements($userid);
         $data['followups'] = self::export_followups($userid);
         $data['referrals'] = self::export_referrals($userid);
+        $data['notifications'] = self::export_notifications($userid);
 
         writer::with_context(\context_system::instance())->export_data(
             [get_string('pluginname', 'local_monlaututoria')],
@@ -822,6 +830,47 @@ final class provider implements
         return $export;
     }
 
+    /**
+     * @param int $userid
+     * @return array
+     */
+    private static function export_notifications(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'local_tut_notification',
+            'recipientid = :r OR actorid = :a',
+            ['r' => $userid, 'a' => $userid],
+            'id ASC'
+        );
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->recipientid === $userid) {
+                $roles[] = 'recipient';
+            }
+            if ((int) $record->actorid === $userid) {
+                $roles[] = 'actor';
+            }
+
+            $export[] = (object) [
+                'yourrole' => $roles,
+                'notificationtype' => $record->notificationtype,
+                'entitytype' => $record->entitytype,
+                'entityid' => (int) $record->entityid,
+                'digestkey' => $record->digestkey,
+                'status' => $record->status,
+                'attempts' => (int) $record->attempts,
+                'lasterror' => $record->lasterror,
+                'timesent' => $record->timesent ? userdate($record->timesent) : null,
+                'timecreated' => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
+    }
+
     public static function delete_data_for_all_users_in_context(\context $context): void {
         if ($context->contextlevel !== CONTEXT_SYSTEM) {
             return;
@@ -836,6 +885,7 @@ final class provider implements
         self::anonymize_all_agreements();
         self::anonymize_all_followups();
         self::anonymize_all_referrals();
+        self::delete_all_notifications();
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -851,6 +901,7 @@ final class provider implements
                 self::anonymize_agreements($userid);
                 self::anonymize_followups($userid);
                 self::anonymize_referrals($userid);
+                self::anonymize_notifications($userid);
             }
         }
     }
@@ -870,6 +921,7 @@ final class provider implements
             self::anonymize_agreements((int) $userid);
             self::anonymize_followups((int) $userid);
             self::anonymize_referrals((int) $userid);
+            self::anonymize_notifications((int) $userid);
         }
     }
 
@@ -1170,4 +1222,26 @@ final class provider implements
         $DB->set_field('local_tut_referral', 'createdby', $noreply, []);
         $DB->set_field('local_tut_referral', 'modifiedby', $noreply, []);
     }
+
+    /**
+     * Notification logs are operational metadata only: rows where the user was
+     * recipient are deleted entirely, while rows they only triggered keep the
+     * delivery audit but lose that actor attribution.
+     *
+     * @param int $userid
+     */
+    private static function anonymize_notifications(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $DB->delete_records('local_tut_notification', ['recipientid' => $userid]);
+        $DB->set_field('local_tut_notification', 'actorid', $noreply, ['actorid' => $userid]);
+    }
+
+    private static function delete_all_notifications(): void {
+        global $DB;
+
+        $DB->delete_records('local_tut_notification');
+    }
 }
+
