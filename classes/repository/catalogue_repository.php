@@ -124,6 +124,26 @@ abstract class catalogue_repository {
     }
 
     /**
+     * Batch fetch by id, keyed by id — one query regardless of how many ids
+     * are requested. Same rationale as academic_year_repository::get_many()
+     * (phase 3E.4): callers resolving several related catalogue rows at once
+     * (e.g. entry_service resolving the reasons attached to a tutoring entry,
+     * phase 5.1) must not do it in a per-id loop.
+     *
+     * @param int[] $ids
+     * @return \stdClass[] keyed by id; missing ids are simply absent, never an error
+     */
+    public function get_many(array $ids): array {
+        global $DB;
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $DB->get_records_list($this->get_table(), 'id', array_unique(array_map('intval', $ids)));
+    }
+
+    /**
      * Returns true if another item with the same shortname already exists.
      *
      * @param string $shortname

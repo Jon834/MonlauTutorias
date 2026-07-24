@@ -23,6 +23,12 @@ use core_privacy\local\request\writer;
 use local_monlaututoria\repository\assignment_repository;
 use local_monlaututoria\repository\academic_year_repository;
 use local_monlaututoria\repository\bulk_operation_repository;
+use local_monlaututoria\repository\entry_repository;
+use local_monlaututoria\repository\entry_participant_repository;
+use local_monlaututoria\repository\entry_version_repository;
+use local_monlaututoria\repository\entry_attachment_repository;
+use local_monlaututoria\domain\entry_participant_type;
+use local_monlaututoria\service\entry_attachment_service;
 
 /**
  * Tests for the retention policy decided in phase 3E.6: local_tut_assignment
@@ -82,6 +88,30 @@ final class provider_test extends \advanced_testcase {
         ]);
 
         $this->assertCount(1, provider::get_contexts_for_userid($tutor->id)->get_contexts());
+        $this->assertCount(0, provider::get_contexts_for_userid($bystander->id)->get_contexts());
+    }
+
+    public function test_get_contexts_for_userid_finds_entry_involvement(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $participant = $this->getDataGenerator()->create_user();
+        $bystander = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        (new entry_participant_repository())->create((object) [
+            'entryid' => $entryid, 'participanttype' => entry_participant_type::TEACHER,
+            'userid' => $participant->id, 'createdby' => get_admin()->id,
+        ]);
+
+        $this->assertCount(1, provider::get_contexts_for_userid($student->id)->get_contexts());
+        $this->assertCount(1, provider::get_contexts_for_userid($tutor->id)->get_contexts());
+        $this->assertCount(1, provider::get_contexts_for_userid($participant->id)->get_contexts());
         $this->assertCount(0, provider::get_contexts_for_userid($bystander->id)->get_contexts());
     }
 
@@ -214,5 +244,262 @@ final class provider_test extends \advanced_testcase {
         $userids = $userlist->get_userids();
         $this->assertContains((int) $student->id, $userids);
         $this->assertContains((int) $tutor->id, $userids);
+    }
+
+    public function test_export_user_data_includes_entries_with_notes_unmasked(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'),
+            'contentvisible' => 'Contenido compartido', 'noteinternal' => 'Nota interna',
+            'noterestricted' => 'Nota restringida', 'createdby' => get_admin()->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($student, 'local_monlaututoria', [$context->id]);
+        provider::export_user_data($approved);
+
+        $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_monlaututoria')]);
+
+        $this->assertNotEmpty($data->entries);
+        $this->assertContains('student', $data->entries[0]->yourrole);
+        // A subject access request is not gated by the normal
+        // viewstudentvisiblecontent/viewinternalnotes/viewrestrictednotes
+        // capabilities — every note is exported unmasked, same as note/
+        // closereason on local_tut_assignment already are.
+        $this->assertSame('Contenido compartido', $data->entries[0]->contentvisible);
+        $this->assertSame('Nota interna', $data->entries[0]->noteinternal);
+        $this->assertSame('Nota restringida', $data->entries[0]->noterestricted);
+    }
+
+    public function test_delete_data_for_user_anonymizes_entry_identity_but_keeps_notes(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $repository = new entry_repository();
+        $id = $repository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'),
+            'contentvisible' => 'Contenido', 'noteinternal' => 'Interna', 'noterestricted' => 'Restringida',
+            'createdby' => get_admin()->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($student, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $record = $repository->get($id);
+
+        $this->assertSame($noreply, (int) $record->studentid);
+        $this->assertSame($tutor->id, (int) $record->tutorid);
+        // Decision taken with the user when this table was introduced (phase
+        // 5.1): same policy as local_tut_assignment's note — content is
+        // conserved, only identity is anonymised.
+        $this->assertSame('Contenido', $record->contentvisible);
+        $this->assertSame('Interna', $record->noteinternal);
+        $this->assertSame('Restringida', $record->noterestricted);
+    }
+
+    public function test_delete_data_for_user_anonymizes_entry_participant_userid(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $participant = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $participantrepository = new entry_participant_repository();
+        $participantrepository->create((object) [
+            'entryid' => $entryid, 'participanttype' => entry_participant_type::TEACHER,
+            'userid' => $participant->id, 'createdby' => get_admin()->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($participant, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $records = array_values($participantrepository->get_for_entry($entryid));
+        $this->assertSame($noreply, (int) $records[0]->userid);
+    }
+
+    /**
+     * @param int $entryid
+     * @param int $userid createdby of the file
+     * @param string $filename
+     * @param string $content
+     * @return string the new pathnamehash
+     */
+    private function create_attachment_file(int $entryid, int $userid, string $filename, string $content): string {
+        $file = get_file_storage()->create_file_from_string([
+            'contextid' => \context_system::instance()->id,
+            'component' => 'local_monlaututoria',
+            'filearea'  => entry_attachment_service::FILEAREA,
+            'itemid'    => $entryid,
+            'filepath'  => '/',
+            'filename'  => $filename,
+        ], $content);
+
+        return $file->get_pathnamehash();
+    }
+
+    public function test_get_contexts_for_userid_finds_entry_version_involvement(): void {
+        $this->resetAfterTest();
+
+        $editor = $this->getDataGenerator()->create_user();
+        $bystander = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        (new entry_version_repository())->create((object) [
+            'entryid' => $entryid, 'versionnumber' => 1,
+            'snapshotjson' => json_encode(['status' => 'active']), 'createdby' => $editor->id,
+        ]);
+
+        $this->assertCount(1, provider::get_contexts_for_userid($editor->id)->get_contexts());
+        $this->assertCount(0, provider::get_contexts_for_userid($bystander->id)->get_contexts());
+    }
+
+    public function test_get_contexts_for_userid_finds_entry_attachment_involvement(): void {
+        $this->resetAfterTest();
+
+        $uploader = $this->getDataGenerator()->create_user();
+        $bystander = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $pathnamehash = $this->create_attachment_file($entryid, $uploader->id, 'informe.pdf', 'contenido');
+        (new entry_attachment_repository())->create((object) [
+            'entryid' => $entryid, 'pathnamehash' => $pathnamehash,
+            'category' => 'report', 'createdby' => $uploader->id,
+        ]);
+
+        $this->assertCount(1, provider::get_contexts_for_userid($uploader->id)->get_contexts());
+        $this->assertCount(0, provider::get_contexts_for_userid($bystander->id)->get_contexts());
+    }
+
+    public function test_export_user_data_includes_entry_versions_and_attachments(): void {
+        $this->resetAfterTest();
+
+        $editor = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        (new entry_version_repository())->create((object) [
+            'entryid' => $entryid, 'versionnumber' => 1,
+            'snapshotjson' => json_encode(['contentvisible' => 'Antes de editar']),
+            'changereason' => 'Corrección de fecha', 'createdby' => $editor->id,
+        ]);
+        $pathnamehash = $this->create_attachment_file($entryid, $editor->id, 'consentimiento.pdf', 'contenido');
+        (new entry_attachment_repository())->create((object) [
+            'entryid' => $entryid, 'pathnamehash' => $pathnamehash,
+            'category' => 'consent', 'description' => 'Firmado por la familia',
+            'createdby' => $editor->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($editor, 'local_monlaututoria', [$context->id]);
+        provider::export_user_data($approved);
+
+        $data = writer::with_context($context)->get_data([get_string('pluginname', 'local_monlaututoria')]);
+
+        $this->assertNotEmpty($data->entryversions);
+        $this->assertSame('Corrección de fecha', $data->entryversions[0]->changereason);
+        $this->assertSame('Antes de editar', $data->entryversions[0]->snapshot['contentvisible']);
+
+        $this->assertNotEmpty($data->entryattachments);
+        $this->assertSame('consentimiento.pdf', $data->entryattachments[0]->filename);
+        $this->assertSame('Firmado por la familia', $data->entryattachments[0]->description);
+    }
+
+    public function test_delete_data_for_user_anonymizes_entry_version_but_keeps_snapshot(): void {
+        $this->resetAfterTest();
+
+        $editor = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $versionrepository = new entry_version_repository();
+        $versionrepository->create((object) [
+            'entryid' => $entryid, 'versionnumber' => 1,
+            'snapshotjson' => json_encode(['contentvisible' => 'Menciona a Juan']),
+            'changereason' => 'Motivo', 'createdby' => $editor->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($editor, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $records = array_values($versionrepository->get_for_entry($entryid));
+        $this->assertSame($noreply, (int) $records[0]->createdby);
+        // Institutional-history value conserved, same policy as local_tut_entry.
+        $this->assertStringContainsString('Menciona a Juan', $records[0]->snapshotjson);
+        $this->assertSame('Motivo', $records[0]->changereason);
+    }
+
+    public function test_delete_data_for_user_anonymizes_entry_attachment_and_clears_description(): void {
+        $this->resetAfterTest();
+
+        $uploader = $this->getDataGenerator()->create_user();
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $year = $this->create_academic_year();
+
+        $entryid = (new entry_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id, 'academicyearid' => $year,
+            'entrydate' => strtotime('2026-10-01'), 'createdby' => get_admin()->id,
+        ]);
+        $pathnamehash = $this->create_attachment_file($entryid, $uploader->id, 'informe.pdf', 'contenido');
+        $attachmentrepository = new entry_attachment_repository();
+        $attachmentrepository->create((object) [
+            'entryid' => $entryid, 'pathnamehash' => $pathnamehash,
+            'category' => 'report', 'description' => 'Informe de Juan Pérez',
+            'createdby' => $uploader->id,
+        ]);
+
+        $context = \context_system::instance();
+        $approved = new approved_contextlist($uploader, 'local_monlaututoria', [$context->id]);
+        provider::delete_data_for_user($approved);
+
+        $noreply = \core_user::get_noreply_user()->id;
+        $records = array_values($attachmentrepository->get_for_entry($entryid));
+        $this->assertSame($noreply, (int) $records[0]->createdby);
+        $this->assertNull($records[0]->description);
+        // category and the file itself are left untouched.
+        $this->assertSame('report', $records[0]->category);
     }
 }

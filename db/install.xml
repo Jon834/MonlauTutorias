@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/monlaututoria/db" VERSION="20260724" COMMENT="XMLDB file for Moodle local/monlaututoria"
+<XMLDB PATH="local/monlaututoria/db" VERSION="20260816" COMMENT="XMLDB file for Moodle local/monlaututoria"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -131,6 +131,101 @@
         <INDEX NAME="ix_status" UNIQUE="false" FIELDS="status"/>
         <INDEX NAME="ix_createdby" UNIQUE="false" FIELDS="createdby"/>
         <INDEX NAME="ix_timecreated" UNIQUE="false" FIELDS="timecreated"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_entry" COMMENT="Tutoring entries (phase 5.1) — the longitudinal record of tutorial actuations">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to user.id, not enforced at DB level per Moodle convention"/>
+        <FIELD NAME="tutorid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Tutor responsible for this entry; FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="academicyearid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_tut_academicyear.id, not enforced at DB level"/>
+        <FIELD NAME="entrydate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The real date the tutoring actuation took place, distinct from timecreated"/>
+        <FIELD NAME="modalityid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="FK to local_tut_modality.id, not enforced at DB level"/>
+        <FIELD NAME="contentvisible" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Content shared with the student"/>
+        <FIELD NAME="noteinternal" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Internal tutoring note, never shown to the student"/>
+        <FIELD NAME="noterestricted" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Restricted note, most sensitive tier"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="active" SEQUENCE="false" COMMENT="active, annulled — see entry_status. Annulment (phase 5.5) has no extra columns yet"/>
+        <FIELD NAME="nextfollowupdate" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Optional next follow-up date"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The author of this entry"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_student_academicyear" UNIQUE="false" FIELDS="studentid, academicyearid"/>
+        <INDEX NAME="ix_tutorid" UNIQUE="false" FIELDS="tutorid"/>
+        <INDEX NAME="ix_status" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="ix_entrydate" UNIQUE="false" FIELDS="entrydate"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_entryreason" COMMENT="Many-to-many link between a tutoring entry and local_tut_reason (phase 5.1)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="reasonid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_tut_reason.id, not enforced at DB level"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_entry_reason" TYPE="unique" FIELDS="entryid, reasonid"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_entryparticipant" COMMENT="Internal and external participants of a tutoring entry (phase 5.1)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="participanttype" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="family, orientation, company, teacher, other — see entry_participant_type"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Set when this participant is a Moodle user (internal); FK to user.id, not enforced at DB level"/>
+        <FIELD NAME="externalname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Set when this participant is not a Moodle user (external). Exactly one of userid/externalname is set, enforced in entry_service, not at DB level"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_entryversion" COMMENT="Field snapshots for tutoring entry edits (schema added phase 5.1, written since phase 5.5's editing/annulment service)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="versionnumber" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="snapshotjson" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Full field snapshot of the entry before the edit that created this version"/>
+        <FIELD NAME="changereason" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Required for sensitive changes; see entry_service::update()/annul()"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_entry_version" TYPE="unique" FIELDS="entryid, versionnumber"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_tut_entryattachment" COMMENT="Document-category metadata for files attached to a tutoring entry (phase 5.6). The files themselves live in Moodle's File API (component=local_monlaututoria, filearea=entryattachment, itemid=entryid); this table only adds the category/description File API has no native field for">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="entryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_tut_entry.id, not enforced at DB level"/>
+        <FIELD NAME="pathnamehash" TYPE="char" LENGTH="40" NOTNULL="true" SEQUENCE="false" COMMENT="Moodle's stored_file unique identifier (sha1) — more robust than filename, survives same-name-different-file cases"/>
+        <FIELD NAME="category" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" COMMENT="report, consent, evidence, other — see entry_attachment_category"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_pathnamehash" TYPE="unique" FIELDS="pathnamehash"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="ix_entryid" UNIQUE="false" FIELDS="entryid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

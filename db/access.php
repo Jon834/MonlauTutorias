@@ -115,4 +115,51 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [],
     ],
+
+    // Phase 5.1 — tutoring entries. Only the 3 read capabilities that
+    // entry_service::get_for_viewer() already checks are defined here;
+    // createentry/editownentry/editanyentry/annulentry (phase 5.2/5.3/5.5)
+    // are deferred to whichever increment adds the page that enforces them,
+    // same criterion already applied throughout this plugin (e.g.
+    // assignstudents was defined in 3B.2, not earlier in 3A when only the
+    // service existed).
+    'local/monlaututoria:viewstudentvisiblecontent' => [
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:viewinternalnotes' => [
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:viewrestrictednotes' => [
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+
+    // Phase 5.2 — quick registration page now exists to enforce this.
+    'local/monlaututoria:createentry' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+
+    // Phase 5.5 — edition/annulment pages now exist to enforce these.
+    'local/monlaututoria:editownentry' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:editanyentry' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
+    'local/monlaututoria:annulentry' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
 ];

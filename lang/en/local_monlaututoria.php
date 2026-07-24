@@ -453,7 +453,117 @@ $string['studenttab_summary'] = 'Summary';
 $string['studenttab_history'] = 'History';
 $string['studenttab_tutoring'] = 'Tutoring';
 $string['studenttab_agreements'] = 'Agreements';
-$string['studenttab_tutoring_empty'] = 'Tutoring entries are not available yet — coming in a later phase.';
+$string['studenttab_tutoring_empty'] = 'Tutoring history is not available yet — coming in a later phase.';
 $string['studenttab_agreements_empty'] = 'Agreements are not available yet — coming in a later phase.';
 $string['student_history_col_reason'] = 'Reason';
 $string['privacy:metadata:assignment:reassignreason'] = 'The coded reason recorded when this assignment was created by reassigning the student\'s primary tutor.';
+
+// Phase 5.1 — tutoring entries: domain and data.
+$string['monlaututoria:viewstudentvisiblecontent'] = 'View tutoring content shared with the student';
+$string['monlaututoria:viewinternalnotes'] = 'View internal tutoring notes';
+$string['monlaututoria:viewrestrictednotes'] = 'View restricted tutoring notes';
+
+$string['entrystatus_active'] = 'Active';
+$string['entrystatus_annulled'] = 'Annulled';
+
+$string['entryparticipanttype_family'] = 'Family';
+$string['entryparticipanttype_orientation'] = 'Orientation';
+$string['entryparticipanttype_company'] = 'Company';
+$string['entryparticipanttype_teacher'] = 'Teaching staff';
+$string['entryparticipanttype_other'] = 'Other';
+
+$string['error_entry_followup_before_entrydate'] = 'The next follow-up date cannot be before the entry date.';
+$string['error_entry_modality_invalid'] = 'The selected modality does not exist or is not active.';
+$string['error_entry_reason_invalid'] = 'One of the selected reasons does not exist or is not active.';
+$string['error_entry_participant_type_invalid'] = 'Invalid participant type.';
+$string['error_entry_participant_identity_invalid'] = 'Each participant must specify exactly one internal user or external name, never both nor neither.';
+$string['error_entry_participant_user_invalid'] = 'The selected participant user does not exist or has been deleted.';
+
+$string['evententrycreated'] = 'Tutoring entry created';
+
+$string['privacy:metadata:entry'] = 'Information about tutoring entries: student, responsible tutor, academic year, date, modality, shared content, internal and restricted notes.';
+$string['privacy:metadata:entry:studentid'] = 'The id of the student this entry is about.';
+$string['privacy:metadata:entry:tutorid'] = 'The id of the tutor responsible for this entry.';
+$string['privacy:metadata:entry:academicyearid'] = 'The academic year of this entry.';
+$string['privacy:metadata:entry:entrydate'] = 'The real date the tutoring actuation took place.';
+$string['privacy:metadata:entry:modalityid'] = 'The contact modality of this entry.';
+$string['privacy:metadata:entry:contentvisible'] = 'The entry content shared with the student.';
+$string['privacy:metadata:entry:noteinternal'] = 'The internal note of this entry, not shown to the student.';
+$string['privacy:metadata:entry:noterestricted'] = 'The restricted note of this entry, the most sensitive tier.';
+$string['privacy:metadata:entry:status'] = 'The status of this entry (active or annulled).';
+$string['privacy:metadata:entry:nextfollowupdate'] = 'The next follow-up date, if one was set.';
+$string['privacy:metadata:entryparticipant'] = 'Information about a tutoring entry\'s participants, internal (Moodle users) or external.';
+$string['privacy:metadata:entryparticipant:participanttype'] = 'The participant type (family, orientation, company, teaching staff, other).';
+$string['privacy:metadata:entryparticipant:userid'] = 'The id of the participant, when they are a Moodle user.';
+$string['privacy:metadata:entryparticipant:externalname'] = 'The name of the participant, when they are not a Moodle user.';
+$string['privacy:metadata:entryversion'] = 'Snapshots of a tutoring entry\'s content taken before each edit or annulment.';
+$string['privacy:metadata:entryversion:versionnumber'] = 'The sequence number of this snapshot within its entry.';
+$string['privacy:metadata:entryversion:snapshotjson'] = 'The entry\'s editable fields as they were immediately before this edit.';
+$string['privacy:metadata:entryversion:changereason'] = 'The reason given for this edit or annulment, if any.';
+$string['privacy:metadata:entryattachment'] = 'Metadata about files attached to a tutoring entry: document category and description.';
+$string['privacy:metadata:entryattachment:category'] = 'The document category of the attachment (report, consent, evidence, other).';
+$string['privacy:metadata:entryattachment:description'] = 'The description given for the attachment, if any.';
+$string['privacy:metadata:entryattachmentfiles'] = 'The tutoring entry attachment files themselves.';
+
+// Phase 5.2 — quick tutoring entry registration.
+$string['monlaututoria:createentry'] = 'Register a tutoring entry';
+$string['entry_field_entrydate'] = 'Entry date';
+$string['entry_field_modality'] = 'Modality';
+$string['entry_field_reason'] = 'Reason';
+$string['entry_field_contentvisible'] = 'Comment shared with the student';
+$string['entry_field_noteinternal'] = 'Internal note';
+$string['entry_field_nextfollowupdate'] = 'Next follow-up';
+$string['entry_register'] = 'Register entry';
+$string['entry_register_title'] = 'Register tutoring entry — {$a}';
+$string['entry_register_success'] = 'Tutoring entry registered successfully.';
+
+// Phase 5.3 — full tutoring entry registration.
+$string['entry_full_register'] = 'Full registration';
+$string['entry_full_register_title'] = 'Full tutoring entry registration — {$a}';
+$string['entry_field_reasons'] = 'Reasons';
+$string['entry_field_noterestricted'] = 'Restricted note';
+$string['entry_field_participanttype'] = 'Participant type';
+$string['entry_field_participantuser'] = 'Internal participant (user)';
+$string['entry_field_participantexternalname'] = 'External participant (name)';
+$string['entry_participants_header'] = 'Participants';
+$string['entry_participant_addmore'] = 'Add another participant';
+
+// Phase 5.4 — tutoring entry history and detail.
+$string['entry_history_empty'] = 'No tutoring entries recorded for this academic year with these filters.';
+$string['entry_viewdetail'] = 'View detail';
+$string['entry_detail_title'] = 'Tutoring entry detail';
+
+// Phase 5.5 — editing, versioning and annulment.
+$string['monlaututoria:editownentry'] = 'Edit own tutoring entries';
+$string['monlaututoria:editanyentry'] = 'Edit any tutoring entry';
+$string['monlaututoria:annulentry'] = 'Annul a tutoring entry';
+$string['setting_entryeditwindow'] = 'Entry edit window';
+$string['setting_entryeditwindow_desc'] = 'How long after a tutoring entry is recorded it can be edited without giving a reason. Past this window, any edit requires a change reason.';
+$string['entry_edit_title'] = 'Edit tutoring entry';
+$string['entry_edit_success'] = 'Tutoring entry updated successfully.';
+$string['entry_field_editreason'] = 'Reason for change';
+$string['error_entry_edit_reason_required'] = 'The edit window has passed without a reason — state the reason for this change.';
+$string['error_entry_already_annulled'] = 'This tutoring entry is already annulled.';
+$string['entry_annul_title'] = 'Annul tutoring entry';
+$string['entry_annul_success'] = 'Tutoring entry annulled successfully.';
+$string['entry_field_annulreason'] = 'Reason for annulment';
+$string['entry_annul_confirm_checkbox'] = 'I confirm I want to annul this tutoring entry.';
+$string['entry_annul_confirm'] = 'Confirm annulment';
+$string['error_entry_annul_reason_required'] = 'State the reason for the annulment.';
+$string['error_entry_annul_not_confirmed'] = 'You must confirm you want to annul this tutoring entry.';
+$string['evententryupdated'] = 'Tutoring entry updated';
+$string['evententryannulled'] = 'Tutoring entry annulled';
+
+// Phase 5.6 — tutoring entry attachments.
+$string['entryattachmentcategory_report'] = 'Report';
+$string['entryattachmentcategory_consent'] = 'Consent';
+$string['entryattachmentcategory_evidence'] = 'Evidence';
+$string['entryattachmentcategory_other'] = 'Other';
+$string['entry_attachment_category'] = 'Document category';
+$string['entry_attachment_files'] = 'Files';
+$string['entry_attachment_upload'] = 'Upload files';
+$string['entry_attachments_title'] = 'Tutoring entry attachments';
+$string['entry_attachment_upload_success'] = '{$a} file(s) uploaded successfully.';
+$string['entry_attachments_empty'] = 'This tutoring entry has no attachments yet.';
+$string['error_entry_attachment_category_invalid'] = 'Invalid document category.';
+$string['evententryattachmentadded'] = 'Attachment added to a tutoring entry';

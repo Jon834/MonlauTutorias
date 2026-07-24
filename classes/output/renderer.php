@@ -654,6 +654,99 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Renders the "Tutorías" history tab of the student ficha (phase 5.4):
+     * a chronological table of tutoring entries within the selected academic
+     * year. Only metadata columns — content/notes stay on the detail page
+     * (entries/view.php), same split as assignments (listing vs. view.php).
+     *
+     * @param \local_monlaututoria\domain\entry[] $entries already masked by
+     *                                            entry_service::get_history_for_student()
+     * @param array<int, \stdClass> $tutors keyed by tutorid
+     * @param array<int, \stdClass> $modalities keyed by modalityid
+     * @param array<int, int[]> $reasonsbyentry keyed by entry id
+     * @param array<int, \stdClass> $allreasons keyed by reasonid, used to resolve
+     *                                          $reasonsbyentry into names
+     * @param bool $islimitedview phase 4.3-style limited view: true when the
+     *                            viewer is the student themselves — omits the
+     *                            "Motivos" column and the link to the detail
+     *                            page (mismo criterio que
+     *                            student_history_table() para asignaciones)
+     * @return string
+     */
+    public function entry_history_table(
+        array $entries,
+        array $tutors,
+        array $modalities,
+        array $reasonsbyentry,
+        array $allreasons,
+        bool $islimitedview = false
+    ): string {
+        if (empty($entries)) {
+            return $this->output->notification(
+                get_string('entry_history_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $statusoptions = \local_monlaututoria\domain\entry_status::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('entry_field_entrydate', 'local_monlaututoria'),
+            get_string('assignment_col_tutor', 'local_monlaututoria'),
+            get_string('entry_field_modality', 'local_monlaututoria'),
+            get_string('assignment_col_status', 'local_monlaututoria'),
+        ];
+        if (!$islimitedview) {
+            $table->head[] = get_string('entry_field_reasons', 'local_monlaututoria');
+            $table->head[] = '';
+        }
+
+        foreach ($entries as $entry) {
+            $tutor = $tutors[$entry->tutorid] ?? null;
+            $modality = $entry->modalityid !== null ? ($modalities[$entry->modalityid] ?? null) : null;
+
+            $cells = [
+                userdate($entry->entrydate, $dateformat),
+                // Same rationale as student_history_table(): html_writer::table()
+                // never auto-escapes, unlike Mustache, so a real user's name
+                // needs an explicit s() here.
+                $tutor ? s(fullname($tutor)) : '#' . $entry->tutorid,
+                $modality ? format_string($modality->name) : '—',
+                $statusoptions[$entry->status] ?? $entry->status,
+            ];
+
+            if (!$islimitedview) {
+                $reasonids = $reasonsbyentry[$entry->id] ?? [];
+                $reasonnames = array_filter(array_map(
+                    static fn (int $reasonid) => isset($allreasons[$reasonid]) ? format_string($allreasons[$reasonid]->name) : null,
+                    $reasonids
+                ));
+                $cells[] = !empty($reasonnames) ? s(implode(', ', $reasonnames)) : '—';
+                $cells[] = \html_writer::link(
+                    new \moodle_url('/local/monlaututoria/entries/view.php', ['id' => $entry->id]),
+                    get_string('entry_viewdetail', 'local_monlaututoria')
+                );
+            }
+
+            $table->data[] = $cells;
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * Renders the detail view of a single tutoring entry (phase 5.4).
+     *
+     * @param \stdClass $data already merged with display data (see entries/view.php)
+     * @return string
+     */
+    public function entry_detail(\stdClass $data): string {
+        return $this->render_from_template('local_monlaututoria/entry_detail', (array) $data);
+    }
+
+    /**
      * @param string[] $codes csv_import_error_code and/or csv_import_message_code values
      * @return string
      */

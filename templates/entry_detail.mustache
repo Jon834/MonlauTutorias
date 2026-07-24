@@ -1,0 +1,148 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_monlaututoria/entry_detail
+
+    Detail view of a single tutoring entry (phase 5.4). Every field here
+    already went through entry_service::get_for_viewer()'s masking before
+    reaching this template — a null contentvisible/noteinternal/noterestricted
+    is rendered as a plain placeholder, indistinguishable from "nothing was
+    written", never as "you are not authorised to see this" (which would
+    itself leak that something exists).
+
+    Classes required for JS: none
+    Data attributes required for JS: none
+
+    Context variables required for this template:
+    * studentname string
+    * studentfichaurl string
+    * tutorname string
+    * academicyearname string
+    * entrydateformatted string
+    * modalitylabel string
+    * statuslabel string
+    * hasreasons bool
+    * reasonnames string - comma-joined, only used when hasreasons is true
+    * contentvisible string - placeholder "—" when null
+    * shownoteinternal bool - whether to show the noteinternal row at all
+    * noteinternal string - only used when shownoteinternal is true
+    * shownoterestricted bool - whether to show the noterestricted row at all
+    * noterestricted string - only used when shownoterestricted is true
+    * hasnextfollowup bool
+    * nextfollowupformatted string - only used when hasnextfollowup is true
+    * hasparticipants bool
+    * participants array - {typelabel, name}
+    * canedit bool - whether to show the edit action (phase 5.5)
+    * editurl string - only used when canedit is true
+    * canannul bool - whether to show the annul action (phase 5.5)
+    * annulurl string - only used when canannul is true
+    * canseeattachments bool - whether to show the attachments link (phase 5.6)
+    * attachmentsurl string - only used when canseeattachments is true
+
+    Example context (json):
+    {
+        "studentname": "Jane Student",
+        "studentfichaurl": "https://example.org/local/monlaututoria/student/view.php?id=2",
+        "tutorname": "John Tutor",
+        "academicyearname": "2026-2027",
+        "entrydateformatted": "1 October 2026",
+        "modalitylabel": "In person",
+        "statuslabel": "Active",
+        "hasreasons": true,
+        "reasonnames": "Follow-up, Behaviour",
+        "contentvisible": "Good progress this term",
+        "shownoteinternal": true,
+        "noteinternal": "—",
+        "shownoterestricted": false,
+        "noterestricted": "",
+        "hasnextfollowup": false,
+        "nextfollowupformatted": "",
+        "hasparticipants": true,
+        "participants": [{"typelabel": "Family", "name": "Family Member"}],
+        "canedit": true,
+        "editurl": "https://example.org/local/monlaututoria/entries/edit.php?id=1",
+        "canannul": true,
+        "annulurl": "https://example.org/local/monlaututoria/entries/annul.php?id=1",
+        "canseeattachments": true,
+        "attachmentsurl": "https://example.org/local/monlaututoria/entries/attachments.php?id=1"
+    }
+}}
+<dl class="row">
+    <dt class="col-sm-3">{{#str}} assignment_col_student, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9"><a href="{{studentfichaurl}}">{{studentname}}</a></dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_tutor, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{tutorname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_academicyear, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{academicyearname}}</dd>
+
+    <dt class="col-sm-3">{{#str}} entry_field_entrydate, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{entrydateformatted}}</dd>
+
+    <dt class="col-sm-3">{{#str}} entry_field_modality, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{modalitylabel}}</dd>
+
+    <dt class="col-sm-3">{{#str}} assignment_col_status, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{statuslabel}}</dd>
+
+    <dt class="col-sm-3">{{#str}} entry_field_reasons, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#hasreasons}}{{reasonnames}}{{/hasreasons}}
+        {{^hasreasons}}—{{/hasreasons}}
+    </dd>
+
+    <dt class="col-sm-3">{{#str}} entry_field_contentvisible, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{contentvisible}}</dd>
+
+    {{#shownoteinternal}}
+    <dt class="col-sm-3">{{#str}} entry_field_noteinternal, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{noteinternal}}</dd>
+    {{/shownoteinternal}}
+
+    {{#shownoterestricted}}
+    <dt class="col-sm-3">{{#str}} entry_field_noterestricted, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{noterestricted}}</dd>
+    {{/shownoterestricted}}
+
+    <dt class="col-sm-3">{{#str}} entry_field_nextfollowupdate, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#hasnextfollowup}}{{nextfollowupformatted}}{{/hasnextfollowup}}
+        {{^hasnextfollowup}}—{{/hasnextfollowup}}
+    </dd>
+
+    <dt class="col-sm-3">{{#str}} entry_participants_header, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#hasparticipants}}
+            <ul class="mb-0">
+                {{#participants}}
+                <li>{{typelabel}}: {{name}}</li>
+                {{/participants}}
+            </ul>
+        {{/hasparticipants}}
+        {{^hasparticipants}}—{{/hasparticipants}}
+    </dd>
+</dl>
+{{#canedit}}
+<p><a class="btn btn-secondary" href="{{editurl}}">{{#str}} entry_edit_title, local_monlaututoria {{/str}}</a></p>
+{{/canedit}}
+{{#canseeattachments}}
+<p><a class="btn btn-secondary" href="{{attachmentsurl}}">{{#str}} entry_attachments_title, local_monlaututoria {{/str}}</a></p>
+{{/canseeattachments}}
+{{#canannul}}
+<p><a class="btn btn-outline-danger" href="{{annulurl}}">{{#str}} entry_annul_title, local_monlaututoria {{/str}}</a></p>
+{{/canannul}}

@@ -1,5 +1,137 @@
 # Changelog — local_monlaututoria
 
+## 0.6.6 — 2026-07-24
+
+**Cierre de la Fase 5** — Fase 5.7, la última de la Fase 5 (5.1-5.6 ya completas). Auditoría, no funcionalidad nueva — mismo tipo de incremento que la Fase 3E sobre el módulo de asignaciones. **Cierra la Fase 5 completa.**
+
+- **Hallazgo real corregido — hueco en la Privacy API**: `classes/privacy/provider.php` nunca se actualizó al crear `local_tut_entryversion` (5.5) ni `local_tut_entryattachment` (5.6) — ninguna de las dos estaba en `get_metadata()`, `get_contexts_for_userid()`, `get_users_in_context()`, la exportación ni el borrado/anonimización. Corregido: ambas tablas se localizan/exportan/anonimizan por `createdby` (no tienen `studentid`/`tutorid` propios), `snapshotjson`/`changereason`/`category` se conservan en el borrado (mismo valor de historial institucional que el resto de contenido de tutorías), `description` de los adjuntos se limpia (más parecida a `note` que a contenido institucional), y los propios archivos se exportan vía `writer::export_file()` en una solicitud de acceso.
+- **Revisión de seguridad (IDOR/XSS/CSRF)** sobre las 7 páginas nuevas de la Fase 5: sin hallazgos nuevos, la implementación ya era coherente — ver `docs/seguridad-permisos.md`.
+- **Revisión de rendimiento**: el bucle de `core_user::get_user()` por participante en `entries/view.php` revisado y aceptado sin cambio (acotado a una sola tutoría, no un listado que escale).
+- **Revisión de accesibilidad**: tablas anchas nuevas ya usan `table-responsive`, formularios ya usan Forms API — confirmado sin cambios de código.
+- **Pruebas**: `tests/upgrade_test.php` ampliado con un caso que simula la actualización desde 0.5.3 (justo antes de la Fase 5) hasta la versión actual, verificando que las 5 tablas nuevas se crean y los datos previos sobreviven. Nuevos casos en `tests/privacy/provider_test.php` para `local_tut_entryversion`/`local_tut_entryattachment` (contextos, exportación con archivo incluido, anonimización).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+---
+
+## 0.6.5 — 2026-07-24
+
+**Adjuntos de tutorías** — Fase 5.6 (sobre la Fase 5.5). Primer uso de la File API y de `pluginfile.php` en todo el plugin.
+
+- **`local_tut_entryattachment`** (tabla nueva): solo metadatos (categoría documental, descripción) — los archivos en sí viven en el almacenamiento de archivos de Moodle (`component=local_monlaututoria`, `filearea=entryattachment`, `itemid=entryid`), identificados por `pathnamehash` (más robusto que el nombre de archivo, sobrevive a archivos distintos con el mismo nombre).
+- **`entry_attachment_service`**: `save_uploaded_files()` mueve los archivos de un área de borrador al área permanente (`file_save_draft_area_files()`, el mecanismo estándar de Moodle — el antivirus configurado ya se aplica automáticamente por este mismo mecanismo, sin código adicional) y registra una fila de metadatos por archivo nuevo. `get_for_entry()` combina archivos + metadatos, con el mismo candado de seguridad que `entry_service::get_for_viewer()`: ámbito (`scope_service`) + `viewinternalnotes`, y **nunca** al propio alumno, sea cual sea su combinación de capacidades — los adjuntos son solo para el personal de tutoría en este incremento, no existe un nivel "compartido con el alumno" para archivos.
+- **`local_monlaututoria_pluginfile()`** (nuevo en `lib.php`, primera función de este archivo): el punto de control de acceso más importante de todo el incremento — una URL de `pluginfile.php` es visible y manipulable directamente por el navegador, sin pasar por ninguna página del plugin. Repite a mano la autenticación + contexto + capacidad + ámbito que cualquier otra página ya hace, exactamente el caso "acceso directo a archivos" que `CLAUDE.md` pide probar explícitamente.
+- **4 categorías documentales**: informe, autorización, evidencia, otro — una categoría por lote de subida, no por archivo individual (evitar JavaScript adicional sin precedente en este proyecto).
+- **`entries/attachments.php`** (nuevo): listado (`viewinternalnotes` + ámbito) y subida (`editanyentry`/`editownentry`, bloqueada en entradas anuladas) — enlace desde `entries/view.php`.
+
+**Pruebas**
+- PHPUnit: 3 casos nuevos en `entry_attachment_repository_test.php`, 5 en `entry_attachment_service_test.php` (incluida la denegación al propio alumno pese a tener las capacidades), 1 en `entry_attachment_added_test.php`. Las subidas se simulan escribiendo directamente en un área de borrador (File API), ya que PHPUnit no puede conducir una subida HTTP real.
+- Behat: `entry_attachments.feature` (nuevo, 4 escenarios) — incluye una prueba de acceso directo a `pluginfile.php` por un tutor sin relación con el alumno, señalada explícitamente como la menos verificada de este incremento (el texto exacto que Moodle muestra ante un archivo denegado necesita confirmarse contra la instancia real).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin) y una comprobación de buena formación del XML de `install.xml`.
+
+**Explícitamente fuera de 5.6**: edición o eliminación de un adjunto ya subido (solo se puede añadir); ningún nivel de adjunto visible para el alumno (hueco aceptado y documentado, no un olvido — el modelo mínimo de la Fase 5 no define un nivel "compartido" para archivos). Resto de la Fase 5: cierre — pruebas de filtración, rendimiento, accesibilidad (5.7).
+
+---
+
+## 0.6.4 — 2026-07-24
+
+**Edición, versionado y anulación de tutorías** — Fase 5.5 (sobre la Fase 5.4). Finalmente escribe en `local_tut_entryversion`, la tabla que la Fase 5.1 creó vacía a propósito.
+
+- **`settings.php`**: primera opción de configuración real de todo el plugin (hasta ahora solo páginas externas) — "ventana de edición" (`local_monlaututoria/entryeditwindow`, `admin_setting_configduration`, por defecto 3 días). `entry_service::update()` la lee vía `get_config()`, con una reserva de 3 días en código por si el valor por defecto todavía no se ha sembrado en `mdl_config_plugins`.
+- **`entry_service::update()`** (nuevo): dentro de la ventana, edición sin motivo; fuera de ella, motivo obligatorio ("cambios sensibles" del prompt de la Fase 5.5). Antes de escribir, siempre toma una foto del estado anterior en `local_tut_entryversion` — la lógica de foto se comparte con `annul()` mediante `snapshot_current_state()`, una sola definición. `noterestricted` se descarta silenciosamente si el llamador no tiene `viewrestrictednotes`, igual que ya hacía `create()`.
+- **`entry_service::annul()`** (nuevo): anulación lógica (`status=annulled`), nunca borrado físico. Motivo siempre obligatorio — a diferencia de editar, anular no tiene versión "rápida". Misma protección de concurrencia (relectura dentro de transacción) que `assignment_service::close()` desde la Fase 3E.3.
+- **3 capacidades nuevas**: `editownentry` (limitada a `createdby` propio), `editanyentry`, `annulentry`.
+- **`entries/edit.php`/`entries/annul.php`** (nuevos), con sus formularios (`entry_edit_form.php`/`entry_annul_form.php`) — mismo patrón que `assignments/edit.php`/`assignments/close.php`: motivo condicional (`requirereason`) en el de edición, confirmación explícita obligatoria en el de anulación.
+- Enlaces "Editar tutoría"/"Anular tutoría" en `entries/view.php`, visibles solo con la capacidad correspondiente y solo mientras la entrada sigue activa.
+- Sin migración de esquema (la tabla ya existía; ninguna columna nueva).
+
+**Pruebas**
+- PHPUnit: 3 casos nuevos en `entry_version_repository_test.php`, 2 en `entry_repository_test.php`, 8 en `entry_service_test.php` (ventana dentro/fuera, foto del estado anterior, `noterestricted` descartado sin capacidad, rechazo de editar/anular una entrada ya anulada, motivo obligatorio en la anulación), 1 en `entry_updated_test.php`, 1 en `entry_annulled_test.php`.
+- Behat: `entry_edit_annul.feature` (nuevo, 4 escenarios). El caso de "editar fuera de la ventana exige motivo" no se cubre aquí — requiere manipular el reloj, impracticable en Behat — y ya está probado directamente en `entry_service_test.php`.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Explícitamente fuera de 5.5** (resto de la Fase 5): adjuntos (5.6), cierre — pruebas de filtración, rendimiento, accesibilidad (5.7). Tampoco se permite editar participantes ni motivos de una entrada existente (`update_editable_fields()` no los toca) — hueco aceptado y documentado, no un olvido.
+
+---
+
+## 0.6.3 — 2026-07-24
+
+**Historial y detalle de tutorías** — Fase 5.4 (sobre la Fase 5.3). Sustituye el aviso de marcador de posición de la pestaña "Tutorías" por un listado real, y añade una página de detalle por entrada.
+
+- **`entry_repository::build_search_where()`** ampliado: filtros por `modalityid`, `reasonid` (subconsulta contra `local_tut_entryreason`) y `visibilitytier` (filas donde `contentvisible`/`noteinternal`/`noterestricted` no es nulo — útil, por ejemplo, para que un coordinador audite qué entradas tienen nota restringida).
+- **`entry_reason_repository::get_for_entries()`** (nuevo): resuelve los motivos de un lote de entradas en una sola consulta, evitando el N+1 que llamar a `get_for_entry()` por fila habría introducido.
+- **`entry_service`**: lógica de enmascarado extraída a un método privado `mask_content()`, reutilizado por `get_for_viewer()` (ya existente) y los dos métodos nuevos `get_history_for_student()`/`count_history_for_student()` — una sola comprobación de `scope_service` por página, nunca una por fila (mismo criterio de rendimiento que la Fase 3E.4).
+- **`renderer::entry_history_table()`/`entry_detail()`** (nuevos): tabla cronológica con `table-responsive`, y una vista de detalle en Mustache — mismo patrón que `student_history_table()`/`assignment_detail`.
+- **`entries/view.php`** (nuevo): detalle de una entrada, mismo patrón de 2 capas que `assignments/view.php` (`viewstudent` + `scope_service`, aquí delegado en `entry_service::get_for_viewer()`).
+- **Vista limitada del alumno**: igual que el historial de asignaciones (Fase 4.2/4.3), la propia vista del alumno oculta la columna/filtro de Motivos y el enlace "Ver detalle" — mismo criterio de "categorización administrativa, no nota interna, pero tampoco pensada para el alumno".
+- Sin migración de esquema ni capacidades nuevas.
+
+**Pruebas**
+- PHPUnit: 3 casos nuevos en `entry_repository_test.php` (filtros modalidad/motivo/visibilidad), 2 en `entry_reason_repository_test.php` (`get_for_entries()`), 4 en `entry_service_test.php` (enmascarado por fila, filtros, acceso denegado sin ámbito, recuento de lecturas de BD constante con el número de filas).
+- Behat: `entry_history.feature` (nuevo, 3 escenarios): un tutor ve y abre el detalle de una entrada; un alumno nunca ve la nota interna ni la columna de motivos en su propio historial; filtrar por un motivo no relacionado no devuelve filas.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Explícitamente fuera de 5.4** (resto de la Fase 5): edición/versionado/anulación (5.5), adjuntos (5.6), cierre (5.7).
+
+---
+
+## 0.6.2 — 2026-07-24
+
+**Registro completo de tutorías** — Fase 5.3 (sobre la Fase 5.2). Segunda interfaz de la Fase 5: todo lo que el registro rápido dejó fuera a propósito. Sin cambios en `entry_service`/`entry_create_command` — el dominio de la Fase 5.1 ya soportaba varios motivos, participantes y nota restringida desde el primer día; este incremento es puramente una interfaz nueva que por fin ejercita esa parte del modelo.
+
+- **`classes/form/entry_full_form.php`** (nuevo): motivos múltiples (`<select multiple>`), participantes internos/externos por filas repetibles (`repeat_elements()`, cada fila con tipo + usuario interno opcional + nombre externo opcional), y la nota restringida — este último elemento **solo se añade al formulario en absoluto** cuando el llamador tiene `viewrestrictednotes`; nunca se renderiza y se oculta con CSS/JS.
+- **`entries/create_full.php`** (nuevo): mismo patrón de 2 capas que `entries/create.php` (`createentry` + `scope_service`). Adjuntos explícitamente fuera de alcance (Fase 5.6).
+- **Botón "Registro completo"** junto al de registro rápido, en la pestaña "Tutorías" de `student/view.php`.
+- Sin migración de esquema ni capacidades nuevas (reutiliza `createentry` de 5.2 y `viewrestrictednotes` de 5.1).
+
+**Pruebas**
+- Behat: `entry_full_registration.feature` (nuevo, 3 escenarios): registro completo con 2 motivos + participante externo + nota restringida por quien tiene la capacidad; quien no la tiene nunca ve el campo; al menos un motivo es obligatorio. Un cuarto caso (participante con usuario interno Y nombre externo a la vez) se documenta como no cubierto aquí — el selector de usuario interno es un componente AJAX que no se puede rellenar con un paso Behat simple; esa validación ya está cubierta a nivel de servicio en `entry_service_test.php` (Fase 5.1).
+- Sin PHPUnit nuevo: mismo criterio que 5.2, sin lógica de negocio propia en el formulario/página.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Explícitamente fuera de 5.3** (resto de la Fase 5): historial y detalle (5.4), edición/versionado/anulación (5.5), adjuntos (5.6), cierre (5.7).
+
+---
+
+## 0.6.1 — 2026-07-24
+
+**Registro rápido de tutorías** — Fase 5.2 (sobre la Fase 5.1). Primera interfaz de la Fase 5: "menos de un minuto", alumno preseleccionado, sin selector de tutor (siempre el usuario conectado).
+
+- **`classes/form/entry_quick_form.php`** (nuevo): fecha, modalidad, motivo (uno solo — el modelo admite varios, pero el registro rápido pide uno), comentario compartido (obligatorio), nota interna (opcional), próximo seguimiento (opcional). Alumno y curso académico van como campos ocultos, nunca elegibles aquí.
+- **`entries/create.php`** (nuevo): `local/monlaututoria:createentry` (nueva capacidad) + `scope_service::require_user_can_access_student()`, mismo patrón de 2 capas que el resto del plugin. El alumno llega siempre por parámetro (`studentid`), nunca por un selector.
+- **Enlace "Registrar tutoría"** en la pestaña "Tutorías" de `student/view.php`, visible solo con `createentry` y solo para quien no esté viendo su propia ficha. El aviso de la pestaña se corrige de "el registro de tutorías no está disponible" a "el **historial** de tutorías no está disponible" — el registro ya lo está desde este incremento, solo la vista de historial sigue pendiente (Fase 5.4).
+- Sin migración de esquema (una capacidad nueva se sincroniza sola).
+
+**Pruebas**
+- Behat: `tests/behat/entry_quick_registration.feature` (nuevo, 4 escenarios): registro exitoso desde la ficha del alumno; usuario sin `createentry` denegado; tutor con `createentry` pero sin relación con el alumno denegado (IDOR); comentario compartido obligatorio.
+- Sin PHPUnit nuevo: no hay lógica de negocio nueva en el formulario/página (toda la validación real ya la cubre `entry_service_test.php` desde la Fase 5.1); mismo criterio que `assignment_form.php`/`assignments/create.php`, sin pruebas unitarias propias.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+**Explícitamente fuera de 5.2** (resto de la Fase 5): participantes internos/externos y motivos múltiples por interfaz (5.3), historial y detalle (5.4), edición/versionado/anulación (5.5), adjuntos (5.6), cierre (5.7).
+
+---
+
+## 0.6.0 — 2026-07-24
+
+**Registro de tutorías — dominio y datos** — Fase 5.1, primer incremento de la Fase 5 (sobre la Fase 4, ya completa). "El núcleo funcional del plugin" según `docs/fases/phase-5.md`. **Migración de esquema real**: 4 tablas nuevas. Sin interfaz todavía — la construyen las fases 5.2-5.6.
+
+- **`local_tut_entry`**: el registro tutorial en sí. `studentid`, `tutorid` (tutor responsable), `academicyearid`, `entrydate` (fecha real, distinta de `timecreated`), `modalityid` (reutiliza el catálogo de la Fase 2), y 3 columnas de contenido de nivel fijo — `contentvisible`/`noteinternal`/`noterestricted` — en vez de una sola columna con un nivel elegible.
+- **`local_tut_entryreason`**: motivos relacionados, N:M con `local_tut_reason`.
+- **`local_tut_entryparticipant`**: participantes internos (usuario Moodle) y externos (nombre libre), con tipo (familia/orientación/empresa/profesorado/otro).
+- **`local_tut_entryversion`**: creada ahora, **sin repositorio ni escritor todavía** — la edición que generaría versiones llega en la Fase 5.5, mismo criterio que `closereason` llegó con la 3B.3A y no antes.
+- **`entry_service::get_for_viewer()`**: el mecanismo de seguridad central del incremento. Reutiliza `scope_service` sin modificarlo para el acceso al alumno, y aplica un segundo filtro propio sobre el contenido — `noteinternal`/`noterestricted` nunca se muestran al propio alumno, sea cual sea su combinación de capacidades (implementa el caso de prueba obligatorio de `CLAUDE.md`, "alumno intentando consultar notas internas").
+- **3 capacidades nuevas de lectura**: `viewstudentvisiblecontent`, `viewinternalnotes`, `viewrestrictednotes`. Las 4 capacidades de escritura "orientativas" de la fase (`createentry`/`editownentry`/`editanyentry`/`annulentry`) se dejan sin definir hasta que exista la página que las exige.
+- **Privacy API**: misma política que `local_tut_assignment` (decisión del usuario en esta sesión) — conservación indefinida, anonimización de identidad en el borrado, contenido de las notas conservado por su valor de historial institucional; exportación sin enmascarar por capacidad.
+- Sin cambios en `docs/matriz-capacidades.md`/`docs/seguridad-permisos.md` de fases anteriores, ampliados con una sección nueva cada uno.
+
+**Pruebas**
+- PHPUnit: 4+2+3 casos en los 3 repositorios nuevos; 18 casos en `entry_service_test.php` (9 de validación de `create()`, 9 cubriendo la matriz completa de `get_for_viewer()`); 1 caso de evento; 4 casos nuevos en `provider_test.php`.
+- Sin Behat: no existe página alguna todavía (mismo criterio que la Fase 3A).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin) y una comprobación de buena formación del XML de `install.xml`.
+
+**Explícitamente fuera de 5.1** (resto de la Fase 5): registro rápido (5.2), registro completo con participantes por interfaz (5.3), historial y detalle (5.4), edición/versionado/anulación (5.5), adjuntos (5.6), cierre (5.7).
+
+---
+
 ## 0.5.3 — 2026-07-24
 
 **Ficha longitudinal del alumno — UX, rendimiento y cierre** — Fase 4.4 (sobre la Fase 4.3). **Cierra la Fase 4 completa** (4.1-4.4). Sin migración de esquema — todos los hallazgos de esta revisión de cierre eran de código de presentación/consulta, no de modelo de datos.

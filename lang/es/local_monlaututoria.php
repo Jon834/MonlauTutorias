@@ -453,7 +453,117 @@ $string['studenttab_summary'] = 'Resumen';
 $string['studenttab_history'] = 'Historial';
 $string['studenttab_tutoring'] = 'Tutorías';
 $string['studenttab_agreements'] = 'Acuerdos';
-$string['studenttab_tutoring_empty'] = 'El registro de tutorías todavía no está disponible — llegará en una fase posterior.';
+$string['studenttab_tutoring_empty'] = 'El historial de tutorías todavía no está disponible — llegará en una fase posterior.';
 $string['studenttab_agreements_empty'] = 'Los acuerdos todavía no están disponibles — llegarán en una fase posterior.';
 $string['student_history_col_reason'] = 'Motivo';
 $string['privacy:metadata:assignment:reassignreason'] = 'El motivo codificado registrado cuando esta asignación se creó al reasignar el tutor principal del alumno.';
+
+// Fase 5.1 — registro de tutorías: dominio y datos.
+$string['monlaututoria:viewstudentvisiblecontent'] = 'Ver el contenido de tutorías compartido con el alumno';
+$string['monlaututoria:viewinternalnotes'] = 'Ver las notas internas de tutorías';
+$string['monlaututoria:viewrestrictednotes'] = 'Ver las notas restringidas de tutorías';
+
+$string['entrystatus_active'] = 'Activa';
+$string['entrystatus_annulled'] = 'Anulada';
+
+$string['entryparticipanttype_family'] = 'Familia';
+$string['entryparticipanttype_orientation'] = 'Orientación';
+$string['entryparticipanttype_company'] = 'Empresa';
+$string['entryparticipanttype_teacher'] = 'Profesorado';
+$string['entryparticipanttype_other'] = 'Otro';
+
+$string['error_entry_followup_before_entrydate'] = 'La fecha de próximo seguimiento no puede ser anterior a la fecha de la tutoría.';
+$string['error_entry_modality_invalid'] = 'La modalidad seleccionada no existe o no está activa.';
+$string['error_entry_reason_invalid'] = 'Uno de los motivos seleccionados no existe o no está activo.';
+$string['error_entry_participant_type_invalid'] = 'Tipo de participante no válido.';
+$string['error_entry_participant_identity_invalid'] = 'Cada participante debe indicar exactamente un usuario interno o un nombre externo, nunca ambos ni ninguno.';
+$string['error_entry_participant_user_invalid'] = 'El usuario participante seleccionado no existe o ha sido eliminado.';
+
+$string['evententrycreated'] = 'Tutoría registrada';
+
+$string['privacy:metadata:entry'] = 'Información sobre las tutorías registradas: alumno, tutor responsable, curso académico, fecha, modalidad, contenido compartido, notas internas y restringidas.';
+$string['privacy:metadata:entry:studentid'] = 'El identificador del alumno de esta tutoría.';
+$string['privacy:metadata:entry:tutorid'] = 'El identificador del tutor responsable de esta tutoría.';
+$string['privacy:metadata:entry:academicyearid'] = 'El curso académico de esta tutoría.';
+$string['privacy:metadata:entry:entrydate'] = 'La fecha real en la que tuvo lugar la tutoría.';
+$string['privacy:metadata:entry:modalityid'] = 'La modalidad de contacto de esta tutoría.';
+$string['privacy:metadata:entry:contentvisible'] = 'El contenido de la tutoría compartido con el alumno.';
+$string['privacy:metadata:entry:noteinternal'] = 'La nota interna de esta tutoría, no visible para el alumno.';
+$string['privacy:metadata:entry:noterestricted'] = 'La nota restringida de esta tutoría, el nivel más sensible.';
+$string['privacy:metadata:entry:status'] = 'El estado de esta tutoría (activa o anulada).';
+$string['privacy:metadata:entry:nextfollowupdate'] = 'La fecha de próximo seguimiento, si se indicó una.';
+$string['privacy:metadata:entryparticipant'] = 'Información sobre los participantes de una tutoría, internos (usuarios de Moodle) o externos.';
+$string['privacy:metadata:entryparticipant:participanttype'] = 'El tipo de participante (familia, orientación, empresa, profesorado, otro).';
+$string['privacy:metadata:entryparticipant:userid'] = 'El identificador del participante, cuando es un usuario de Moodle.';
+$string['privacy:metadata:entryparticipant:externalname'] = 'El nombre del participante, cuando no es un usuario de Moodle.';
+$string['privacy:metadata:entryversion'] = 'Instantáneas del contenido de una tutoría, tomadas antes de cada edición o anulación.';
+$string['privacy:metadata:entryversion:versionnumber'] = 'El número de secuencia de esta instantánea dentro de su tutoría.';
+$string['privacy:metadata:entryversion:snapshotjson'] = 'Los campos editables de la tutoría tal y como estaban justo antes de esta edición.';
+$string['privacy:metadata:entryversion:changereason'] = 'El motivo indicado para esta edición o anulación, si lo hubo.';
+$string['privacy:metadata:entryattachment'] = 'Metadatos de los archivos adjuntos a una tutoría: categoría de documento y descripción.';
+$string['privacy:metadata:entryattachment:category'] = 'La categoría documental del adjunto (informe, consentimiento, evidencia, otro).';
+$string['privacy:metadata:entryattachment:description'] = 'La descripción indicada para el adjunto, si la hubo.';
+$string['privacy:metadata:entryattachmentfiles'] = 'Los propios archivos adjuntos a las tutorías.';
+
+// Fase 5.2 — registro rápido de tutorías.
+$string['monlaututoria:createentry'] = 'Registrar una tutoría';
+$string['entry_field_entrydate'] = 'Fecha de la tutoría';
+$string['entry_field_modality'] = 'Modalidad';
+$string['entry_field_reason'] = 'Motivo';
+$string['entry_field_contentvisible'] = 'Comentario compartido con el alumno';
+$string['entry_field_noteinternal'] = 'Nota interna';
+$string['entry_field_nextfollowupdate'] = 'Próximo seguimiento';
+$string['entry_register'] = 'Registrar tutoría';
+$string['entry_register_title'] = 'Registrar tutoría — {$a}';
+$string['entry_register_success'] = 'Tutoría registrada correctamente.';
+
+// Fase 5.3 — registro completo de tutorías.
+$string['entry_full_register'] = 'Registro completo';
+$string['entry_full_register_title'] = 'Registro completo de tutoría — {$a}';
+$string['entry_field_reasons'] = 'Motivos';
+$string['entry_field_noterestricted'] = 'Nota restringida';
+$string['entry_field_participanttype'] = 'Tipo de participante';
+$string['entry_field_participantuser'] = 'Participante interno (usuario)';
+$string['entry_field_participantexternalname'] = 'Participante externo (nombre)';
+$string['entry_participants_header'] = 'Participantes';
+$string['entry_participant_addmore'] = 'Añadir otro participante';
+
+// Fase 5.4 — historial y detalle de tutorías.
+$string['entry_history_empty'] = 'No hay tutorías registradas para este curso académico con estos filtros.';
+$string['entry_viewdetail'] = 'Ver detalle';
+$string['entry_detail_title'] = 'Detalle de la tutoría';
+
+// Fase 5.5 — edición, versionado y anulación.
+$string['monlaututoria:editownentry'] = 'Editar las tutorías propias';
+$string['monlaututoria:editanyentry'] = 'Editar cualquier tutoría';
+$string['monlaututoria:annulentry'] = 'Anular una tutoría';
+$string['setting_entryeditwindow'] = 'Ventana de edición de tutorías';
+$string['setting_entryeditwindow_desc'] = 'Tiempo tras el registro de una tutoría durante el cual se puede editar sin indicar un motivo. Pasado este plazo, cualquier edición exige un motivo del cambio.';
+$string['entry_edit_title'] = 'Editar tutoría';
+$string['entry_edit_success'] = 'Tutoría actualizada correctamente.';
+$string['entry_field_editreason'] = 'Motivo del cambio';
+$string['error_entry_edit_reason_required'] = 'Ha pasado la ventana de edición sin motivo — indica el motivo de este cambio.';
+$string['error_entry_already_annulled'] = 'Esta tutoría ya está anulada.';
+$string['entry_annul_title'] = 'Anular tutoría';
+$string['entry_annul_success'] = 'Tutoría anulada correctamente.';
+$string['entry_field_annulreason'] = 'Motivo de la anulación';
+$string['entry_annul_confirm_checkbox'] = 'Confirmo que quiero anular esta tutoría.';
+$string['entry_annul_confirm'] = 'Confirmar anulación';
+$string['error_entry_annul_reason_required'] = 'Indica el motivo de la anulación.';
+$string['error_entry_annul_not_confirmed'] = 'Debes confirmar que quieres anular esta tutoría.';
+$string['evententryupdated'] = 'Tutoría editada';
+$string['evententryannulled'] = 'Tutoría anulada';
+
+// Fase 5.6 — adjuntos de tutorías.
+$string['entryattachmentcategory_report'] = 'Informe';
+$string['entryattachmentcategory_consent'] = 'Autorización';
+$string['entryattachmentcategory_evidence'] = 'Evidencia';
+$string['entryattachmentcategory_other'] = 'Otro';
+$string['entry_attachment_category'] = 'Categoría documental';
+$string['entry_attachment_files'] = 'Archivos';
+$string['entry_attachment_upload'] = 'Subir archivos';
+$string['entry_attachments_title'] = 'Adjuntos de la tutoría';
+$string['entry_attachment_upload_success'] = 'Se han subido {$a} archivo(s) correctamente.';
+$string['entry_attachments_empty'] = 'Esta tutoría todavía no tiene ningún archivo adjunto.';
+$string['error_entry_attachment_category_invalid'] = 'Categoría documental no válida.';
+$string['evententryattachmentadded'] = 'Adjunto añadido a una tutoría';

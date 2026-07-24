@@ -60,6 +60,50 @@ use core_privacy\local\request\writer;
  *   operations were already purged after 1 day (phase 3D.4); this adds the
  *   missing other half of the policy.
  *
+ * **`local_tut_entry` (phase 5.1), same retention policy as
+ * `local_tut_assignment`, decided by the user together with this table's own
+ * introduction:** conserved indefinitely; erasure anonymises
+ * studentid/tutorid/createdby/modifiedby to the "no-reply" user but leaves
+ * `contentvisible`/`noteinternal`/`noterestricted` untouched — this is the
+ * tutoring record itself, with institutional history value, same reasoning
+ * already applied to `note` on `local_tut_assignment`. Export includes all 3
+ * note fields unmasked, regardless of the requesting user's normal
+ * viewstudentvisiblecontent/viewinternalnotes/viewrestrictednotes
+ * capabilities: a subject access request is a distinct concept from ordinary
+ * in-app viewing permission, same as `note`/`closereason` already export
+ * unmasked today. `local_tut_entryparticipant.userid` is anonymised the same
+ * way when it matches the erased user; `externalname` is out of scope (not
+ * tied to any Moodle userid). `local_tut_entryreason` (a pure join, no
+ * personal data of its own) is not declared separately — reassigning
+ * studentid/tutorid on its parent `local_tut_entry` row already covers it,
+ * there is nothing else in it to anonymise.
+ *
+ * **`local_tut_entryversion` (phase 5.5, closed by this class in phase
+ * 5.7's "pruebas de filtración de datos" review — it was left undeclared
+ * when 5.5 first wired a writer for it, a real gap this review caught and
+ * fixed):** the table never stores studentid/tutorid at all (a version
+ * snapshot only captures the entry's editable content fields, not who the
+ * relationship is between), so its only personal-data footprint is
+ * `createdby` (who made the edit) — scoped and anonymised by that field
+ * alone, same as `local_tut_entryparticipant` is scoped by `userid` alone
+ * rather than by joining back to the parent entry. `snapshotjson` and
+ * `changereason` are conserved untouched on erasure, same institutional-
+ * history reasoning as `local_tut_entry`'s own content fields — a snapshot
+ * can still incidentally name someone in prose even after the editor's own
+ * id is anonymised, the same accepted limitation `note` already has.
+ *
+ * **`local_tut_entryattachment` (phase 5.6, same review):** likewise scoped
+ * by `createdby` alone (no studentid/tutorid column). `description` is
+ * cleared on erasure — free text closer in kind to `note` than to
+ * institutional content. `category`, the files themselves and their
+ * filenames are left untouched, same reasoning as `contentvisible`. The
+ * files (component=local_monlaututoria, filearea=entryattachment) ARE
+ * exported via `writer::export_area_files()` for entries the requesting
+ * user is student/tutor/creator/modifier/participant of — unlike the
+ * transient csvimport file area below, these files are meant to persist
+ * and are squarely the kind of record a subject access request should
+ * surface.
+ *
  * The local_monlaututoria/csvimport file area (phase 3D.4) is unaffected by
  * this: it holds the same kind of personal data as local_tut_assignment's
  * studentid/tutorid (whoever a large CSV import's rows name), but only
@@ -145,6 +189,59 @@ final class provider implements
             'timemodified'   => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:assignment');
 
+        // Exported and anonymised on erasure (phase 5.1) — see the class
+        // docblock for the retention policy this implements.
+        $collection->add_database_table('local_tut_entry', [
+            'studentid'        => 'privacy:metadata:entry:studentid',
+            'tutorid'          => 'privacy:metadata:entry:tutorid',
+            'academicyearid'   => 'privacy:metadata:entry:academicyearid',
+            'entrydate'        => 'privacy:metadata:entry:entrydate',
+            'modalityid'       => 'privacy:metadata:entry:modalityid',
+            'contentvisible'   => 'privacy:metadata:entry:contentvisible',
+            'noteinternal'     => 'privacy:metadata:entry:noteinternal',
+            'noterestricted'   => 'privacy:metadata:entry:noterestricted',
+            'status'           => 'privacy:metadata:entry:status',
+            'nextfollowupdate' => 'privacy:metadata:entry:nextfollowupdate',
+            'createdby'        => 'privacy:metadata:createdby',
+            'modifiedby'       => 'privacy:metadata:modifiedby',
+            'timecreated'      => 'privacy:metadata:timecreated',
+            'timemodified'     => 'privacy:metadata:timemodified',
+        ], 'privacy:metadata:entry');
+
+        $collection->add_database_table('local_tut_entryparticipant', [
+            'participanttype' => 'privacy:metadata:entryparticipant:participanttype',
+            'userid'          => 'privacy:metadata:entryparticipant:userid',
+            'externalname'    => 'privacy:metadata:entryparticipant:externalname',
+            'createdby'       => 'privacy:metadata:createdby',
+            'timecreated'     => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:entryparticipant');
+
+        // Exported and anonymised on erasure (phase 5.7, closing a gap left
+        // by phase 5.5) — see the class docblock. No studentid/tutorid: a
+        // version snapshot only captures the entry's own editable fields.
+        $collection->add_database_table('local_tut_entryversion', [
+            'versionnumber' => 'privacy:metadata:entryversion:versionnumber',
+            'snapshotjson'  => 'privacy:metadata:entryversion:snapshotjson',
+            'changereason'  => 'privacy:metadata:entryversion:changereason',
+            'createdby'     => 'privacy:metadata:createdby',
+            'timecreated'   => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:entryversion');
+
+        // Exported and anonymised on erasure (phase 5.7, closing a gap left
+        // by phase 5.6) — see the class docblock. The attachment files
+        // themselves are exported via core_files below.
+        $collection->add_database_table('local_tut_entryattachment', [
+            'category'    => 'privacy:metadata:entryattachment:category',
+            'description' => 'privacy:metadata:entryattachment:description',
+            'createdby'   => 'privacy:metadata:createdby',
+            'timecreated' => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:entryattachment');
+
+        // Persistent, unlike the transient csvimport area below — exported
+        // for entries the requesting user is entitled to (see the class
+        // docblock and export_entry_attachments()).
+        $collection->add_subsystem_link('core_files', [], 'privacy:metadata:entryattachmentfiles');
+
         // Transient only — see the class docblock. Not wired into
         // export/delete, same documented reason as local_tut_assignment.
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:csvimportfiles');
@@ -167,13 +264,26 @@ final class provider implements
                     WHERE studentid = :as1 OR tutorid = :as2 OR createdby = :as3 OR modifiedby = :as4
                 UNION
                 SELECT 1 FROM {local_tut_bulkoperation}
-                    WHERE createdby = :bo1 OR primarytutorid = :bo2 OR cotutorid = :bo3';
+                    WHERE createdby = :bo1 OR primarytutorid = :bo2 OR cotutorid = :bo3
+                UNION
+                SELECT 1 FROM {local_tut_entry}
+                    WHERE studentid = :en1 OR tutorid = :en2 OR createdby = :en3 OR modifiedby = :en4
+                UNION
+                SELECT 1 FROM {local_tut_entryparticipant} WHERE userid = :ep1
+                UNION
+                SELECT 1 FROM {local_tut_entryversion} WHERE createdby = :ev1
+                UNION
+                SELECT 1 FROM {local_tut_entryattachment} WHERE createdby = :ea1';
         $params = [
             'ay1' => $userid, 'ay2' => $userid,
             'r1'  => $userid, 'r2'  => $userid,
             'm1'  => $userid, 'm2'  => $userid,
             'as1' => $userid, 'as2' => $userid, 'as3' => $userid, 'as4' => $userid,
             'bo1' => $userid, 'bo2' => $userid, 'bo3' => $userid,
+            'en1' => $userid, 'en2' => $userid, 'en3' => $userid, 'en4' => $userid,
+            'ep1' => $userid,
+            'ev1' => $userid,
+            'ea1' => $userid,
         ];
 
         if ($DB->record_exists_sql($sql, $params)) {
@@ -201,6 +311,15 @@ final class provider implements
         $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_bulkoperation}', []);
         $userlist->add_from_sql('primarytutorid', 'SELECT primarytutorid FROM {local_tut_bulkoperation}', []);
         $userlist->add_from_sql('cotutorid', 'SELECT cotutorid FROM {local_tut_bulkoperation}', []);
+
+        $userlist->add_from_sql('studentid', 'SELECT studentid FROM {local_tut_entry}', []);
+        $userlist->add_from_sql('tutorid', 'SELECT tutorid FROM {local_tut_entry}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_entry}', []);
+        $userlist->add_from_sql('modifiedby', 'SELECT modifiedby FROM {local_tut_entry}', []);
+        $userlist->add_from_sql('userid', 'SELECT userid FROM {local_tut_entryparticipant}', []);
+
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_entryversion}', []);
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_entryattachment}', []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -241,6 +360,9 @@ final class provider implements
 
         $data['assignments'] = self::export_assignments($userid);
         $data['bulkoperations'] = self::export_bulk_operations($userid);
+        $data['entries'] = self::export_entries($userid);
+        $data['entryversions'] = self::export_entry_versions($userid);
+        $data['entryattachments'] = self::export_entry_attachments($userid);
 
         writer::with_context(\context_system::instance())->export_data(
             [get_string('pluginname', 'local_monlaututoria')],
@@ -340,6 +462,133 @@ final class provider implements
         return $export;
     }
 
+    /**
+     * Exports every entry where the requesting user is student, tutor,
+     * creator, modifier, or an internal participant. Notes are included
+     * unmasked (see the class docblock) — a subject access request is not
+     * gated by the normal viewstudentvisiblecontent/viewinternalnotes/
+     * viewrestrictednotes capabilities.
+     *
+     * @param int $userid
+     * @return array
+     */
+    private static function export_entries(int $userid): array {
+        global $DB;
+
+        $sql = 'SELECT DISTINCT e.* FROM {local_tut_entry} e
+                LEFT JOIN {local_tut_entryparticipant} p ON p.entryid = e.id
+                WHERE e.studentid = :s OR e.tutorid = :t OR e.createdby = :c OR e.modifiedby = :m OR p.userid = :pid';
+        $records = $DB->get_records_sql($sql, ['s' => $userid, 't' => $userid, 'c' => $userid, 'm' => $userid, 'pid' => $userid]);
+
+        $export = [];
+        foreach ($records as $record) {
+            $roles = [];
+            if ((int) $record->studentid === $userid) {
+                $roles[] = 'student';
+            }
+            if ((int) $record->tutorid === $userid) {
+                $roles[] = 'tutor';
+            }
+            if ((int) $record->createdby === $userid) {
+                $roles[] = 'creator';
+            }
+            if ((int) $record->modifiedby === $userid) {
+                $roles[] = 'modifier';
+            }
+            if ($DB->record_exists('local_tut_entryparticipant', ['entryid' => $record->id, 'userid' => $userid])) {
+                $roles[] = 'participant';
+            }
+
+            $counterpartid = (int) $record->studentid === $userid ? (int) $record->tutorid : (int) $record->studentid;
+            $counterpart = \core_user::get_user($counterpartid);
+
+            $export[] = (object) [
+                'yourrole'         => $roles,
+                'counterpart'      => $counterpart ? fullname($counterpart) : null,
+                'entrydate'        => userdate($record->entrydate),
+                'status'           => $record->status,
+                'contentvisible'   => $record->contentvisible,
+                'noteinternal'     => $record->noteinternal,
+                'noterestricted'   => $record->noterestricted,
+                'nextfollowupdate' => $record->nextfollowupdate ? userdate($record->nextfollowupdate) : null,
+                'timecreated'      => userdate($record->timecreated),
+                'timemodified'     => userdate($record->timemodified),
+            ];
+        }
+
+        return $export;
+    }
+
+    /**
+     * Exports every version snapshot the requesting user created (see the
+     * class docblock: local_tut_entryversion has no studentid/tutorid of its
+     * own, so createdby is the only scoping field available). snapshotjson
+     * is included unmasked, same "subject access overrides normal viewing
+     * capabilities" reasoning as export_entries().
+     *
+     * @param int $userid
+     * @return array
+     */
+    private static function export_entry_versions(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records('local_tut_entryversion', ['createdby' => $userid]);
+
+        $export = [];
+        foreach ($records as $record) {
+            $export[] = (object) [
+                'entryid'       => (int) $record->entryid,
+                'versionnumber' => (int) $record->versionnumber,
+                'snapshot'      => json_decode($record->snapshotjson, true) ?? [],
+                'changereason'  => $record->changereason,
+                'timecreated'   => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
+    }
+
+    /**
+     * Exports every attachment the requesting user uploaded (createdby is
+     * the only scoping field, same reasoning as export_entry_versions()),
+     * including the file itself via export_area_files() — see the class
+     * docblock for why these files (unlike the transient csvimport area)
+     * are squarely in scope for a subject access request.
+     *
+     * @param int $userid
+     * @return array
+     */
+    private static function export_entry_attachments(int $userid): array {
+        global $DB;
+
+        $records = $DB->get_records('local_tut_entryattachment', ['createdby' => $userid]);
+
+        $context = \context_system::instance();
+        $fs = get_file_storage();
+        $export = [];
+        foreach ($records as $record) {
+            $file = $fs->get_file_by_hash($record->pathnamehash);
+            $filename = $file ? $file->get_filename() : null;
+
+            if ($file) {
+                writer::with_context($context)->export_file(
+                    [get_string('pluginname', 'local_monlaututoria'), 'entryattachments'],
+                    $file
+                );
+            }
+
+            $export[] = (object) [
+                'entryid'     => (int) $record->entryid,
+                'filename'    => $filename,
+                'category'    => $record->category,
+                'description' => $record->description,
+                'timecreated' => userdate($record->timecreated),
+            ];
+        }
+
+        return $export;
+    }
+
     public static function delete_data_for_all_users_in_context(\context $context): void {
         if ($context->contextlevel !== CONTEXT_SYSTEM) {
             return;
@@ -348,6 +597,9 @@ final class provider implements
         self::reassign_all_attribution();
         self::anonymize_all_assignments();
         self::anonymize_all_bulk_operations();
+        self::anonymize_all_entries();
+        self::anonymize_all_entry_versions();
+        self::anonymize_all_entry_attachments();
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -357,6 +609,9 @@ final class provider implements
                 self::reassign_attribution($userid);
                 self::anonymize_assignments($userid);
                 self::anonymize_bulk_operations($userid);
+                self::anonymize_entries($userid);
+                self::anonymize_entry_versions($userid);
+                self::anonymize_entry_attachments($userid);
             }
         }
     }
@@ -370,6 +625,9 @@ final class provider implements
             self::reassign_attribution((int) $userid);
             self::anonymize_assignments((int) $userid);
             self::anonymize_bulk_operations((int) $userid);
+            self::anonymize_entries((int) $userid);
+            self::anonymize_entry_versions((int) $userid);
+            self::anonymize_entry_attachments((int) $userid);
         }
     }
 
@@ -475,5 +733,103 @@ final class provider implements
         $DB->set_field('local_tut_bulkoperation', 'createdby', $noreply, []);
         $DB->set_field('local_tut_bulkoperation', 'primarytutorid', $noreply, []);
         $DB->set_field('local_tut_bulkoperation', 'cotutorid', $noreply, []);
+    }
+
+    /**
+     * Anonymises local_tut_entry rows where $userid is student, tutor,
+     * creator or modifier, and local_tut_entryparticipant.userid where it
+     * matches — never deletes a row, and never touches contentvisible/
+     * noteinternal/noterestricted (decided by the user together with this
+     * table's own introduction, phase 5.1 — see the class docblock).
+     *
+     * @param int $userid
+     */
+    private static function anonymize_entries(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_entry', 'studentid', $noreply, ['studentid' => $userid]);
+        $DB->set_field('local_tut_entry', 'tutorid', $noreply, ['tutorid' => $userid]);
+        $DB->set_field('local_tut_entry', 'createdby', $noreply, ['createdby' => $userid]);
+        $DB->set_field('local_tut_entry', 'modifiedby', $noreply, ['modifiedby' => $userid]);
+
+        $DB->set_field('local_tut_entryparticipant', 'userid', $noreply, ['userid' => $userid]);
+    }
+
+    /**
+     * Same anonymisation as anonymize_entries(), for every row in the
+     * system — used only by delete_data_for_all_users_in_context().
+     */
+    private static function anonymize_all_entries(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_entry', 'studentid', $noreply, []);
+        $DB->set_field('local_tut_entry', 'tutorid', $noreply, []);
+        $DB->set_field('local_tut_entry', 'createdby', $noreply, []);
+        $DB->set_field('local_tut_entry', 'modifiedby', $noreply, []);
+
+        $DB->set_field('local_tut_entryparticipant', 'userid', $noreply, []);
+    }
+
+    /**
+     * Anonymises local_tut_entryversion rows created by $userid — createdby
+     * only, no studentid/tutorid on this table (see the class docblock).
+     * snapshotjson/changereason are left untouched, same institutional-
+     * history reasoning as local_tut_entry's own content fields.
+     *
+     * @param int $userid
+     */
+    private static function anonymize_entry_versions(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_entryversion', 'createdby', $noreply, ['createdby' => $userid]);
+    }
+
+    /**
+     * Same anonymisation as anonymize_entry_versions(), for every row in the
+     * system — used only by delete_data_for_all_users_in_context().
+     */
+    private static function anonymize_all_entry_versions(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_entryversion', 'createdby', $noreply, []);
+    }
+
+    /**
+     * Anonymises local_tut_entryattachment rows created by $userid —
+     * createdby only, same reasoning as anonymize_entry_versions(). Clears
+     * `description` (free text closer in kind to `note` than to
+     * institutional content, see the class docblock); `category` and the
+     * attachment files themselves are left untouched.
+     *
+     * @param int $userid
+     */
+    private static function anonymize_entry_attachments(int $userid): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_entryattachment', 'description', null, ['createdby' => $userid]);
+        $DB->set_field('local_tut_entryattachment', 'createdby', $noreply, ['createdby' => $userid]);
+    }
+
+    /**
+     * Same anonymisation as anonymize_entry_attachments(), for every row in
+     * the system — used only by delete_data_for_all_users_in_context().
+     */
+    private static function anonymize_all_entry_attachments(): void {
+        global $DB;
+
+        $noreply = \core_user::get_noreply_user()->id;
+
+        $DB->set_field('local_tut_entryattachment', 'description', null, []);
+        $DB->set_field('local_tut_entryattachment', 'createdby', $noreply, []);
     }
 }

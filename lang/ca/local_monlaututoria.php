@@ -453,7 +453,117 @@ $string['studenttab_summary'] = 'Resum';
 $string['studenttab_history'] = 'Historial';
 $string['studenttab_tutoring'] = 'Tutories';
 $string['studenttab_agreements'] = 'Acords';
-$string['studenttab_tutoring_empty'] = 'El registre de tutories encara no està disponible — arribarà en una fase posterior.';
+$string['studenttab_tutoring_empty'] = 'L\'historial de tutories encara no està disponible — arribarà en una fase posterior.';
 $string['studenttab_agreements_empty'] = 'Els acords encara no estan disponibles — arribaran en una fase posterior.';
 $string['student_history_col_reason'] = 'Motiu';
 $string['privacy:metadata:assignment:reassignreason'] = 'El motiu codificat registrat quan aquesta assignació es va crear en reassignar el tutor principal de l\'alumne.';
+
+// Fase 5.1 — registre de tutories: domini i dades.
+$string['monlaututoria:viewstudentvisiblecontent'] = 'Veure el contingut de tutories compartit amb l\'alumne';
+$string['monlaututoria:viewinternalnotes'] = 'Veure les notes internes de tutories';
+$string['monlaututoria:viewrestrictednotes'] = 'Veure les notes restringides de tutories';
+
+$string['entrystatus_active'] = 'Activa';
+$string['entrystatus_annulled'] = 'Anul·lada';
+
+$string['entryparticipanttype_family'] = 'Família';
+$string['entryparticipanttype_orientation'] = 'Orientació';
+$string['entryparticipanttype_company'] = 'Empresa';
+$string['entryparticipanttype_teacher'] = 'Professorat';
+$string['entryparticipanttype_other'] = 'Altre';
+
+$string['error_entry_followup_before_entrydate'] = 'La data de proper seguiment no pot ser anterior a la data de la tutoria.';
+$string['error_entry_modality_invalid'] = 'La modalitat seleccionada no existeix o no està activa.';
+$string['error_entry_reason_invalid'] = 'Un dels motius seleccionats no existeix o no està actiu.';
+$string['error_entry_participant_type_invalid'] = 'Tipus de participant no vàlid.';
+$string['error_entry_participant_identity_invalid'] = 'Cada participant ha d\'indicar exactament un usuari intern o un nom extern, mai els dos ni cap.';
+$string['error_entry_participant_user_invalid'] = 'L\'usuari participant seleccionat no existeix o ha estat eliminat.';
+
+$string['evententrycreated'] = 'Tutoria registrada';
+
+$string['privacy:metadata:entry'] = 'Informació sobre les tutories registrades: alumne, tutor responsable, curs acadèmic, data, modalitat, contingut compartit, notes internes i restringides.';
+$string['privacy:metadata:entry:studentid'] = 'L\'identificador de l\'alumne d\'aquesta tutoria.';
+$string['privacy:metadata:entry:tutorid'] = 'L\'identificador del tutor responsable d\'aquesta tutoria.';
+$string['privacy:metadata:entry:academicyearid'] = 'El curs acadèmic d\'aquesta tutoria.';
+$string['privacy:metadata:entry:entrydate'] = 'La data real en què va tenir lloc la tutoria.';
+$string['privacy:metadata:entry:modalityid'] = 'La modalitat de contacte d\'aquesta tutoria.';
+$string['privacy:metadata:entry:contentvisible'] = 'El contingut de la tutoria compartit amb l\'alumne.';
+$string['privacy:metadata:entry:noteinternal'] = 'La nota interna d\'aquesta tutoria, no visible per a l\'alumne.';
+$string['privacy:metadata:entry:noterestricted'] = 'La nota restringida d\'aquesta tutoria, el nivell més sensible.';
+$string['privacy:metadata:entry:status'] = 'L\'estat d\'aquesta tutoria (activa o anul·lada).';
+$string['privacy:metadata:entry:nextfollowupdate'] = 'La data de proper seguiment, si se\'n va indicar una.';
+$string['privacy:metadata:entryparticipant'] = 'Informació sobre els participants d\'una tutoria, interns (usuaris de Moodle) o externs.';
+$string['privacy:metadata:entryparticipant:participanttype'] = 'El tipus de participant (família, orientació, empresa, professorat, altre).';
+$string['privacy:metadata:entryparticipant:userid'] = 'L\'identificador del participant, quan és un usuari de Moodle.';
+$string['privacy:metadata:entryparticipant:externalname'] = 'El nom del participant, quan no és un usuari de Moodle.';
+$string['privacy:metadata:entryversion'] = 'Instantànies del contingut d\'una tutoria, preses abans de cada edició o anul·lació.';
+$string['privacy:metadata:entryversion:versionnumber'] = 'El número de seqüència d\'aquesta instantània dins de la seva tutoria.';
+$string['privacy:metadata:entryversion:snapshotjson'] = 'Els camps editables de la tutoria tal com estaven just abans d\'aquesta edició.';
+$string['privacy:metadata:entryversion:changereason'] = 'El motiu indicat per a aquesta edició o anul·lació, si n\'hi va haver.';
+$string['privacy:metadata:entryattachment'] = 'Metadades dels fitxers adjunts a una tutoria: categoria de document i descripció.';
+$string['privacy:metadata:entryattachment:category'] = 'La categoria documental de l\'adjunt (informe, consentiment, evidència, altre).';
+$string['privacy:metadata:entryattachment:description'] = 'La descripció indicada per a l\'adjunt, si n\'hi va haver.';
+$string['privacy:metadata:entryattachmentfiles'] = 'Els mateixos fitxers adjunts a les tutories.';
+
+// Fase 5.2 — registre ràpid de tutories.
+$string['monlaututoria:createentry'] = 'Registrar una tutoria';
+$string['entry_field_entrydate'] = 'Data de la tutoria';
+$string['entry_field_modality'] = 'Modalitat';
+$string['entry_field_reason'] = 'Motiu';
+$string['entry_field_contentvisible'] = 'Comentari compartit amb l\'alumne';
+$string['entry_field_noteinternal'] = 'Nota interna';
+$string['entry_field_nextfollowupdate'] = 'Proper seguiment';
+$string['entry_register'] = 'Registrar tutoria';
+$string['entry_register_title'] = 'Registrar tutoria — {$a}';
+$string['entry_register_success'] = 'Tutoria registrada correctament.';
+
+// Fase 5.3 — registre complet de tutories.
+$string['entry_full_register'] = 'Registre complet';
+$string['entry_full_register_title'] = 'Registre complet de tutoria — {$a}';
+$string['entry_field_reasons'] = 'Motius';
+$string['entry_field_noterestricted'] = 'Nota restringida';
+$string['entry_field_participanttype'] = 'Tipus de participant';
+$string['entry_field_participantuser'] = 'Participant intern (usuari)';
+$string['entry_field_participantexternalname'] = 'Participant extern (nom)';
+$string['entry_participants_header'] = 'Participants';
+$string['entry_participant_addmore'] = 'Afegir un altre participant';
+
+// Fase 5.4 — historial i detall de tutories.
+$string['entry_history_empty'] = 'No hi ha tutories registrades per a aquest curs acadèmic amb aquests filtres.';
+$string['entry_viewdetail'] = 'Veure detall';
+$string['entry_detail_title'] = 'Detall de la tutoria';
+
+// Fase 5.5 — edició, versionat i anul·lació.
+$string['monlaututoria:editownentry'] = 'Editar les tutories pròpies';
+$string['monlaututoria:editanyentry'] = 'Editar qualsevol tutoria';
+$string['monlaututoria:annulentry'] = 'Anul·lar una tutoria';
+$string['setting_entryeditwindow'] = 'Finestra d\'edició de tutories';
+$string['setting_entryeditwindow_desc'] = 'Temps després del registre d\'una tutoria durant el qual es pot editar sense indicar un motiu. Passat aquest termini, qualsevol edició exigeix un motiu del canvi.';
+$string['entry_edit_title'] = 'Editar tutoria';
+$string['entry_edit_success'] = 'Tutoria actualitzada correctament.';
+$string['entry_field_editreason'] = 'Motiu del canvi';
+$string['error_entry_edit_reason_required'] = 'Ha passat la finestra d\'edició sense motiu — indica el motiu d\'aquest canvi.';
+$string['error_entry_already_annulled'] = 'Aquesta tutoria ja està anul·lada.';
+$string['entry_annul_title'] = 'Anul·lar tutoria';
+$string['entry_annul_success'] = 'Tutoria anul·lada correctament.';
+$string['entry_field_annulreason'] = 'Motiu de l\'anul·lació';
+$string['entry_annul_confirm_checkbox'] = 'Confirmo que vull anul·lar aquesta tutoria.';
+$string['entry_annul_confirm'] = 'Confirmar anul·lació';
+$string['error_entry_annul_reason_required'] = 'Indica el motiu de l\'anul·lació.';
+$string['error_entry_annul_not_confirmed'] = 'Has de confirmar que vols anul·lar aquesta tutoria.';
+$string['evententryupdated'] = 'Tutoria editada';
+$string['evententryannulled'] = 'Tutoria anul·lada';
+
+// Fase 5.6 — adjunts de tutories.
+$string['entryattachmentcategory_report'] = 'Informe';
+$string['entryattachmentcategory_consent'] = 'Autorització';
+$string['entryattachmentcategory_evidence'] = 'Evidència';
+$string['entryattachmentcategory_other'] = 'Altre';
+$string['entry_attachment_category'] = 'Categoria documental';
+$string['entry_attachment_files'] = 'Arxius';
+$string['entry_attachment_upload'] = 'Pujar arxius';
+$string['entry_attachments_title'] = 'Adjunts de la tutoria';
+$string['entry_attachment_upload_success'] = 'S\'han pujat {$a} arxiu(s) correctament.';
+$string['entry_attachments_empty'] = 'Aquesta tutoria encara no té cap arxiu adjunt.';
+$string['error_entry_attachment_category_invalid'] = 'Categoria documental no vàlida.';
+$string['evententryattachmentadded'] = 'Adjunt afegit a una tutoria';

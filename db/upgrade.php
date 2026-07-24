@@ -257,5 +257,107 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026080800, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026081100) {
+        // Phase 5.1: tutoring entries — the longitudinal record itself, its
+        // motivos relacionados (many-to-many with local_tut_reason), its
+        // participants (internal Moodle users and external people), and a
+        // versions table with no writer yet (see its own comment below).
+        $table = new xmldb_table('local_tut_entry');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('studentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('tutorid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('academicyearid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('entrydate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('modalityid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('contentvisible', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('noteinternal', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('noterestricted', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'active');
+        $table->add_field('nextfollowupdate', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('modifiedby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('ix_student_academicyear', XMLDB_INDEX_NOTUNIQUE, ['studentid', 'academicyearid']);
+        $table->add_index('ix_tutorid', XMLDB_INDEX_NOTUNIQUE, ['tutorid']);
+        $table->add_index('ix_status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+        $table->add_index('ix_entrydate', XMLDB_INDEX_NOTUNIQUE, ['entrydate']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_tut_entryreason');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('entryid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('reasonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_entry_reason', XMLDB_KEY_UNIQUE, ['entryid', 'reasonid']);
+        $table->add_index('ix_entryid', XMLDB_INDEX_NOTUNIQUE, ['entryid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('local_tut_entryparticipant');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('entryid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('participanttype', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('externalname', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('ix_entryid', XMLDB_INDEX_NOTUNIQUE, ['entryid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Created empty here — no repository/service wrote to it until phase
+        // 5.5's editing/annulment service — because docs/fases/phase-5.md
+        // groups "tablas de ... versiones" into 5.1's own scope alongside
+        // the other 3 tables.
+        $table = new xmldb_table('local_tut_entryversion');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('entryid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('versionnumber', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('snapshotjson', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('changereason', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_entry_version', XMLDB_KEY_UNIQUE, ['entryid', 'versionnumber']);
+        $table->add_index('ix_entryid', XMLDB_INDEX_NOTUNIQUE, ['entryid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026081100, 'local', 'monlaututoria');
+    }
+
+    if ($oldversion < 2026081600) {
+        // Phase 5.6: document-category metadata for tutoring entry
+        // attachments. The files themselves live in Moodle's File API
+        // (component=local_monlaututoria, filearea=entryattachment,
+        // itemid=entryid) — nothing to migrate there, File API tables are
+        // core and already exist. This table only adds the category/
+        // description File API has no native field for.
+        $table = new xmldb_table('local_tut_entryattachment');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('entryid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('pathnamehash', XMLDB_TYPE_CHAR, '40', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('category', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_pathnamehash', XMLDB_KEY_UNIQUE, ['pathnamehash']);
+        $table->add_index('ix_entryid', XMLDB_INDEX_NOTUNIQUE, ['entryid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026081600, 'local', 'monlaututoria');
+    }
+
     return true;
 }

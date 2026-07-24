@@ -163,10 +163,131 @@ if ($academicyear === null) {
     echo $renderer->student_history_table($records, $tutors, $academicyears, $islimitedview);
 
     echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
+} else if ($tab === 'tutorias') {
+    if (!$islimitedview && has_capability('local/monlaututoria:createentry', $context)) {
+        $entryurlparams = ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id];
+        echo html_writer::div(
+            $OUTPUT->single_button(
+                new moodle_url('/local/monlaututoria/entries/create.php', $entryurlparams),
+                get_string('entry_register', 'local_monlaututoria')
+            ) .
+            $OUTPUT->single_button(
+                new moodle_url('/local/monlaututoria/entries/create_full.php', $entryurlparams),
+                get_string('entry_full_register', 'local_monlaututoria')
+            ),
+            'd-flex gap-2'
+        );
+    }
+
+    // Phase 5.4: real listing, replacing the placeholder. Filters: estado,
+    // modalidad, and (limited view excepted, same reasoning as the
+    // "Motivo"/"Origen" columns of the assignments history tab) motivo and
+    // "visibilidad" (which content tier a row actually has populated for
+    // this viewer — useful for a coordinator auditing which entries carry a
+    // restricted note, for instance).
+    $statusfilter = optional_param('entrystatus', '', PARAM_ALPHA);
+    $modalityfilter = optional_param('modalityid', 0, PARAM_INT);
+    $reasonfilter = $islimitedview ? 0 : optional_param('reasonid', 0, PARAM_INT);
+    $visibilityfilter = optional_param('visibilitytier', '', PARAM_ALPHA);
+
+    $entryfilters = [];
+    if (in_array($statusfilter, \local_monlaututoria\domain\entry_status::values(), true)) {
+        $entryfilters['status'] = $statusfilter;
+    }
+    if ($modalityfilter > 0) {
+        $entryfilters['modalityid'] = $modalityfilter;
+    }
+    if ($reasonfilter > 0) {
+        $entryfilters['reasonid'] = $reasonfilter;
+    }
+    if (in_array($visibilityfilter, ['contentvisible', 'noteinternal', 'noterestricted'], true)) {
+        $entryfilters['visibilitytier'] = $visibilityfilter;
+    }
+
+    $entrypage = optional_param('entrypage', 0, PARAM_INT);
+    $entryperpage = 20;
+
+    $entryservice = new \local_monlaututoria\service\entry_service();
+    $entrytotalcount = $entryservice->count_history_for_student(
+        $studentid, (int) $academicyear->id, $entryfilters, (int) $USER->id
+    );
+    $entries = $entryservice->get_history_for_student(
+        $studentid, (int) $academicyear->id, $entryfilters, (int) $USER->id, $entrypage * $entryperpage, $entryperpage
+    );
+
+    $modalityrepository = new \local_monlaututoria\repository\modality_repository();
+    $allmodalities = $modalityrepository->get_all(true);
+    $modalityoptionsmap = [];
+    foreach ($allmodalities as $modality) {
+        $modalityoptionsmap[(int) $modality->id] = format_string($modality->name);
+    }
+
+    $entrytutorids = array_unique(array_map(static fn ($entry) => $entry->tutorid, $entries));
+    $entrytutors = !empty($entrytutorids)
+        ? $DB->get_records_list('user', 'id', $entrytutorids, '', 'id, firstname, lastname, email')
+        : [];
+
+    $reasonlinkrepository = new \local_monlaututoria\repository\entry_reason_repository();
+    $entryids = array_map(static fn ($entry) => $entry->id, $entries);
+    $reasonsbyentry = $islimitedview ? [] : $reasonlinkrepository->get_for_entries($entryids);
+    $allreasonids = array_unique(array_merge(...array_values($reasonsbyentry ?: [[]])));
+    $reasonrepository = new \local_monlaututoria\repository\reason_repository();
+    $allreasons = !empty($allreasonids) ? $reasonrepository->get_many($allreasonids) : [];
+
+    $entryfilterurlparams = array_filter([
+        'id' => $studentid, 'tab' => 'tutorias', 'academicyearid' => $requestedacademicyearid ?: null,
+    ]);
+    $statusfilterurl = new moodle_url('/local/monlaututoria/student/view.php', $entryfilterurlparams);
+    echo $OUTPUT->single_select(
+        $statusfilterurl,
+        'entrystatus',
+        ['' => get_string('choosedots')] + \local_monlaututoria\domain\entry_status::get_options(),
+        $statusfilter,
+        [],
+        'entrystatusselector'
+    );
+    echo $OUTPUT->single_select(
+        $statusfilterurl,
+        'modalityid',
+        [0 => get_string('choosedots')] + $modalityoptionsmap,
+        $modalityfilter,
+        [],
+        'entrymodalityselector'
+    );
+    if (!$islimitedview) {
+        $reasonoptionsmap = [];
+        foreach ($reasonrepository->get_all(true) as $reason) {
+            $reasonoptionsmap[(int) $reason->id] = format_string($reason->name);
+        }
+        echo $OUTPUT->single_select(
+            $statusfilterurl,
+            'reasonid',
+            [0 => get_string('choosedots')] + $reasonoptionsmap,
+            $reasonfilter,
+            [],
+            'entryreasonselector'
+        );
+        echo $OUTPUT->single_select(
+            $statusfilterurl,
+            'visibilitytier',
+            ['' => get_string('choosedots')] + [
+                'contentvisible'  => get_string('entry_field_contentvisible', 'local_monlaututoria'),
+                'noteinternal'    => get_string('entry_field_noteinternal', 'local_monlaututoria'),
+                'noterestricted'  => get_string('entry_field_noterestricted', 'local_monlaututoria'),
+            ],
+            $visibilityfilter,
+            [],
+            'entryvisibilityselector'
+        );
+    }
+
+    echo $renderer->entry_history_table($entries, $entrytutors, $allmodalities, $reasonsbyentry, $allreasons, $islimitedview);
+
+    echo $OUTPUT->paging_bar($entrytotalcount, $entrypage, $entryperpage, $PAGE->url);
 } else {
-    // 'tutorias'/'acuerdos': empty until phases 5/6.
+    // 'acuerdos': empty until phase 6.
     echo $OUTPUT->notification(
-        get_string('studenttab_' . ($tab === 'tutorias' ? 'tutoring' : 'agreements') . '_empty', 'local_monlaututoria'),
+        get_string('studenttab_agreements_empty', 'local_monlaututoria'),
         \core\output\notification::NOTIFY_INFO
     );
 }

@@ -69,7 +69,25 @@ if ($hassiteconfig
         new moodle_url('/local/monlaututoria/assignments/import.php'),
         ['local/monlaututoria:importassignments']
     ));
-}
 
-// This plugin has no admin_settingpage of its own, only external pages above.
-$settings = null;
+    // Phase 5.5: first real setting this plugin has ever needed — every page
+    // above is an admin_externalpage instead. "Ventana de edición
+    // configurable" (docs/fases/phase-5.md) means exactly this: how long
+    // after a tutoring entry is created it may still be edited without
+    // giving a reason; entry_service::update() reads it via get_config(),
+    // never hardcodes it.
+    $settings = new admin_settingpage(
+        'local_monlaututoria_settings',
+        get_string('pluginname', 'local_monlaututoria'),
+        'local/monlaututoria:managecatalogues'
+    );
+    $settings->add(new admin_setting_configduration(
+        'local_monlaututoria/entryeditwindow',
+        get_string('setting_entryeditwindow', 'local_monlaututoria'),
+        get_string('setting_entryeditwindow_desc', 'local_monlaututoria'),
+        3 * DAYSECS
+    ));
+    $ADMIN->add('local_monlaututoria', $settings);
+} else {
+    $settings = null;
+}

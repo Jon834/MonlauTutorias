@@ -21,6 +21,7 @@ use local_monlaututoria\repository\modality_repository;
 use local_monlaututoria\repository\academic_year_repository;
 use local_monlaututoria\repository\assignment_repository;
 use local_monlaututoria\repository\bulk_operation_repository;
+use local_monlaututoria\repository\entry_repository;
 
 /**
  * Upgrade-path tests (phase 3E.8 — "Prueba de actualización desde cada
@@ -55,6 +56,20 @@ final class upgrade_test extends \advanced_testcase {
         'local_tut_modality',
         'local_tut_assignment',
         'local_tut_bulkoperation',
+        'local_tut_entry',
+        'local_tut_entryreason',
+        'local_tut_entryparticipant',
+        'local_tut_entryversion',
+        'local_tut_entryattachment',
+    ];
+
+    /** @var string[] the 5 tables phase 5 introduced (2026081100/2026081600) */
+    private const PHASE5_TABLES = [
+        'local_tut_entry',
+        'local_tut_entryreason',
+        'local_tut_entryparticipant',
+        'local_tut_entryversion',
+        'local_tut_entryattachment',
     ];
 
     /**
@@ -180,16 +195,73 @@ final class upgrade_test extends \advanced_testcase {
         $this->assertNotNull($assignmentrepository->get($id));
     }
 
+    public function test_upgrade_from_0_5_3_pre_phase5_adds_all_5_phase5_tables(): void {
+        $this->resetAfterTest();
+        $this->require_upgrade_script();
+
+        $dbman = $this->dbman();
+
+        // Simulate 0.5.3 — the version right after phase 4.4 closed, the last
+        // release before phase 5 started: local_tut_assignment.reassignreason
+        // already exists (2026080800, phase 4.2), but none of the 5 phase 5
+        // tables do yet.
+        foreach (self::PHASE5_TABLES as $tablename) {
+            $table = new \xmldb_table($tablename);
+            if ($dbman->table_exists($table)) {
+                $dbman->drop_table($table);
+            }
+        }
+        foreach (self::PHASE5_TABLES as $tablename) {
+            $this->assertFalse($dbman->table_exists(new \xmldb_table($tablename)), "$tablename should not exist yet");
+        }
+
+        // A pre-existing assignment, created before the upgrade — must survive
+        // it untouched, same check as test_upgrade_from_phase_3a_0_3_0().
+        $year = (new academic_year_repository())->create((object) [
+            'name' => '2026-2027', 'shortname' => '2026-2027-' . uniqid(),
+            'startdate' => strtotime('2026-09-01'), 'enddate' => strtotime('2027-06-30'),
+            'createdby' => get_admin()->id,
+        ]);
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $assignmentrepository = new assignment_repository();
+        $assignmentid = $assignmentrepository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'createdby' => get_admin()->id,
+        ]);
+
+        // 2026080800 is the last savepoint before phase 5 (phase 4.2's
+        // reassignreason field) — equivalent to upgrading from 0.5.3.
+        $result = xmldb_local_monlaututoria_upgrade(2026080800);
+        $this->assertTrue($result);
+
+        foreach (self::PHASE5_TABLES as $tablename) {
+            $this->assertTrue($dbman->table_exists(new \xmldb_table($tablename)), "$tablename should exist after upgrade");
+        }
+
+        $this->assertNotNull($assignmentrepository->get($assignmentid));
+
+        // The upgrade must be functionally usable, not just schema-present:
+        // create a real entry through the actual repository layer.
+        $entryrepository = new entry_repository();
+        $entryid = $entryrepository->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $year, 'entrydate' => time(),
+            'status' => 'active', 'createdby' => get_admin()->id, 'modifiedby' => get_admin()->id,
+        ]);
+        $this->assertNotNull($entryrepository->get($entryid));
+    }
+
     public function test_upgrade_from_already_current_version_is_a_safe_noop(): void {
         $this->resetAfterTest();
         $this->require_upgrade_script();
 
         // The schema is already fully current (resetAfterTest() always installs
-        // from today's install.xml). 2026073100 is the last real savepoint in
-        // db/upgrade.php — every version from 0.4.2 onward starts here with no
-        // schema left to apply, which is exactly the common case (most phases
-        // since bumped version.php without touching install.xml/upgrade.php).
-        $result = xmldb_local_monlaututoria_upgrade(2026073100);
+        // from today's install.xml). 2026081600 is the last real savepoint in
+        // db/upgrade.php (phase 5.6) — starting from here leaves no schema left
+        // to apply, which is exactly the common case (most phases since bumped
+        // version.php without touching install.xml/upgrade.php).
+        $result = xmldb_local_monlaututoria_upgrade(2026081600);
 
         $this->assertTrue($result);
         foreach (self::ALL_TABLES as $tablename) {
