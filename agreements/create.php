@@ -82,7 +82,15 @@ if ($form->is_cancelled()) {
     );
 }
 
+/** @var \local_monlaututoria\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_monlaututoria');
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('agreement_create_title', 'local_monlaututoria', fullname($student)));
+echo $renderer->contextual_help(
+    get_string('help_concept_agreement_title', 'local_monlaututoria'),
+    html_writer::tag('p', get_string('help_concept_agreement_short', 'local_monlaututoria'))
+    . html_writer::tag('p', get_string('help_concept_agreement_full', 'local_monlaututoria'))
+);
 $form->display();
 echo $OUTPUT->footer();

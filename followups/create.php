@@ -67,7 +67,15 @@ if ($form->is_cancelled()) {
     );
 }
 
+/** @var \local_monlaututoria\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_monlaututoria');
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('followup_create_title', 'local_monlaututoria', fullname($student)));
+echo $renderer->contextual_help(
+    get_string('help_concept_followup_title', 'local_monlaututoria'),
+    html_writer::tag('p', get_string('help_concept_followup_short', 'local_monlaututoria'))
+    . html_writer::tag('p', get_string('help_concept_followup_full', 'local_monlaututoria'))
+);
 $form->display();
 echo $OUTPUT->footer();

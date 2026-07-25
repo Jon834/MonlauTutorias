@@ -1,5 +1,26 @@
 # Changelog — local_monlaututoria
 
+## 0.10.4 — 2026-07-25
+
+**Página de ayuda estática + ayuda contextual por pantalla.** Sin cambio de esquema.
+
+- **Nueva página `help.php`** ("Ayuda"), enlazada desde un nuevo elemento de navegación en todas las pantallas: explica en lenguaje llano qué es una tutoría, un acuerdo, un seguimiento y una derivación, y quién ve qué (alumno / tutor / coordinación). Puramente informativa, sin datos de ningún alumno — solo exige sesión iniciada, igual que `notifications.php`.
+- **Ayuda contextual (`<details>`/`<summary>`, sin JavaScript)**: nuevo método `renderer::contextual_help()`, añadido en las 7 pantallas donde tiene más sentido — registro rápido y completo de tutoría, creación de acuerdo/seguimiento/derivación, panel del tutor y ficha del alumno — como un desplegable que el usuario abre solo si lo necesita, con el mismo texto breve que la página de ayuda para el concepto correspondiente.
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 304 archivos PHP del plugin).
+
+---
+
+## 0.10.3 — 2026-07-25
+
+**Más correcciones de uso real (ficha del alumno y panel del tutor).** Sin cambio de esquema.
+
+- **Ficha del alumno**: la foto del alumno y el selector de curso académico se pegaban entre sí (echoados uno tras otro sin contenedor). Ahora van en una fila con separación y el selector lleva su propia etiqueta visible.
+- **Panel del tutor**: los 3 filtros (curso, alumnos, pendientes) y las tarjetas de resumen de debajo se veían pegados — ahora van en `.local-monlaututoria-toolbar` con su propio margen.
+- **Mensajes de "no hay nada que mostrar"**: en el panel del tutor, `dashboard_followups_table()`/`dashboard_agreements_table()` mostraban un aviso de "no hay seguimientos/acuerdos" justo encima de una tabla que sí tenía filas (una lista vacía —p. ej. vencidos— seguida de otra con datos —p. ej. próximos—, ambas bajo el mismo epígrafe). Ahora solo se muestra un aviso combinado cuando **ambas** mitades están vacías; si alguna tiene datos, la otra simplemente no muestra nada. Además, el aviso en sí (y el de derivaciones/alumnos prioritarios) pasa de una caja de notificación azul a una línea de texto discreta (`subtle_empty_hint()`).
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+---
+
 ## 0.10.2 — 2026-07-25
 
 **Correcciones de uso real reportadas en pruebas manuales.** Sin cambio de esquema.

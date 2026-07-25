@@ -109,9 +109,18 @@ echo $renderer->page_header_card(
     [],
     get_string('pluginname', 'local_monlaututoria')
 );
+echo $renderer->contextual_help(
+    get_string('help_dashboard_title', 'local_monlaututoria'),
+    get_string('help_dashboard_body', 'local_monlaututoria')
+);
 
+// Wrapped together (previously echoed bare, one after another, running
+// straight into the summary cards below with no separation) — same
+// .local-monlaututoria-toolbar treatment already applied to the ficha del
+// alumno's "Tutorías" tab filters.
+$dashboardfilters = '';
 if (!empty($academicyearoptions)) {
-    echo $OUTPUT->single_select(
+    $dashboardfilters .= $OUTPUT->single_select(
         new moodle_url('/local/monlaututoria/dashboard.php', [
             'studentfilter' => $studentfilter,
             'pendingfilter' => $pendingfilter,
@@ -123,8 +132,7 @@ if (!empty($academicyearoptions)) {
         'dashboardacademicyearselector'
     );
 }
-
-echo $OUTPUT->single_select(
+$dashboardfilters .= $OUTPUT->single_select(
     new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
         'academicyearid' => $requestedacademicyearid ?: null,
         'pendingfilter' => $pendingfilter,
@@ -135,7 +143,7 @@ echo $OUTPUT->single_select(
     [],
     'dashboardstudentfilterselector'
 );
-echo $OUTPUT->single_select(
+$dashboardfilters .= $OUTPUT->single_select(
     new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
         'academicyearid' => $requestedacademicyearid ?: null,
         'studentfilter' => $studentfilter,
@@ -146,6 +154,7 @@ echo $OUTPUT->single_select(
     [],
     'dashboardpendingfilterselector'
 );
+echo html_writer::div($dashboardfilters, 'local-monlaututoria-toolbar');
 
 if ($academicyear === null) {
     echo $renderer->noactiveacademicyear_warning();
@@ -206,12 +215,31 @@ echo $renderer->dashboard_students_table(
 );
 
 echo $renderer->heading(get_string('dashboard_section_followups', 'local_monlaututoria'), 3);
-echo $renderer->dashboard_followups_table($overduefollowups, $studentusers, $canmanagefollowups);
-echo $renderer->dashboard_followups_table($upcomingfollowups, $studentusers, $canmanagefollowups);
+if (empty($overduefollowups) && empty($upcomingfollowups)) {
+    // One combined empty note, not two — showing "no overdue follow-ups"
+    // directly above a table that DOES have upcoming ones (or vice versa)
+    // reads as contradictory, not informative.
+    echo $renderer->dashboard_followups_table([], $studentusers, $canmanagefollowups);
+} else {
+    if (!empty($overduefollowups)) {
+        echo $renderer->dashboard_followups_table($overduefollowups, $studentusers, $canmanagefollowups);
+    }
+    if (!empty($upcomingfollowups)) {
+        echo $renderer->dashboard_followups_table($upcomingfollowups, $studentusers, $canmanagefollowups);
+    }
+}
 
 echo $renderer->heading(get_string('dashboard_section_agreements', 'local_monlaututoria'), 3);
-echo $renderer->dashboard_agreements_table($overdueagreements, $studentusers, $responsibleusers, $canmanageagreements);
-echo $renderer->dashboard_agreements_table($pendingagreements, $studentusers, $responsibleusers, $canmanageagreements);
+if (empty($overdueagreements) && empty($pendingagreements)) {
+    echo $renderer->dashboard_agreements_table([], $studentusers, $responsibleusers, $canmanageagreements);
+} else {
+    if (!empty($overdueagreements)) {
+        echo $renderer->dashboard_agreements_table($overdueagreements, $studentusers, $responsibleusers, $canmanageagreements);
+    }
+    if (!empty($pendingagreements)) {
+        echo $renderer->dashboard_agreements_table($pendingagreements, $studentusers, $responsibleusers, $canmanageagreements);
+    }
+}
 
 echo $renderer->heading(get_string('dashboard_section_referrals', 'local_monlaututoria'), 3);
 echo $renderer->referrals_table($referrals, $studentusers);

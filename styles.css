@@ -195,3 +195,47 @@
         grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
     }
 }
+
+.local-monlaututoria-help {
+    padding: .75rem 1rem;
+    border: 1px solid #d7dee7;
+    border-radius: 12px;
+    background: #f7f9fc;
+}
+
+.local-monlaututoria-help > summary {
+    cursor: pointer;
+    color: #13324b;
+    font-weight: 600;
+}
+
+.local-monlaututoria-help > summary::-webkit-details-marker {
+    color: #245b7d;
+}
+
+.local-monlaututoria-help__body {
+    margin-top: .6rem;
+    color: #384857;
+}
+
+.local-monlaututoria-help__body p:last-child {
+    margin-bottom: 0;
+}
+
+.local-monlaututoria-help-index {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.local-monlaututoria-help-index__card {
+    padding: 1.25rem;
+    border: 1px solid #d7dee7;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbfe 100%);
+}
+
+.local-monlaututoria-help-index__card h3 {
+    margin-top: 0;
+    color: #13324b;
+}

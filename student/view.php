@@ -121,15 +121,19 @@ echo $renderer->page_header_card(
     [],
     fullname($student)
 );
-echo $OUTPUT->user_picture($student, ['size' => 100, 'class' => 'mb-3']);
-
+echo $renderer->contextual_help(
+    get_string('help_studentview_title', 'local_monlaututoria'),
+    get_string('help_studentview_body', 'local_monlaututoria')
+);
 $academicyearoptions = [];
 foreach ($academicyearrepository->get_all() as $year) {
     $academicyearoptions[(int) $year->id] = format_string($year->name);
 }
+
+$academicyearselecthtml = '';
 if (!empty($academicyearoptions)) {
     $selectorurl = new moodle_url('/local/monlaututoria/student/view.php', ['id' => $studentid, 'tab' => $tab]);
-    echo $OUTPUT->single_select(
+    $academicyearselect = new single_select(
         $selectorurl,
         'academicyearid',
         $academicyearoptions,
@@ -137,7 +141,18 @@ if (!empty($academicyearoptions)) {
         ['' => get_string('choosedots')],
         'academicyearselector'
     );
+    $academicyearselect->set_label(get_string('filter_academicyear', 'local_monlaututoria'));
+    $academicyearselecthtml = $OUTPUT->render($academicyearselect);
 }
+
+// Photo and academic year selector previously ran straight into each other
+// (echoed one after another with no container) — now a proper row, with the
+// selector's own visible label instead of single_select's screen-reader-only
+// default.
+echo html_writer::div(
+    $OUTPUT->user_picture($student, ['size' => 100]) . $academicyearselecthtml,
+    'd-flex flex-wrap align-items-center gap-3 mb-4'
+);
 
 echo $renderer->student_tabs($tab, $studentid, $academicyear !== null ? (int) $academicyear->id : null);
 

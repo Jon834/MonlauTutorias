@@ -43,6 +43,28 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * A collapsed-by-default help disclosure ("¿Qué es...?"), using the
+     * native HTML5 <details>/<summary> pair rather than a Bootstrap
+     * JS-driven collapse — this plugin has no JavaScript of its own, and
+     * <details> needs none: it works, and is keyboard-accessible, out of the
+     * box in every browser this project targets. $body is built from static,
+     * developer-authored lang strings (never user/DB content), so it is
+     * inserted as trusted HTML, same convention as the rest of this renderer
+     * for non-data strings.
+     *
+     * @param string $title
+     * @param string $body one or more already-formed HTML fragments (e.g. <p>...</p>)
+     * @return string
+     */
+    public function contextual_help(string $title, string $body): string {
+        return \html_writer::tag(
+            'details',
+            \html_writer::tag('summary', s($title)) . \html_writer::div($body, 'local-monlaututoria-help__body'),
+            ['class' => 'local-monlaututoria-help mb-3']
+        );
+    }
+
+    /**
      * @param string $active
      * @param array $contextdata
      * @return string
@@ -99,6 +121,15 @@ final class renderer extends \plugin_renderer_base {
                 'label' => get_string('nav_notifications', 'local_monlaututoria'),
                 'url' => new \moodle_url('/local/monlaututoria/notifications.php'),
                 'title' => get_string('nav_notifications_tip', 'local_monlaututoria'),
+            ];
+            // No capability check beyond being logged in: purely explanatory
+            // content (what a tutoring entry/agreement/follow-up/referral
+            // is), nothing here exposes any student's data.
+            $items[] = [
+                'key' => 'help',
+                'label' => get_string('nav_help', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/help.php'),
+                'title' => get_string('nav_help_tip', 'local_monlaututoria'),
             ];
         }
 
@@ -500,6 +531,21 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * A muted, non-boxed line for "nothing to show here" states that are
+     * common and expected (an empty dashboard section, one half of a
+     * split overdue/upcoming pair) — as opposed to $this->output->notification()'s
+     * bright NOTIFY_INFO box, which is the right amount of emphasis for a
+     * standalone empty listing but reads as an alarming wall of colour when
+     * several of these sit one after another on the same dashboard.
+     *
+     * @param string $message
+     * @return string
+     */
+    private function subtle_empty_hint(string $message): string {
+        return \html_writer::tag('p', s($message), ['class' => 'text-muted small mb-3']);
+    }
+
+    /**
      * @param \local_monlaututoria\domain\followup[] $followups
      * @param array<int, \stdClass> $students keyed by student id
      * @param bool $canmanage
@@ -507,10 +553,7 @@ final class renderer extends \plugin_renderer_base {
      */
     public function dashboard_followups_table(array $followups, array $students, bool $canmanage): string {
         if (empty($followups)) {
-            return $this->output->notification(
-                get_string('dashboard_followups_empty', 'local_monlaututoria'),
-                \core\output\notification::NOTIFY_INFO
-            );
+            return $this->subtle_empty_hint(get_string('dashboard_followups_empty', 'local_monlaututoria'));
         }
 
         $dateformat = get_string('strftimedatefullshort', 'langconfig');
@@ -554,10 +597,7 @@ final class renderer extends \plugin_renderer_base {
      */
     public function dashboard_agreements_table(array $agreements, array $students, array $responsibleusers, bool $canmanage): string {
         if (empty($agreements)) {
-            return $this->output->notification(
-                get_string('dashboard_agreements_empty', 'local_monlaututoria'),
-                \core\output\notification::NOTIFY_INFO
-            );
+            return $this->subtle_empty_hint(get_string('dashboard_agreements_empty', 'local_monlaututoria'));
         }
 
         $dateformat = get_string('strftimedatefullshort', 'langconfig');
@@ -610,10 +650,7 @@ final class renderer extends \plugin_renderer_base {
      */
     public function dashboard_priority_students_list(array $students, array $studentusers, int $academicyearid): string {
         if (empty($students)) {
-            return $this->output->notification(
-                get_string('dashboard_priority_empty', 'local_monlaututoria'),
-                \core\output\notification::NOTIFY_INFO
-            );
+            return $this->subtle_empty_hint(get_string('dashboard_priority_empty', 'local_monlaututoria'));
         }
 
         $items = [];
@@ -1355,10 +1392,7 @@ final class renderer extends \plugin_renderer_base {
      */
     public function referrals_table(array $referrals, array $students): string {
         if (empty($referrals)) {
-            return $this->output->notification(
-                get_string('referrals_empty', 'local_monlaututoria'),
-                \core\output\notification::NOTIFY_INFO
-            );
+            return $this->subtle_empty_hint(get_string('referrals_empty', 'local_monlaututoria'));
         }
 
         $dateformat = get_string('strftimedatefullshort', 'langconfig');
