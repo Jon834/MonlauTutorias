@@ -835,3 +835,71 @@ $string['privacy:metadata:notification:status'] = 'Estado del envio.';
 $string['privacy:metadata:notification:attempts'] = 'Numero de intentos de envio.';
 $string['privacy:metadata:notification:lasterror'] = 'Ultimo error de entrega registrado.';
 $string['privacy:metadata:notification:timesent'] = 'Momento de envio.';
+
+$string['nav_dashboard'] = 'Panel';
+$string['nav_dashboard_tip'] = 'Resumen rapido de alumnos, pendientes y prioridades del tutor.';
+$string['nav_assignments'] = 'Asignaciones';
+$string['nav_assignments_tip'] = 'Consulta el reparto de alumnos y abre el detalle de cada asignacion.';
+$string['nav_referrals'] = 'Derivaciones';
+$string['nav_referrals_tip'] = 'Gestiona las derivaciones abiertas y revisa su estado.';
+$string['nav_coordination'] = 'Coordinacion';
+$string['nav_coordination_tip'] = 'Vision global por curso, cohorte y tutor.';
+$string['nav_notifications'] = 'Notificaciones';
+$string['nav_notifications_tip'] = 'Ajusta recordatorios, cambios y digestos del plugin.';
+$string['nav_configuration'] = 'Configuracion';
+$string['nav_configuration_tip'] = 'Accede a cursos academicos, motivos y modalidades.';
+$string['nav_student'] = 'Ficha del alumno';
+$string['nav_student_tip'] = 'Vuelve a la ficha longitudinal del alumno actual.';
+
+$string['dashboard_intro'] = 'Revisa de un vistazo los alumnos asignados, los pendientes y las alertas que requieren accion tutorial.';
+$string['assignments_intro'] = 'Filtra asignaciones, entra en cada detalle y localiza rapido la ficha del alumno.';
+$string['assignment_detail_intro'] = 'Aqui puedes revisar el contexto completo de la asignacion y saltar a la ficha del alumno.';
+$string['student_detail_intro'] = 'Usa las pestanas para moverte entre el resumen, historial, tutorias, acuerdos y seguimientos del alumno.';
+$string['entry_detail_intro'] = 'Esta pantalla centraliza el contenido de la tutoria y sus acciones relacionadas.';
+$string['referrals_intro'] = 'Consulta la cola de derivaciones y aplica filtros por estado para priorizar la gestion.';
+$string['referral_detail_intro'] = 'Revisa la derivacion, su responsable y las acciones disponibles sin salir del contexto.';
+$string['coordination_intro'] = 'Analiza cobertura, calidad y desglose de tutorias por curso, cohorte o tutor.';
+$string['notifications_intro'] = 'Decide que avisos quieres recibir y con que frecuencia para no perder seguimiento.';
+$string['academicyears_intro'] = 'Gestiona los cursos academicos disponibles y controla cual esta activo o bloqueado.';
+$string['reasons_intro'] = 'Mantiene el catalogo de motivos de tutoria y su visibilidad por defecto.';
+$string['modalities_intro'] = 'Define los canales de contacto disponibles para registrar tutorias.';
+
+$string['page_back_dashboard'] = 'Volver al panel';
+$string['page_back_assignments'] = 'Volver a asignaciones';
+$string['page_back_referrals'] = 'Volver a derivaciones';
+$string['page_back_student_entries'] = 'Volver a tutorias del alumno';
+$string['page_back_configuration'] = 'Volver a configuracion';
+
+$string['assignments_create_tip'] = 'Crea una nueva asignacion manual y despues accede a su detalle.';
+
+$string['studenttab_summary_tip'] = 'Vista general del alumno en el curso academico seleccionado.';
+$string['studenttab_history_tip'] = 'Historial de asignaciones y cambios de tutor a lo largo del tiempo.';
+$string['studenttab_tutoring_tip'] = 'Listado de tutorias registradas para este alumno.';
+$string['studenttab_agreements_tip'] = 'Seguimiento de acuerdos asociados a tutorias del alumno.';
+$string['studenttab_followups_tip'] = 'Pendientes de seguimiento abiertos para este alumno.';
+
+$string['configuration_intro'] = 'Punto de entrada para la administracion del plugin y sus catalogos base.';
+
+$string['settings_entryeditwindow_title'] = 'Ventana de edición de tutorías';
+
+$string['assignment_reassign'] = 'Reasignar tutor';
+$string['assignment_reassign_title'] = 'Reasignar tutor';
+$string['assignment_reassign_confirm'] = 'Confirmar reasignación';
+$string['assignment_reassign_confirm_checkbox'] = 'Confirmo que deseo reasignar esta tutoría a otro tutor.';
+$string['assignment_reassign_success'] = 'Tutor reasignado correctamente.';
+$string['assignment_reassign_intro'] = 'Cierra la asignación principal actual y crea una nueva con el tutor seleccionado, conservando el historial.';
+$string['assignment_field_newtutor'] = 'Nuevo tutor';
+$string['assignment_field_reassignreason'] = 'Motivo de la reasignación';
+$string['assignment_field_reassigndate'] = 'Fecha efectiva de la reasignación';
+$string['assignment_field_keepcotutors'] = 'Mantener los cotutores activos del alumno';
+$string['warning_assignment_reassign'] = 'Esta acción cerrará la asignación principal actual y creará una nueva con el tutor seleccionado.';
+$string['warning_assignment_reassign_cotutors'] = 'El alumno tiene {} cotutor(es) activo(s). Puedes mantenerlos o cerrarlos en la misma reasignación.';
+$string['error_assignment_reassign_only_primary'] = 'Solo se puede reasignar una asignación principal activa.';
+$string['error_assignment_reassign_not_confirmed'] = 'Debes confirmar la reasignación.';
+
+$string['coordination_scope_manage'] = 'Gestionar coordinadores';
+$string['coordination_scope_manage_help'] = 'Elegir que coordinadores pueden supervisar cada cohorte.';
+$string['coordination_dashboard_intro'] = 'Vista agregada para coordinacion. El alcance se define por cohortes asignadas al coordinador y, dentro de ese alcance, se puede filtrar por tutor.';
+$string['coordination_filter_help'] = 'Primero acota por cohorte y despues, si lo necesitas, filtra por tutor dentro de esas cohortes.';
+$string['error_coordination_scope_invalid_user'] = 'Solo puedes asignar ambitos a usuarios con acceso al panel de coordinacion.';
+$string['coordination_scope_intro'] = 'Selecciona un coordinador y asígnale las cohortes que podrá supervisar. Dentro del panel, después podrá filtrar por tutor.';

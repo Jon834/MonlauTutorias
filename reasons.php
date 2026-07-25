@@ -46,6 +46,15 @@ $canmanage = has_capability('local/monlaututoria:managecatalogues', $context);
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
+echo $renderer->plugin_navigation('configuration');
+echo $renderer->page_header_card(
+    get_string('reasons', 'local_monlaututoria'),
+    get_string('reasons_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/index.php'),
+    get_string('page_back_configuration', 'local_monlaututoria'),
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 
 if ($canmanage) {
     echo $OUTPUT->single_button(
@@ -57,3 +66,5 @@ if ($canmanage) {
 echo $renderer->catalogue_list($items, 'reason', $canmanage);
 
 echo $OUTPUT->footer();
+
+

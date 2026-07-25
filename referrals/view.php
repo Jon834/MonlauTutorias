@@ -48,6 +48,7 @@ $PAGE->set_url('/local/monlaututoria/referrals/view.php', ['id' => $id]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('referral_detail_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('referral_detail_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $canmanage = has_capability('local/monlaututoria:managereferrals', $context);
 $isopen = in_array(
@@ -60,7 +61,18 @@ $isopen = in_array(
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('referral_detail_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('referrals', [
+    'studentid' => (int) $referral->studentid,
+    'studentlabel' => $student ? fullname($student) : get_string('nav_student', 'local_monlaututoria'),
+]);
+echo $renderer->page_header_card(
+    get_string('referral_detail_title', 'local_monlaututoria'),
+    get_string('referral_detail_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/referrals/index.php'),
+    get_string('page_back_referrals', 'local_monlaututoria'),
+    [],
+    $student ? fullname($student) : null
+);
 echo $renderer->referral_detail($referral, $student, $entry, $assignee);
 
 if ($canmanage && $isopen) {
@@ -82,3 +94,5 @@ if ($canmanage && $isopen) {
 }
 
 echo $OUTPUT->footer();
+
+

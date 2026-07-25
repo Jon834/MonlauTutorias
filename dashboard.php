@@ -72,6 +72,7 @@ $PAGE->set_url('/local/monlaututoria/dashboard.php', $urlparams);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('dashboard_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('dashboard_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 /** @var \local_monlaututoria\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_monlaututoria');
@@ -99,7 +100,15 @@ $canmanagefollowups = has_capability('local/monlaututoria:managefollowups', $con
 $canmanagereferrals = has_capability('local/monlaututoria:managereferrals', $context);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('dashboard_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('dashboard');
+echo $renderer->page_header_card(
+    get_string('dashboard_title', 'local_monlaututoria'),
+    get_string('dashboard_intro', 'local_monlaututoria'),
+    null,
+    null,
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 
 if (!empty($academicyearoptions)) {
     echo $OUTPUT->single_select(
@@ -211,3 +220,5 @@ echo $renderer->heading(get_string('dashboard_section_priority', 'local_monlautu
 echo $renderer->dashboard_priority_students_list($dashboard->prioritystudents, $studentusers, (int) $academicyear->id);
 
 echo $OUTPUT->footer();
+
+

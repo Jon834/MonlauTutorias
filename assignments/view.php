@@ -42,6 +42,7 @@ $PAGE->set_url('/local/monlaututoria/assignments/view.php', ['id' => $id]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('assignment_detail_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('assignment_detail_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 \local_monlaututoria\event\assignment_viewed::create_from_id(
     $id,
@@ -84,6 +85,10 @@ $isactive = $assignment->status === \local_monlaututoria\domain\assignment_statu
 $canedit = $canmanageassignments && ($isactive || $canmanageclosed);
 $canclose = $canmanageassignments && $isactive
     && $assignment->assignmenttype !== \local_monlaututoria\domain\assignment_type::CO_TUTOR;
+$canreassign = has_capability('local/monlaututoria:reassignstudents', $context)
+    && $isactive
+    && $assignment->assignmenttype === \local_monlaututoria\domain\assignment_type::PRIMARY
+    && !empty($assignment->isprimary);
 
 $closereasonoptions = \local_monlaututoria\domain\assignment_close_reason::get_options();
 
@@ -91,17 +96,17 @@ $detaildata = (object) ($badge + [
     'studentname'         => $student ? fullname($student) : ('#' . $assignment->studentid),
     'tutorname'           => $tutor ? fullname($tutor) : ('#' . $assignment->tutorid),
     'typelabel'           => $typeoptions[$assignment->assignmenttype] ?? $assignment->assignmenttype,
-    'academicyearname'    => $academicyear ? format_string($academicyear->name) : 'â€”',
-    'cohortname'          => $cohort ? format_string($cohort->name) : 'â€”',
+    'academicyearname'    => $academicyear ? format_string($academicyear->name) : '—',
+    'cohortname'          => $cohort ? format_string($cohort->name) : '—',
     'timestartformatted'  => userdate($assignment->timestart, $dateformat),
-    'timeendformatted'    => !empty($assignment->timeend) ? userdate($assignment->timeend, $dateformat) : 'â€”',
+    'timeendformatted'    => !empty($assignment->timeend) ? userdate($assignment->timeend, $dateformat) : '—',
     'sourcelabel'         => $sourceoptions[$assignment->source] ?? $assignment->source,
     'studentfichaurl'     => (new moodle_url('/local/monlaututoria/student/view.php', ['id' => $assignment->studentid]))->out(false),
     'studentfichalabel'   => get_string('student_viewficha', 'local_monlaututoria'),
-    'noteformatted'       => !empty($assignment->note) ? format_text($assignment->note, FORMAT_PLAIN) : 'â€”',
+    'noteformatted'       => !empty($assignment->note) ? format_text($assignment->note, FORMAT_PLAIN) : '—',
     'closereasonlabel'    => !empty($assignment->closereason)
         ? ($closereasonoptions[$assignment->closereason] ?? $assignment->closereason)
-        : 'â€”',
+        : '—',
     'createdbyname'       => $createdby ? fullname($createdby) : ('#' . $assignment->createdby),
     'createdonformatted'  => userdate($assignment->timecreated, $datetimeformat),
     'modifiedbyname'      => $modifiedby ? fullname($modifiedby) : ('#' . $assignment->modifiedby),
@@ -116,6 +121,11 @@ $detaildata = (object) ($badge + [
         ? (new moodle_url('/local/monlaututoria/assignments/close.php', ['id' => $id]))->out(false)
         : '',
     'closelabel'          => get_string('assignment_close', 'local_monlaututoria'),
+    'canreassign'         => $canreassign,
+    'reassignurl'         => $canreassign
+        ? (new moodle_url('/local/monlaututoria/assignments/reassign.php', ['id' => $id]))->out(false)
+        : '',
+    'reassignlabel'       => get_string('assignment_reassign', 'local_monlaututoria'),
 ]);
 
 // Basic history: every assignment for this student, most recent first.
@@ -136,12 +146,24 @@ foreach ($historyrecords as $entry) {
         'tutorname'          => $entrytutor ? fullname($entrytutor) : ('#' . $entry->tutorid),
         'typelabel'          => $typeoptions[$entry->assignmenttype] ?? $entry->assignmenttype,
         'timestartformatted' => userdate($entry->timestart, $dateformat),
-        'timeendformatted'   => !empty($entry->timeend) ? userdate($entry->timeend, $dateformat) : 'â€”',
+        'timeendformatted'   => !empty($entry->timeend) ? userdate($entry->timeend, $dateformat) : '—',
     ];
 }
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('assignment_detail_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('assignments', [
+    'studentid' => (int) $assignment->studentid,
+    'studentlabel' => $student ? fullname($student) : get_string('nav_student', 'local_monlaututoria'),
+    'academicyearid' => (int) $assignment->academicyearid,
+]);
+echo $renderer->page_header_card(
+    get_string('assignment_detail_title', 'local_monlaututoria'),
+    get_string('assignment_detail_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/assignments/index.php'),
+    get_string('page_back_assignments', 'local_monlaututoria'),
+    [],
+    $student ? fullname($student) : null
+);
 
 echo $renderer->assignment_detail($detaildata);
 

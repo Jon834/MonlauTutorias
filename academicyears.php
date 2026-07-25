@@ -47,6 +47,15 @@ $canoverridelock = has_capability('local/monlaututoria:overridelock', $context);
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
+echo $renderer->plugin_navigation('configuration');
+echo $renderer->page_header_card(
+    get_string('academicyears', 'local_monlaututoria'),
+    get_string('academicyears_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/index.php'),
+    get_string('page_back_configuration', 'local_monlaututoria'),
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 
 if ($repository->get_active() === null) {
     echo $renderer->noactiveacademicyear_warning();
@@ -62,3 +71,5 @@ if ($canmanage) {
 echo $renderer->academic_years_list($years, $canmanage, $canoverridelock);
 
 echo $OUTPUT->footer();
+
+

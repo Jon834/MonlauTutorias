@@ -43,34 +43,10 @@
     * canclose bool - whether to show the close link (never true for co-tutor rows)
     * closeurl string - only used when canclose is true
     * closelabel string - only used when canclose is true
+    * canreassign bool - whether to show the reassign link
+    * reassignurl string - only used when canreassign is true
+    * reassignlabel string - only used when canreassign is true
     * status, statuslabel, statusclass, statusicon - see assignment_status
-
-    Example context (json):
-    {
-        "studentname": "Jane Student",
-        "tutorname": "John Tutor",
-        "cotutornames": "—",
-        "cohortname": "—",
-        "academicyearname": "2026-2027",
-        "typelabel": "Primary tutor",
-        "timestartformatted": "1 September 2026",
-        "timeendformatted": "—",
-        "sourcelabel": "Manual",
-        "detailurl": "https://example.org/local/monlaututoria/assignments/view.php?id=1",
-        "viewdetaillabel": "View detail",
-        "studentfichaurl": "https://example.org/local/monlaututoria/student/view.php?id=2",
-        "studentfichalabel": "View file",
-        "canedit": true,
-        "editurl": "https://example.org/local/monlaututoria/assignments/edit.php?id=1",
-        "editlabel": "Edit",
-        "canclose": true,
-        "closeurl": "https://example.org/local/monlaututoria/assignments/close.php?id=1",
-        "closelabel": "Close",
-        "status": "active",
-        "statuslabel": "Active",
-        "statusclass": "success",
-        "statusicon": "check-circle"
-    }
 }}
 <tr>
     <td>{{studentname}}</td>
@@ -87,6 +63,7 @@
         <a href="{{detailurl}}">{{viewdetaillabel}}</a>
         | <a href="{{studentfichaurl}}">{{studentfichalabel}}</a>
         {{#canedit}} | <a href="{{editurl}}">{{editlabel}}</a>{{/canedit}}
+        {{#canreassign}} | <a href="{{reassignurl}}">{{reassignlabel}}</a>{{/canreassign}}
         {{#canclose}} | <a href="{{closeurl}}">{{closelabel}}</a>{{/canclose}}
     </td>
 </tr>

@@ -32,10 +32,29 @@ admin_externalpage_setup('local_monlaututoria_coordination');
 $PAGE->set_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid]);
 $PAGE->set_title(get_string('coordination_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('coordination_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('coordination_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('coordination');
+
+$headeractions = [];
+if (has_capability('local/monlaututoria:managecoordinationscopes', $context)) {
+    $headeractions[] = [
+        'url' => new moodle_url('/local/monlaututoria/coordination_scopes.php'),
+        'label' => get_string('coordination_scope_manage', 'local_monlaututoria'),
+        'title' => get_string('coordination_scope_manage_help', 'local_monlaututoria'),
+    ];
+}
+
+echo $renderer->page_header_card(
+    get_string('coordination_title', 'local_monlaututoria'),
+    get_string('coordination_dashboard_intro', 'local_monlaututoria'),
+    null,
+    null,
+    $headeractions,
+    get_string('pluginname', 'local_monlaututoria')
+);
 
 if (empty($availablecohortids)) {
     echo $OUTPUT->notification(get_string('coordination_dashboard_noscope', 'local_monlaututoria'), \core\output\notification::NOTIFY_WARNING);
@@ -53,6 +72,7 @@ $cohortoptions = [0 => get_string('coordination_cohort_all', 'local_monlaututori
 foreach ($dashboardall->cohortlabels as $cohortid => $label) {
     $cohortoptions[$cohortid] = $label;
 }
+echo html_writer::tag('p', get_string('coordination_filter_help', 'local_monlaututoria'), ['class' => 'text-muted']);
 echo $renderer->single_select(new moodle_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'tutorid' => $selectedtutorid]), 'cohortid', $cohortoptions, $selectedcohortid, null, 'coordinationcohortselector');
 
 $tutoroptions = [0 => get_string('coordination_tutor_all', 'local_monlaututoria')] + $dashboardall->tutoroptions;
@@ -75,3 +95,4 @@ echo $renderer->heading(get_string('coordination_breakdown_tutors', 'local_monla
 echo $renderer->coordination_breakdown_table($dashboard->tutorbreakdown);
 
 echo $OUTPUT->footer();
+

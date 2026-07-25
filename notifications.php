@@ -17,6 +17,7 @@ $PAGE->set_url($url);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('notification_preferences_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('notification_preferences_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 if (optional_param('save', 0, PARAM_BOOL) && confirm_sesskey()) {
     $service->save_settings((int) $USER->id, [
@@ -37,8 +38,16 @@ $frequencyoptions = [
 ];
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('notification_preferences_title', 'local_monlaututoria'));
-echo html_writer::tag('p', get_string('notification_preferences_intro', 'local_monlaututoria'));
+$renderer = $PAGE->get_renderer('local_monlaututoria');
+echo $renderer->plugin_navigation('notifications');
+echo $renderer->page_header_card(
+    get_string('notification_preferences_title', 'local_monlaututoria'),
+    get_string('notifications_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/dashboard.php'),
+    get_string('page_back_dashboard', 'local_monlaututoria'),
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $url->out(false)]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'save', 'value' => 1]);
@@ -62,3 +71,5 @@ echo html_writer::empty_tag('br');
 echo html_writer::tag('button', get_string('notification_preferences_save', 'local_monlaututoria'), ['type' => 'submit', 'class' => 'btn btn-primary']);
 echo html_writer::end_tag('form');
 echo $OUTPUT->footer();
+
+

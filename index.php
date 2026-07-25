@@ -41,8 +41,21 @@ $PAGE->set_url(new moodle_url('/local/monlaututoria/index.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('pluginname', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('pluginname', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
+
+/** @var \local_monlaututoria\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
+echo $renderer->plugin_navigation('configuration');
+echo $renderer->page_header_card(
+    get_string('pluginname', 'local_monlaututoria'),
+    get_string('configuration_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/dashboard.php'),
+    get_string('page_back_dashboard', 'local_monlaututoria'),
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 
 $links = [
     ['url' => '/local/monlaututoria/academicyears.php', 'string' => 'academicyears'],
@@ -60,3 +73,7 @@ foreach ($links as $link) {
 echo html_writer::end_tag('ul');
 
 echo $OUTPUT->footer();
+
+
+
+

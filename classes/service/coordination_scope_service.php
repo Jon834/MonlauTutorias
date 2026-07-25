@@ -73,7 +73,16 @@ final class coordination_scope_service {
      * @param int[] $cohortids
      */
     public function replace_user_scopes(int $userid, int $actorid, array $cohortids): void {
-        require_capability('local/monlaututoria:managecoordinationscopes', \context_system::instance(), $actorid);
+        $context = \context_system::instance();
+        require_capability('local/monlaututoria:managecoordinationscopes', $context, $actorid);
+
+        if (!has_any_capability([
+            'local/monlaututoria:viewcoordinationdashboard',
+            'local/monlaututoria:viewallassignments',
+        ], $context, $userid)) {
+            throw new \moodle_exception('error_coordination_scope_invalid_user', 'local_monlaututoria');
+        }
+
         $validcohortids = array_keys($this->cohortrepository->get_many($cohortids));
         $this->repository->replace_user_scopes($userid, array_map('intval', $validcohortids), $actorid);
     }

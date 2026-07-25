@@ -103,3 +103,19 @@ function local_monlaututoria_pluginfile($course, $cm, $context, $filearea, $args
 
     send_stored_file($file, null, 0, $forcedownload, $options);
 }
+
+/**
+ * Loads shared styles for the Monlau Tutoria UI.
+ *
+ * @param moodle_page $page
+ * @return void
+ */
+function local_monlaututoria_require_page_assets(\moodle_page $page): void {
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+
+    $page->requires->css(new \moodle_url('/local/monlaututoria/styles.css'));
+    $loaded = true;
+}

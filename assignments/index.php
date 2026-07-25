@@ -92,6 +92,7 @@ $PAGE->set_url('/local/monlaututoria/assignments/index.php', $filters + ['page' 
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('assignments', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('assignments', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $academicyearrepository = new \local_monlaututoria\repository\academic_year_repository();
 $academicyearoptions = [];
@@ -109,16 +110,12 @@ $filterform = new \local_monlaututoria\form\assignment_filter_form(
     ['academicyears' => $academicyearoptions, 'cohorts' => $cohortoptions],
     'get'
 );
-// The GET filter values already come from optional_param() above; set_data()
-// here only pre-fills the form fields for redisplay, it does not gate the query.
 $filterform->set_data($filters);
 
 $repository = new \local_monlaututoria\repository\assignment_repository();
 $totalcount = $repository->count_search($filters);
 $records = $repository->search($filters, $page * $perpage, $perpage);
 
-// Batch-fetch display data for this page only, to avoid N+1 and avoid
-// loading full user profiles for the whole system.
 $studentids = [];
 $tutorids = [];
 $cohortids = [];
@@ -135,12 +132,6 @@ foreach ($records as $record) {
 $userids = array_unique(array_merge(array_keys($studentids), array_keys($tutorids)));
 $users = !empty($userids) ? $DB->get_records_list('user', 'id', $userids, '', 'id, firstname, lastname, email') : [];
 $cohorts = !empty($cohortids) ? $DB->get_records_list('cohort', 'id', array_keys($cohortids), '', 'id, name') : [];
-
-// One query for every distinct academic year on this page (phase 3E.4: this
-// used to call get() once per id in a loop â€” bounded by page size, since
-// $academicyearids only ever holds ids from the current page, but still an
-// easy, safe batch fetch to make instead). Dangling references simply do not
-// come back from get_many(), rather than throwing and breaking the listing.
 $academicyears = $academicyearrepository->get_many(array_keys($academicyearids));
 
 $cotutorrecords = $repository->get_cotutors_for_students(array_keys($studentids));
@@ -160,6 +151,7 @@ $dateformat = get_string('strftimedatefullshort', 'langconfig');
 $canmanageassignments = has_capability('local/monlaututoria:manageassignments', $context);
 $canmanageclosed = has_capability('local/monlaututoria:manageclosedassignments', $context);
 $canassignstudents = has_capability('local/monlaututoria:assignstudents', $context);
+$canreassignstudents = has_capability('local/monlaututoria:reassignstudents', $context);
 
 $rows = [];
 foreach ($records as $record) {
@@ -175,16 +167,19 @@ foreach ($records as $record) {
     $canedit = $canmanageassignments && ($isactive || $canmanageclosed);
     $canclose = $canmanageassignments && $isactive
         && $record->assignmenttype !== \local_monlaututoria\domain\assignment_type::CO_TUTOR;
+    $canreassign = $canreassignstudents && $isactive
+        && $record->assignmenttype === \local_monlaututoria\domain\assignment_type::PRIMARY
+        && !empty($record->isprimary);
 
     $rows[] = $badge + [
         'studentname'        => $student ? fullname($student) : ('#' . $record->studentid),
         'tutorname'          => $tutor ? fullname($tutor) : ('#' . $record->tutorid),
-        'cotutornames'       => !empty($cotutornames) ? implode(', ', $cotutornames) : 'â€”',
-        'cohortname'         => $cohort ? format_string($cohort->name) : 'â€”',
-        'academicyearname'   => $academicyear ? format_string($academicyear->name) : 'â€”',
+        'cotutornames'       => !empty($cotutornames) ? implode(', ', $cotutornames) : '—',
+        'cohortname'         => $cohort ? format_string($cohort->name) : '—',
+        'academicyearname'   => $academicyear ? format_string($academicyear->name) : '—',
         'typelabel'          => $typeoptions[$record->assignmenttype] ?? $record->assignmenttype,
         'timestartformatted' => userdate($record->timestart, $dateformat),
-        'timeendformatted'   => !empty($record->timeend) ? userdate($record->timeend, $dateformat) : 'â€”',
+        'timeendformatted'   => !empty($record->timeend) ? userdate($record->timeend, $dateformat) : '—',
         'sourcelabel'        => $sourceoptions[$record->source] ?? $record->source,
         'detailurl'          => (new moodle_url('/local/monlaututoria/assignments/view.php', ['id' => $record->id]))->out(false),
         'viewdetaillabel'    => get_string('assignment_viewdetail', 'local_monlaututoria'),
@@ -200,6 +195,11 @@ foreach ($records as $record) {
             ? (new moodle_url('/local/monlaututoria/assignments/close.php', ['id' => $record->id]))->out(false)
             : '',
         'closelabel'         => get_string('assignment_close', 'local_monlaututoria'),
+        'canreassign'        => $canreassign,
+        'reassignurl'        => $canreassign
+            ? (new moodle_url('/local/monlaututoria/assignments/reassign.php', ['id' => $record->id]))->out(false)
+            : '',
+        'reassignlabel'      => get_string('assignment_reassign', 'local_monlaututoria'),
     ];
 }
 

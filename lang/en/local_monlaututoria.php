@@ -835,3 +835,27 @@ $string['privacy:metadata:notification:status'] = 'Delivery status.';
 $string['privacy:metadata:notification:attempts'] = 'Number of delivery attempts.';
 $string['privacy:metadata:notification:lasterror'] = 'Last recorded delivery error.';
 $string['privacy:metadata:notification:timesent'] = 'Time when the notification was sent.';
+
+$string['settings_entryeditwindow_title'] = 'Tutoring entry edit window';
+
+$string['assignment_reassign'] = 'Reassign tutor';
+$string['assignment_reassign_title'] = 'Reassign tutor';
+$string['assignment_reassign_confirm'] = 'Confirm reassignment';
+$string['assignment_reassign_confirm_checkbox'] = 'I confirm that I want to reassign this tutoring assignment to another tutor.';
+$string['assignment_reassign_success'] = 'Tutor reassigned successfully.';
+$string['assignment_reassign_intro'] = 'This closes the current primary assignment and creates a new one with the selected tutor, preserving history.';
+$string['assignment_field_newtutor'] = 'New tutor';
+$string['assignment_field_reassignreason'] = 'Reason for reassignment';
+$string['assignment_field_reassigndate'] = 'Effective reassignment date';
+$string['assignment_field_keepcotutors'] = 'Keep the student\'s active co-tutors';
+$string['warning_assignment_reassign'] = 'This action will close the current primary assignment and create a new one with the selected tutor.';
+$string['warning_assignment_reassign_cotutors'] = 'The student has {} active co-tutor(s). You can keep or close them as part of the reassignment.';
+$string['error_assignment_reassign_only_primary'] = 'Only an active primary assignment can be reassigned.';
+$string['error_assignment_reassign_not_confirmed'] = 'You must confirm the reassignment.';
+
+$string['coordination_scope_manage'] = 'Manage coordinators';
+$string['coordination_scope_manage_help'] = 'Choose which coordinators can supervise each cohort.';
+$string['coordination_dashboard_intro'] = 'Aggregated coordination view. Scope is defined by the cohorts assigned to the coordinator and, within that scope, the dashboard can be filtered by tutor.';
+$string['coordination_filter_help'] = 'First narrow by cohort and then, if needed, filter by tutor within those cohorts.';
+$string['error_coordination_scope_invalid_user'] = 'You can only assign scopes to users with access to the coordination dashboard.';
+$string['coordination_scope_intro'] = 'Select a coordinator and assign the cohorts they can supervise. Inside the dashboard they can then filter by tutor.';

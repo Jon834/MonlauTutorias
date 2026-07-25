@@ -121,7 +121,7 @@ if ($hassiteconfig
     // never hardcodes it.
     $settings = new admin_settingpage(
         'local_monlaututoria_settings',
-        get_string('pluginname', 'local_monlaututoria'),
+        get_string('settings_entryeditwindow_title', 'local_monlaututoria'),
         'local/monlaututoria:managecatalogues'
     );
     $settings->add(new admin_setting_configduration(
@@ -134,3 +134,4 @@ if ($hassiteconfig
 } else {
     $settings = null;
 }
+

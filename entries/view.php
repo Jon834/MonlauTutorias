@@ -57,6 +57,7 @@ $PAGE->set_url('/local/monlaututoria/entries/view.php', ['id' => $id]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('entry_detail_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('entry_detail_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $modalitylabel = '—';
 if ($entry->modalityid !== null) {
@@ -148,6 +149,20 @@ $data = (object) [
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('entry_detail_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('student', [
+    'studentid' => (int) $entry->studentid,
+    'studentlabel' => fullname($student),
+    'academicyearid' => (int) $entry->academicyearid,
+]);
+echo $renderer->page_header_card(
+    get_string('entry_detail_title', 'local_monlaututoria'),
+    get_string('entry_detail_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/student/view.php', ['id' => $entry->studentid, 'tab' => 'tutorias', 'academicyearid' => $entry->academicyearid]),
+    get_string('page_back_student_entries', 'local_monlaututoria'),
+    [],
+    fullname($student)
+);
 echo $renderer->entry_detail($data);
 echo $OUTPUT->footer();
+
+

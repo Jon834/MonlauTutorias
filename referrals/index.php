@@ -45,6 +45,7 @@ $PAGE->set_url('/local/monlaututoria/referrals/index.php', array_filter(['status
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('referrals_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('referrals_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $service = new \local_monlaututoria\service\referral_service();
 $totalcount = $service->count_for_coordination($filters, (int) $USER->id);
@@ -54,8 +55,18 @@ $studentids = array_unique(array_map(static fn ($referral) => $referral->student
 $students = !empty($studentids) ? $DB->get_records_list('user', 'id', $studentids, '', 'id, firstname, lastname, email') : [];
 
 $statusoptions = ['' => get_string('choosedots')] + \local_monlaututoria\domain\referral_status::get_options();
+/** @var \local_monlaututoria\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_monlaututoria');
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('referrals_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('referrals');
+echo $renderer->page_header_card(
+    get_string('referrals_title', 'local_monlaututoria'),
+    get_string('referrals_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/dashboard.php'),
+    get_string('page_back_dashboard', 'local_monlaututoria'),
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 echo $OUTPUT->single_select(
     new moodle_url('/local/monlaututoria/referrals/index.php'),
     'status',
@@ -71,3 +82,6 @@ echo $renderer->referrals_table($referrals, $students);
 
 echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 echo $OUTPUT->footer();
+
+
+

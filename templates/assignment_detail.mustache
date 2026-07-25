@@ -45,41 +45,14 @@
     * canclose bool - whether to show the close action (never true for co-tutor rows)
     * closeurl string - only used when canclose is true
     * closelabel string - only used when canclose is true
+    * canreassign bool - whether to show the reassignment action
+    * reassignurl string - only used when canreassign is true
+    * reassignlabel string - only used when canreassign is true
     * status, statuslabel, statusclass, statusicon - see assignment_status
-
-    Example context (json):
-    {
-        "studentname": "Jane Student",
-        "tutorname": "John Tutor",
-        "typelabel": "Primary tutor",
-        "academicyearname": "2026-2027",
-        "cohortname": "—",
-        "timestartformatted": "1 September 2026",
-        "timeendformatted": "—",
-        "sourcelabel": "Manual",
-        "studentfichaurl": "https://example.org/local/monlaututoria/student/view.php?id=2",
-        "studentfichalabel": "View file",
-        "noteformatted": "—",
-        "closereasonlabel": "—",
-        "createdbyname": "Admin User",
-        "createdonformatted": "1 September 2026, 09:00",
-        "modifiedbyname": "Admin User",
-        "modifiedonformatted": "1 September 2026, 09:00",
-        "canedit": true,
-        "editurl": "https://example.org/local/monlaututoria/assignments/edit.php?id=1",
-        "editlabel": "Edit",
-        "canclose": true,
-        "closeurl": "https://example.org/local/monlaututoria/assignments/close.php?id=1",
-        "closelabel": "Close",
-        "status": "active",
-        "statuslabel": "Active",
-        "statusclass": "success",
-        "statusicon": "check-circle"
-    }
 }}
 <dl class="row">
     <dt class="col-sm-3">{{#str}} assignment_col_student, local_monlaututoria {{/str}}</dt>
-    <dd class="col-sm-9">{{studentname}} — <a href="{{studentfichaurl}}">{{studentfichalabel}}</a></dd>
+    <dd class="col-sm-9">{{studentname}} � <a href="{{studentfichaurl}}">{{studentfichalabel}}</a></dd>
 
     <dt class="col-sm-3">{{#str}} assignment_col_tutor, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">{{tutorname}}</dd>
@@ -112,14 +85,17 @@
     <dd class="col-sm-9">{{closereasonlabel}}</dd>
 
     <dt class="col-sm-3">{{#str}} assignment_createdby, local_monlaututoria {{/str}}</dt>
-    <dd class="col-sm-9">{{createdbyname}} — {{createdonformatted}}</dd>
+    <dd class="col-sm-9">{{createdbyname}} � {{createdonformatted}}</dd>
 
     <dt class="col-sm-3">{{#str}} assignment_modifiedby, local_monlaututoria {{/str}}</dt>
-    <dd class="col-sm-9">{{modifiedbyname}} — {{modifiedonformatted}}</dd>
+    <dd class="col-sm-9">{{modifiedbyname}} � {{modifiedonformatted}}</dd>
 </dl>
 {{#canedit}}
 <p><a class="btn btn-secondary" href="{{editurl}}">{{editlabel}}</a></p>
 {{/canedit}}
+{{#canreassign}}
+<p><a class="btn btn-primary" href="{{reassignurl}}">{{reassignlabel}}</a></p>
+{{/canreassign}}
 {{#canclose}}
 <p><a class="btn btn-outline-danger" href="{{closeurl}}">{{closelabel}}</a></p>
 {{/canclose}}

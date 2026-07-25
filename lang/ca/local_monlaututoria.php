@@ -835,3 +835,29 @@ $string['privacy:metadata:notification:status'] = 'Estat de lliurament.';
 $string['privacy:metadata:notification:attempts'] = 'Nombre d\'intents de lliurament.';
 $string['privacy:metadata:notification:lasterror'] = 'Ultim error de lliurament registrat.';
 $string['privacy:metadata:notification:timesent'] = 'Moment d\'enviament.';
+
+$string['settings_entryeditwindow_title'] = 'Finestra d\'edició de tutories';
+
+
+
+$string['assignment_reassign'] = 'Reassignar tutor';
+$string['assignment_reassign_title'] = 'Reassignar tutor';
+$string['assignment_reassign_confirm'] = 'Confirmar reassignació';
+$string['assignment_reassign_confirm_checkbox'] = 'Confirmo que vull reassignar aquesta tutoria a un altre tutor.';
+$string['assignment_reassign_success'] = 'Tutor reassignat correctament.';
+$string['assignment_reassign_intro'] = 'Tanca l\'assignació principal actual i en crea una de nova amb el tutor seleccionat, conservant l\'historial.';
+$string['assignment_field_newtutor'] = 'Nou tutor';
+$string['assignment_field_reassignreason'] = 'Motiu de la reassignació';
+$string['assignment_field_reassigndate'] = 'Data efectiva de la reassignació';
+$string['assignment_field_keepcotutors'] = 'Mantenir actius els cotutors de l\'alumne';
+$string['warning_assignment_reassign'] = 'Aquesta acció tancarà l\'assignació principal actual i en crearà una de nova amb el tutor seleccionat.';
+$string['warning_assignment_reassign_cotutors'] = 'L\'alumne té {} cotutor(s) actiu(s). Pots mantenir-los o tancar-los dins de la mateixa reassignació.';
+$string['error_assignment_reassign_only_primary'] = 'Només es pot reassignar una assignació principal activa.';
+$string['error_assignment_reassign_not_confirmed'] = 'Cal confirmar la reassignació.';
+
+$string['coordination_scope_manage'] = 'Gestionar coordinadors';
+$string['coordination_scope_manage_help'] = 'Triar quins coordinadors poden supervisar cada cohort.';
+$string['coordination_dashboard_intro'] = 'Vista agregada per a coordinacio. L abast es defineix per les cohorts assignades al coordinador i, dins d aquest abast, es pot filtrar per tutor.';
+$string['coordination_filter_help'] = 'Primer acota per cohort i despres, si cal, filtra per tutor dins d aquestes cohorts.';
+$string['error_coordination_scope_invalid_user'] = 'Nomes pots assignar ambits a usuaris amb acces al tauler de coordinacio.';
+$string['coordination_scope_intro'] = 'Selecciona un coordinador i assigna-li les cohorts que podrà supervisar. Dins del panell després podrà filtrar per tutor.';

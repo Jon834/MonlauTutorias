@@ -29,6 +29,169 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class renderer extends \plugin_renderer_base {
+    /**
+     * @param string $text
+     * @return string
+     */
+    public function tooltip(string $text): string {
+        return \html_writer::tag('span', '?', [
+            'class' => 'local-monlaututoria-tooltip',
+            'title' => $text,
+            'aria-label' => $text,
+            'tabindex' => '0',
+        ]);
+    }
+
+    /**
+     * @param string $active
+     * @param array $contextdata
+     * @return string
+     */
+    public function plugin_navigation(string $active, array $contextdata = []): string {
+        $systemcontext = \context_system::instance();
+        $items = [];
+
+        if (has_any_capability(['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments'], $systemcontext)) {
+            $items[] = [
+                'key' => 'dashboard',
+                'label' => get_string('nav_dashboard', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/dashboard.php'),
+                'title' => get_string('nav_dashboard_tip', 'local_monlaututoria'),
+            ];
+            $items[] = [
+                'key' => 'assignments',
+                'label' => get_string('nav_assignments', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/assignments/index.php'),
+                'title' => get_string('nav_assignments_tip', 'local_monlaututoria'),
+            ];
+        }
+
+        if (has_capability('local/monlaututoria:managereferrals', $systemcontext)) {
+            $items[] = [
+                'key' => 'referrals',
+                'label' => get_string('nav_referrals', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/referrals/index.php'),
+                'title' => get_string('nav_referrals_tip', 'local_monlaututoria'),
+            ];
+        }
+
+        if (has_any_capability(['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments'], $systemcontext)) {
+            $items[] = [
+                'key' => 'coordination',
+                'label' => get_string('nav_coordination', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/coordination.php'),
+                'title' => get_string('nav_coordination_tip', 'local_monlaututoria'),
+            ];
+        }
+
+        if (isloggedin() && !isguestuser()) {
+            $items[] = [
+                'key' => 'notifications',
+                'label' => get_string('nav_notifications', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/notifications.php'),
+                'title' => get_string('nav_notifications_tip', 'local_monlaututoria'),
+            ];
+        }
+
+        if (has_any_capability([
+            'local/monlaututoria:viewconfiguration',
+            'local/monlaututoria:manageacademicyears',
+            'local/monlaututoria:managecatalogues'
+        ], $systemcontext)) {
+            $items[] = [
+                'key' => 'configuration',
+                'label' => get_string('nav_configuration', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/index.php'),
+                'title' => get_string('nav_configuration_tip', 'local_monlaututoria'),
+            ];
+        }
+
+        if (!empty($contextdata['studentid'])) {
+            $params = ['id' => (int) $contextdata['studentid']];
+            if (!empty($contextdata['academicyearid'])) {
+                $params['academicyearid'] = (int) $contextdata['academicyearid'];
+            }
+            $items[] = [
+                'key' => 'student',
+                'label' => !empty($contextdata['studentlabel']) ? $contextdata['studentlabel'] : get_string('nav_student', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/student/view.php', $params),
+                'title' => get_string('nav_student_tip', 'local_monlaututoria'),
+            ];
+        }
+
+        $links = [];
+        foreach ($items as $item) {
+            $classes = 'local-monlaututoria-nav__link';
+            if ($item['key'] === $active) {
+                $classes .= ' is-active';
+            }
+            $attributes = [
+                'class' => $classes,
+                'title' => $item['title'],
+            ];
+            if ($item['key'] === $active) {
+                $attributes['aria-current'] = 'page';
+            }
+            $links[] = \html_writer::link($item['url'], s($item['label']), $attributes);
+        }
+
+        return \html_writer::div(implode('', $links), 'local-monlaututoria-nav mb-4');
+    }
+
+    /**
+     * @param string $title
+     * @param string $description
+     * @param \moodle_url|null $backurl
+     * @param string|null $backlabel
+     * @param array $actions
+     * @param string|null $eyebrow
+     * @return string
+     */
+    public function page_header_card(
+        string $title,
+        string $description,
+        ?\moodle_url $backurl = null,
+        ?string $backlabel = null,
+        array $actions = [],
+        ?string $eyebrow = null
+    ): string {
+        $header = '';
+        if ($eyebrow !== null && $eyebrow !== '') {
+            $header .= \html_writer::div(s($eyebrow), 'local-monlaututoria-page-header__eyebrow');
+        }
+        $header .= \html_writer::tag('h1', s($title), ['class' => 'local-monlaututoria-page-header__title']);
+        $header .= \html_writer::tag('p', s($description), ['class' => 'local-monlaututoria-page-header__description']);
+
+        if ($backurl !== null) {
+            $header .= \html_writer::link(
+                $backurl,
+                s($backlabel ?? get_string('back')),
+                ['class' => 'local-monlaututoria-page-header__back', 'title' => $backlabel ?? get_string('back')]
+            );
+        }
+
+        $actionlinks = [];
+        foreach ($actions as $action) {
+            if (empty($action['url']) || empty($action['label'])) {
+                continue;
+            }
+            $actionlinks[] = \html_writer::link(
+                $action['url'],
+                s($action['label']),
+                [
+                    'class' => 'local-monlaututoria-page-header__action',
+                    'title' => $action['title'] ?? $action['label'],
+                ]
+            );
+        }
+
+        $content = \html_writer::div($header, 'local-monlaututoria-page-header__main');
+        if (!empty($actionlinks)) {
+            $content .= \html_writer::div(implode('', $actionlinks), 'local-monlaututoria-page-header__actions');
+        }
+
+        return \html_writer::div($content, 'local-monlaututoria-page-header mb-4');
+    }
 
     /**
      * @param \stdClass[] $years
@@ -652,6 +815,13 @@ final class renderer extends \plugin_renderer_base {
             'acuerdos'     => get_string('studenttab_agreements', 'local_monlaututoria'),
             'seguimientos' => get_string('studenttab_followups', 'local_monlaututoria'),
         ];
+        $tooltips = [
+            'resumen' => get_string('studenttab_summary_tip', 'local_monlaututoria'),
+            'historial' => get_string('studenttab_history_tip', 'local_monlaututoria'),
+            'tutorias' => get_string('studenttab_tutoring_tip', 'local_monlaututoria'),
+            'acuerdos' => get_string('studenttab_agreements_tip', 'local_monlaututoria'),
+            'seguimientos' => get_string('studenttab_followups_tip', 'local_monlaututoria'),
+        ];
 
         $links = '';
         foreach ($tabs as $key => $label) {
@@ -667,14 +837,14 @@ final class renderer extends \plugin_renderer_base {
             // item. Keyboard access itself already works natively: each tab
             // is a plain <a href>, reachable and activatable with Tab/Enter
             // without any extra wiring.
-            $attributes = ['class' => $classes];
+            $attributes = ['class' => $classes, 'title' => $tooltips[$key] ?? $label];
             if ($key === $active) {
                 $attributes['aria-current'] = 'page';
             }
             $links .= \html_writer::link($url, $label, $attributes);
         }
 
-        return \html_writer::div($links, 'nav nav-tabs mb-3');
+        return \html_writer::div($links, 'nav nav-tabs mb-3 local-monlaututoria-subnav');
     }
 
     /**
@@ -1354,3 +1524,7 @@ final class renderer extends \plugin_renderer_base {
     }
 
 }
+
+
+
+
