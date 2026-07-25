@@ -54,6 +54,7 @@ $PAGE->set_url('/local/monlaututoria/assignments/close.php', ['id' => $id]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('assignment_close_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('assignment_close_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $student = core_user::get_user((int) $existing->studentid);
 $tutor = core_user::get_user((int) $existing->tutorid);
@@ -121,7 +122,22 @@ if ($form->is_cancelled()) {
     );
 }
 
+/** @var \local_monlaututoria\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_monlaututoria');
+
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('assignment_close_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('assignments', [
+    'studentid' => (int) $existing->studentid,
+    'studentlabel' => $student ? fullname($student) : get_string('nav_student', 'local_monlaututoria'),
+    'academicyearid' => (int) $existing->academicyearid,
+]);
+echo $renderer->page_header_card(
+    get_string('assignment_close_title', 'local_monlaututoria'),
+    get_string('assignment_detail_intro', 'local_monlaututoria'),
+    $returnurl,
+    get_string('page_back_assignments', 'local_monlaututoria'),
+    [],
+    $student ? fullname($student) : null
+);
 $form->display();
 echo $OUTPUT->footer();

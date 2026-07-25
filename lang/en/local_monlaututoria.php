@@ -836,6 +836,40 @@ $string['privacy:metadata:notification:attempts'] = 'Number of delivery attempts
 $string['privacy:metadata:notification:lasterror'] = 'Last recorded delivery error.';
 $string['privacy:metadata:notification:timesent'] = 'Time when the notification was sent.';
 
+
+$string['nav_dashboard'] = 'Dashboard';
+$string['nav_dashboard_tip'] = 'Quick overview of tutor students, pending items and priorities.';
+$string['nav_assignments'] = 'Assignments';
+$string['nav_assignments_tip'] = 'Review student allocation and open each assignment detail.';
+$string['nav_referrals'] = 'Referrals';
+$string['nav_referrals_tip'] = 'Manage open referrals and review their status.';
+$string['nav_coordination'] = 'Coordination';
+$string['nav_coordination_tip'] = 'Global view by academic year, cohort and tutor.';
+$string['nav_notifications'] = 'Notifications';
+$string['nav_notifications_tip'] = 'Adjust reminders, changes and digest settings.';
+$string['nav_configuration'] = 'Configuration';
+$string['nav_configuration_tip'] = 'Access academic years, reasons and contact modalities.';
+$string['nav_student'] = 'Student record';
+$string['nav_student_tip'] = 'Return to the current student tutoring record.';
+
+$string['dashboard_intro'] = 'Review assigned students, pending items and tutoring alerts at a glance.';
+$string['assignments_intro'] = 'Filter assignments, open each detail and jump quickly to the student record.';
+$string['assignment_detail_intro'] = 'Review the full assignment context here and jump directly to the student record.';
+$string['student_detail_intro'] = 'Use the tabs to move between summary, history, tutoring entries, agreements and follow-ups.';
+$string['entry_detail_intro'] = 'This screen centralises the tutoring entry content and related actions.';
+$string['referrals_intro'] = 'Review the referral queue and filter by status to prioritise work.';
+$string['referral_detail_intro'] = 'Review the referral, its owner and the available actions without leaving context.';
+$string['notifications_intro'] = 'Choose which alerts you want to receive and how often.';
+$string['academicyears_intro'] = 'Manage academic years and control which one is active or locked.';
+$string['reasons_intro'] = 'Maintain the tutoring reasons catalogue and its default visibility.';
+$string['modalities_intro'] = 'Define the available contact channels used when recording tutoring entries.';
+
+$string['page_back_dashboard'] = 'Back to dashboard';
+$string['page_back_assignments'] = 'Back to assignments';
+$string['page_back_referrals'] = 'Back to referrals';
+$string['page_back_student_entries'] = 'Back to student entries';
+$string['page_back_configuration'] = 'Back to configuration';
+
 $string['settings_entryeditwindow_title'] = 'Tutoring entry edit window';
 
 $string['assignment_reassign'] = 'Reassign tutor';

@@ -103,7 +103,7 @@ final class coordination_dashboard_service {
         $studentids = array_map('intval', array_keys($members));
         $cohortlabels = [];
         foreach ($this->cohortrepository->get_many($cohortids) as $cohort) {
-            $cohortlabels[(int) $cohort->id] = format_string($cohort->name);
+            $cohortlabels[(int) $cohort->id] = format_string($cohort->name, true, ['context' => \context_system::instance()]);
         }
 
         if (empty($studentids)) {

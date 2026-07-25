@@ -40,6 +40,13 @@ final class referral_status {
     }
 
     /**
+     * @return string[]
+     */
+    public static function open_values(): array {
+        return [self::PENDING, self::IN_PROGRESS];
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function get_options(): array {

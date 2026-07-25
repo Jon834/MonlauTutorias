@@ -8,6 +8,8 @@ if (!has_any_capability(['local/monlaututoria:viewcoordinationdashboard', 'local
     throw new required_capability_exception($context, 'local/monlaututoria:viewcoordinationdashboard', 'nopermissions', '');
 }
 
+$PAGE->set_context($context);
+
 $academicyearrepository = new \local_monlaututoria\repository\academic_year_repository();
 $coordscopeservice = new \local_monlaututoria\service\coordination_scope_service();
 $dashboardservice = new \local_monlaututoria\service\coordination_dashboard_service();
@@ -28,7 +30,6 @@ $dashboard = $selectedtutorid > 0
     ? $dashboardservice->get_dashboard((int) $USER->id, (int) $academicyear->id, $selectedcohortids, $selectedtutorid)
     : $dashboardall;
 
-admin_externalpage_setup('local_monlaututoria_coordination');
 $PAGE->set_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid]);
 $PAGE->set_title(get_string('coordination_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('coordination_title', 'local_monlaututoria'));
