@@ -177,8 +177,7 @@ $string['error_assignment_academicyear_locked'] = 'The selected academic year is
 $string['error_assignment_invalid_cohort'] = 'The selected cohort does not exist.';
 $string['error_assignment_dates_invalid'] = 'The end date cannot be before the start date.';
 $string['error_assignment_duplicate'] = 'An identical active assignment already exists.';
-$string['error_assignment_isprimary_type_mismatch'] = 'Only a primary assignment can be marked as the primary tutor.';
-$string['error_assignment_primary_duplicate'] = 'This student already has an active primary tutor for this academic year.';
+$string['error_assignment_isprimary_type_mismatch'] = 'Only a primary assignment can be marked as the primary tutor.';$string['error_assignment_primary_duplicate'] = 'This student already has an active primary tutor for this academic year.';
 $string['error_assignment_invalid_type'] = 'Invalid assignment type.';
 $string['error_assignment_already_closed'] = 'This assignment is already closed or cancelled.';
 $string['error_assignment_no_active_primary'] = 'This student has no active primary tutor to reassign.';
@@ -267,7 +266,6 @@ $string['assignment_create'] = 'New assignment';
 $string['assignment_edit'] = 'Edit';
 $string['assignment_create_success'] = 'Assignment created.';
 $string['assignment_update_success'] = 'Assignment updated.';
-$string['assignment_field_isprimary'] = 'Mark as primary tutor';
 $string['assignment_field_note'] = 'Administrative note';
 $string['assignment_field_editreason'] = 'Reason for the change';
 $string['assignment_field_closereason'] = 'Reason for closing';

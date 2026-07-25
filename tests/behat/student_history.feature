@@ -24,7 +24,6 @@ Feature: View a student's assignment history (phase 4.2)
     And I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
 
   Scenario: The history tab shows the current assignment

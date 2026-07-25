@@ -177,8 +177,7 @@ $string['error_assignment_academicyear_locked'] = 'El curs acadèmic seleccionat
 $string['error_assignment_invalid_cohort'] = 'La cohort seleccionada no existeix.';
 $string['error_assignment_dates_invalid'] = 'La data de fi no pot ser anterior a la data d\'inici.';
 $string['error_assignment_duplicate'] = 'Ja existeix una assignació activa idèntica.';
-$string['error_assignment_isprimary_type_mismatch'] = 'Només una assignació de tipus principal es pot marcar com a tutor principal.';
-$string['error_assignment_primary_duplicate'] = 'Aquest alumne ja té un tutor principal actiu per a aquest curs acadèmic.';
+$string['error_assignment_isprimary_type_mismatch'] = 'Només una assignació de tipus principal es pot marcar com a tutor principal.';$string['error_assignment_primary_duplicate'] = 'Aquest alumne ja té un tutor principal actiu per a aquest curs acadèmic.';
 $string['error_assignment_invalid_type'] = 'Tipus d\'assignació no vàlid.';
 $string['error_assignment_already_closed'] = 'Aquesta assignació ja està tancada o cancel·lada.';
 $string['error_assignment_no_active_primary'] = 'Aquest alumne no té cap tutor principal actiu per reassignar.';
@@ -267,7 +266,6 @@ $string['assignment_create'] = 'Nova assignació';
 $string['assignment_edit'] = 'Editar';
 $string['assignment_create_success'] = 'Assignació creada.';
 $string['assignment_update_success'] = 'Assignació actualitzada.';
-$string['assignment_field_isprimary'] = 'Marcar com a tutor principal';
 $string['assignment_field_note'] = 'Observació administrativa';
 $string['assignment_field_editreason'] = 'Motiu de la modificació';
 $string['assignment_field_closereason'] = 'Motiu de tancament';

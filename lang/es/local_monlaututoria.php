@@ -177,8 +177,7 @@ $string['error_assignment_academicyear_locked'] = 'El curso académico seleccion
 $string['error_assignment_invalid_cohort'] = 'La cohorte seleccionada no existe.';
 $string['error_assignment_dates_invalid'] = 'La fecha de fin no puede ser anterior a la fecha de inicio.';
 $string['error_assignment_duplicate'] = 'Ya existe una asignación activa idéntica.';
-$string['error_assignment_isprimary_type_mismatch'] = 'Solo una asignación de tipo principal puede marcarse como tutor principal.';
-$string['error_assignment_primary_duplicate'] = 'Este alumno ya tiene un tutor principal activo para este curso académico.';
+$string['error_assignment_isprimary_type_mismatch'] = 'Solo una asignación de tipo principal puede marcarse como tutor principal.';$string['error_assignment_primary_duplicate'] = 'Este alumno ya tiene un tutor principal activo para este curso académico.';
 $string['error_assignment_invalid_type'] = 'Tipo de asignación no válido.';
 $string['error_assignment_already_closed'] = 'Esta asignación ya está cerrada o cancelada.';
 $string['error_assignment_no_active_primary'] = 'Este alumno no tiene ningún tutor principal activo que reasignar.';
@@ -267,7 +266,6 @@ $string['assignment_create'] = 'Nueva asignación';
 $string['assignment_edit'] = 'Editar';
 $string['assignment_create_success'] = 'Asignación creada.';
 $string['assignment_update_success'] = 'Asignación actualizada.';
-$string['assignment_field_isprimary'] = 'Marcar como tutor principal';
 $string['assignment_field_note'] = 'Observación administrativa';
 $string['assignment_field_editreason'] = 'Motivo de la modificación';
 $string['assignment_field_closereason'] = 'Motivo de cierre';

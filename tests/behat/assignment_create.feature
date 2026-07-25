@@ -43,12 +43,10 @@ Feature: Create a tutor-student assignment manually
     Given I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     When I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     Then I should see "This student already has an active primary tutor for this academic year."
 

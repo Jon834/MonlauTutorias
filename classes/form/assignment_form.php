@@ -78,8 +78,18 @@ final class assignment_form extends \moodleform {
             assignment_type::get_options()
         );
 
-        $mform->addElement('advcheckbox', 'isprimary', get_string('assignment_field_isprimary', 'local_monlaututoria'));
-
+        // No separate "isprimary" field here on purpose: assignments/create.php
+        // derives it directly from "Tipo" (isprimary = assignmenttype===primary)
+        // before calling the service. A standalone checkbox next to the type
+        // dropdown let a user pick "Tutor principal" without ticking it (or
+        // vice versa) and silently create a row invisible to
+        // dashboard_service/block_monlaututoria/reassign_primary_tutor(), all
+        // of which key off isprimary=1, not assignmenttype alone — a real bug
+        // found in manual testing, fixed by removing the redundant input
+        // rather than trying to keep 2 independent fields in sync. CSV import
+        // keeps its own explicit "isprimary" column unaffected — a bulk
+        // import has legitimate reasons (historical rows, tests) to set them
+        // independently that a single manual creation does not.
         $mform->addElement('date_selector', 'timestart', get_string('assignment_col_timestart', 'local_monlaututoria'));
 
         $mform->addElement(

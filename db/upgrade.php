@@ -495,6 +495,27 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026090500, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026090600) {
+        // Data repair, no schema change: until this version,
+        // assignment_service::create() only validated one direction of the
+        // isprimary/assignmenttype invariant (isprimary=true requires
+        // assignmenttype=primary), never the other way round. The manual
+        // assignment creation form and CSV import both accept "Tipo" and
+        // "Marcar como tutor principal" as independent inputs, so a
+        // primary-type row with isprimary=0 could be created — invisible to
+        // dashboard_service/block_monlaututoria/reassign_primary_tutor(),
+        // all of which key off isprimary=1, not assignmenttype alone (a
+        // tutor could see their own assignment listed as "Tutor principal /
+        // Activa" while their dashboard and the block showed 0 assigned
+        // students, with no "Reasignar" action available either). The
+        // validation is now bidirectional going forward (see
+        // assignment_service::validate_isprimary_type_match()); this backfills
+        // any row already created before that fix.
+        $DB->set_field('local_tut_assignment', 'isprimary', 1, ['assignmenttype' => 'primary', 'isprimary' => 0]);
+
+        upgrade_plugin_savepoint(true, 2026090600, 'local', 'monlaututoria');
+    }
+
     return true;
 }
 

@@ -26,7 +26,6 @@ Feature: View a student's longitudinal file header (phase 4.1)
     Given I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     When I click on "View file" "link"
     Then I should see "Tutor One"

@@ -51,7 +51,6 @@ Feature: Full tutoring entry registration (phase 5.3)
     And I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     And I log out
 

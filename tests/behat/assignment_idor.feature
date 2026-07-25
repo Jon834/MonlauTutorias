@@ -44,13 +44,11 @@ Feature: A tutor cannot access another tutor's student data (IDOR)
     And I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     And I navigate to "Plugins > Local plugins > Monlau Tutoria > Asignaciones" in site administration
     And I press "New assignment"
     And I set the field "Student" to "Student Two"
     And I set the field "Tutor" to "Tutor Two"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     And I log out
 

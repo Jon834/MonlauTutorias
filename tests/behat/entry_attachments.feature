@@ -42,7 +42,6 @@ Feature: Tutoring entry attachments (phase 5.6)
     And I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     And I log out
     And I am on "local/monlaututoria/entries/create.php?studentid=2&academicyearid=1" logged in as "tutor1"

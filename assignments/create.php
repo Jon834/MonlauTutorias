@@ -64,7 +64,12 @@ if ($form->is_cancelled()) {
         'academicyearid' => (int) $data->academicyearid,
         'cohortid'       => !empty($data->cohortid) ? (int) $data->cohortid : null,
         'assignmenttype' => $data->assignmenttype,
-        'isprimary'      => !empty($data->isprimary),
+        // Derived, not a separate form field — see assignment_form's
+        // definition() for why: a standalone checkbox let "Tipo" and
+        // "isprimary" disagree, creating a row labelled "Tutor principal"
+        // that dashboard_service/block_monlaututoria/reassign_primary_tutor()
+        // (all keyed on isprimary=1) would silently never count.
+        'isprimary'      => $data->assignmenttype === \local_monlaututoria\domain\assignment_type::PRIMARY,
         'timestart'      => $data->timestart,
         'timeend'        => !empty($data->timeend) ? $data->timeend : null,
         'note'           => $data->note !== '' ? $data->note : null,

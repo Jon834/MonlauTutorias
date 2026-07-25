@@ -37,7 +37,6 @@ Feature: Follow-ups (phase 6.2/6.3)
     And I press "New assignment"
     And I set the field "Student" to "Student One"
     And I set the field "Tutor" to "Tutor One"
-    And I set the field "Mark as primary tutor" to "1"
     And I press "New assignment"
     And I log out
     And I am on "local/monlaututoria/student/view.php?id=2" logged in as "tutor1"
