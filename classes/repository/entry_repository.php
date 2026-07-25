@@ -19,7 +19,7 @@ namespace local_monlaututoria\repository;
 use local_monlaututoria\domain\entry_status;
 
 /**
- * Data access for local_tut_entry. No business rules, no security here —
+ * Data access for local_tut_entry. No business rules, no security here â€”
  * scope_service/entry_service resolve who may see what; this class returns
  * raw rows to whoever calls it, same layering as assignment_repository.
  *
@@ -108,12 +108,12 @@ final class entry_repository {
     }
 
     /**
-     * Paginated, filterable listing — same shape as assignment_repository::search(),
-     * used by the student ficha's "Tutorías" history tab (phase 5.4).
+     * Paginated, filterable listing â€” same shape as assignment_repository::search(),
+     * used by the student ficha's "TutorÃ­as" history tab (phase 5.4).
      *
      * @param array $filters optional keys: studentid, tutorid, academicyearid, status,
      *                        modalityid, reasonid, visibilitytier ('contentvisible',
-     *                        'noteinternal' or 'noterestricted' — rows where that
+     *                        'noteinternal' or 'noterestricted' â€” rows where that
      *                        column is not null), entrydatefrom, entrydateto
      * @param int $limitfrom
      * @param int $limitnum
@@ -144,10 +144,10 @@ final class entry_repository {
     /**
      * Updates only the editable fields of a tutoring entry. Deliberately
      * never reads or touches studentid, tutorid, academicyearid, entrydate or
-     * status from $data, even if present — changing status is annul()'s job
+     * status from $data, even if present â€” changing status is annul()'s job
      * (a separate flow), not a generic edit. Participants and reasonids are
      * not handled here either (phase 5.5 does not build participant/reason
-     * editing, an accepted gap — see docs/seguridad-permisos.md).
+     * editing, an accepted gap â€” see docs/seguridad-permisos.md).
      *
      * @param int $id
      * @param \stdClass $data may contain modalityid, contentvisible, noteinternal,
@@ -182,7 +182,7 @@ final class entry_repository {
     }
 
     /**
-     * Annuls a tutoring entry (status=annulled) — never a physical delete.
+     * Annuls a tutoring entry (status=annulled) â€” never a physical delete.
      * Callers are responsible for enforcing business guards (reason
      * required, not already annulled) before calling this.
      *
@@ -314,6 +314,37 @@ final class entry_repository {
         return $first;
     }
 
+    /**
+     * Counts active tutoring entries in one academic year that include at
+     * least one family participant, across a batch of students. Each entry
+     * counts once even if it has several family participants.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return int
+     */
+    public function count_family_contacts_by_students(array $studentids, int $academicyearid): int {
+        global $DB;
+
+        if (empty($studentids)) {
+            return 0;
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED);
+        $params['academicyearid'] = $academicyearid;
+        $params['status'] = entry_status::ACTIVE;
+        $params['participanttype'] = \local_monlaututoria\domain\entry_participant_type::FAMILY;
+
+        $sql = 'SELECT COUNT(DISTINCT e.id)
+                  FROM {' . self::TABLE . '} e
+                  JOIN {local_tut_entryparticipant} ep ON ep.entryid = e.id
+                 WHERE e.studentid ' . $insql . '
+                   AND e.academicyearid = :academicyearid
+                   AND e.status = :status
+                   AND ep.participanttype = :participanttype';
+
+        return (int) $DB->count_records_sql($sql, $params);
+    }
     /**
      * @param array $filters see search()
      * @return int
