@@ -34,6 +34,7 @@ $PAGE->set_url('/local/monlaututoria/assignments/create.php');
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('assignment_create_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('assignment_create_title', 'local_monlaututoria'));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $academicyearrepository = new \local_monlaututoria\repository\academic_year_repository();
 $academicyearoptions = [];
@@ -77,7 +78,18 @@ if ($form->is_cancelled()) {
     );
 }
 
+/** @var \local_monlaututoria\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('local_monlaututoria');
+
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('assignment_create_title', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('assignments');
+echo $renderer->page_header_card(
+    get_string('assignment_create_title', 'local_monlaututoria'),
+    get_string('assignments_create_tip', 'local_monlaututoria'),
+    $returnurl,
+    get_string('page_back_assignments', 'local_monlaututoria'),
+    [],
+    get_string('pluginname', 'local_monlaututoria')
+);
 $form->display();
 echo $OUTPUT->footer();

@@ -84,6 +84,15 @@ final class renderer extends \plugin_renderer_base {
             ];
         }
 
+        if (has_capability('local/monlaututoria:managecoordinationscopes', $systemcontext)) {
+            $items[] = [
+                'key' => 'coordinators',
+                'label' => get_string('nav_coordinators', 'local_monlaututoria'),
+                'url' => new \moodle_url('/local/monlaututoria/coordination_scopes.php'),
+                'title' => get_string('nav_coordinators_tip', 'local_monlaututoria'),
+            ];
+        }
+
         if (isloggedin() && !isguestuser()) {
             $items[] = [
                 'key' => 'notifications',
@@ -395,7 +404,7 @@ final class renderer extends \plugin_renderer_base {
             $html .= \html_writer::div(
                 \html_writer::div(s($card['value']), 'h3 mb-1')
                 . \html_writer::div(s($card['label']), 'text-muted'),
-                'border rounded p-3'
+                'local-monlaututoria-stat-card'
             );
         }
 
@@ -1467,7 +1476,7 @@ final class renderer extends \plugin_renderer_base {
         ];
         $html = '';
         foreach ($cards as $card) {
-            $html .= \html_writer::div(\html_writer::div(s((string) $card['value']), 'h3 mb-1') . \html_writer::div(s($card['label']), 'text-muted'), 'border rounded p-3');
+            $html .= \html_writer::div(\html_writer::div(s((string) $card['value']), 'h3 mb-1') . \html_writer::div(s($card['label']), 'text-muted'), 'local-monlaututoria-stat-card');
         }
         return \html_writer::div($html, 'local-monlaututoria-dashboard-summary d-grid gap-3 mb-4');
     }
@@ -1482,7 +1491,7 @@ final class renderer extends \plugin_renderer_base {
         ];
         $html = '';
         foreach ($cards as $card) {
-            $html .= \html_writer::div(\html_writer::div(s((string) $card['value']), 'h3 mb-1') . \html_writer::div(s($card['label']), 'text-muted'), 'border rounded p-3');
+            $html .= \html_writer::div(\html_writer::div(s((string) $card['value']), 'h3 mb-1') . \html_writer::div(s($card['label']), 'text-muted'), 'local-monlaututoria-stat-card');
         }
         return \html_writer::div($html, 'local-monlaututoria-dashboard-summary d-grid gap-3 mb-4');
     }
@@ -1524,7 +1533,6 @@ final class renderer extends \plugin_renderer_base {
     }
 
 }
-
 
 
 

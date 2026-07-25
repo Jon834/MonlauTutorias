@@ -32,7 +32,9 @@ $id = required_param('id', PARAM_INT);
 $repository = new \local_monlaututoria\repository\assignment_repository();
 $existing = $repository->get($id);
 
-require_capability('local/monlaututoria:reassignstudents', $context);
+if (!has_any_capability(['local/monlaututoria:reassignstudents', 'local/monlaututoria:manageassignments'], $context)) {
+    throw new required_capability_exception($context, 'local/monlaututoria:reassignstudents', 'nopermissions', '');
+}
 
 if ($existing->status !== \local_monlaututoria\domain\assignment_status::ACTIVE
     || $existing->assignmenttype !== \local_monlaututoria\domain\assignment_type::PRIMARY

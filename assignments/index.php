@@ -151,7 +151,7 @@ $dateformat = get_string('strftimedatefullshort', 'langconfig');
 $canmanageassignments = has_capability('local/monlaututoria:manageassignments', $context);
 $canmanageclosed = has_capability('local/monlaututoria:manageclosedassignments', $context);
 $canassignstudents = has_capability('local/monlaututoria:assignstudents', $context);
-$canreassignstudents = has_capability('local/monlaututoria:reassignstudents', $context);
+$canreassignstudents = has_any_capability(['local/monlaututoria:reassignstudents', 'local/monlaututoria:manageassignments'], $context);
 
 $rows = [];
 foreach ($records as $record) {
@@ -204,14 +204,25 @@ foreach ($records as $record) {
 }
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('assignments', 'local_monlaututoria'));
+echo $renderer->plugin_navigation('assignments');
 
+$headeractions = [];
 if ($canassignstudents) {
-    echo $OUTPUT->single_button(
-        new moodle_url('/local/monlaututoria/assignments/create.php'),
-        get_string('assignment_create', 'local_monlaututoria')
-    );
+    $headeractions[] = [
+        'url' => new moodle_url('/local/monlaututoria/assignments/create.php'),
+        'label' => get_string('assignment_create', 'local_monlaututoria'),
+        'title' => get_string('assignments_create_tip', 'local_monlaututoria'),
+    ];
 }
+
+echo $renderer->page_header_card(
+    get_string('assignments', 'local_monlaututoria'),
+    get_string('assignments_intro', 'local_monlaututoria'),
+    null,
+    null,
+    $headeractions,
+    get_string('pluginname', 'local_monlaututoria')
+);
 
 $filterform->display();
 

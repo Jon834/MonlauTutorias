@@ -85,7 +85,7 @@ $isactive = $assignment->status === \local_monlaututoria\domain\assignment_statu
 $canedit = $canmanageassignments && ($isactive || $canmanageclosed);
 $canclose = $canmanageassignments && $isactive
     && $assignment->assignmenttype !== \local_monlaututoria\domain\assignment_type::CO_TUTOR;
-$canreassign = has_capability('local/monlaututoria:reassignstudents', $context)
+$canreassign = has_any_capability(['local/monlaututoria:reassignstudents', 'local/monlaututoria:manageassignments'], $context)
     && $isactive
     && $assignment->assignmenttype === \local_monlaututoria\domain\assignment_type::PRIMARY
     && !empty($assignment->isprimary);

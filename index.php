@@ -63,6 +63,10 @@ $links = [
     ['url' => '/local/monlaututoria/modalities.php', 'string' => 'modalities'],
 ];
 
+if (has_capability('local/monlaututoria:managecoordinationscopes', $context)) {
+    $links[] = ['url' => '/local/monlaututoria/coordination_scopes.php', 'string' => 'coordination_scopes_title'];
+}
+
 echo html_writer::start_tag('ul');
 foreach ($links as $link) {
     echo html_writer::tag(

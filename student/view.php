@@ -102,12 +102,25 @@ $PAGE->set_url('/local/monlaututoria/student/view.php', $urlparams);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('student_summary_title', 'local_monlaututoria'));
 $PAGE->set_heading(fullname($student));
+$PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 /** @var \local_monlaututoria\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(fullname($student));
+echo $renderer->plugin_navigation('student', [
+    'studentid' => $studentid,
+    'studentlabel' => fullname($student),
+    'academicyearid' => $academicyear !== null ? (int) $academicyear->id : null,
+]);
+echo $renderer->page_header_card(
+    get_string('student_summary_title', 'local_monlaututoria'),
+    get_string('student_detail_intro', 'local_monlaututoria'),
+    new moodle_url('/local/monlaututoria/assignments/index.php'),
+    get_string('page_back_assignments', 'local_monlaututoria'),
+    [],
+    fullname($student)
+);
 echo $OUTPUT->user_picture($student, ['size' => 100, 'class' => 'mb-3']);
 
 $academicyearoptions = [];

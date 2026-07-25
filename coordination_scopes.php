@@ -69,7 +69,7 @@ $scopecohortids = $scoperepository->get_cohort_ids_for_users(array_keys($users))
 $currentcohortids = $selecteduserid > 0 ? ($scopecohortids[$selecteduserid] ?? []) : [];
 
 echo $OUTPUT->header();
-echo $renderer->plugin_navigation('coordination');
+echo $renderer->plugin_navigation('coordinators');
 echo $renderer->page_header_card(
     get_string('coordination_scopes_title', 'local_monlaututoria'),
     get_string('coordination_scope_intro', 'local_monlaututoria'),
@@ -78,6 +78,7 @@ echo $renderer->page_header_card(
     [],
     get_string('pluginname', 'local_monlaututoria')
 );
+echo $OUTPUT->notification(get_string('coordination_scope_help_steps', 'local_monlaututoria'), \core\output\notification::NOTIFY_INFO);
 
 echo $renderer->single_select(
     new moodle_url('/local/monlaututoria/coordination_scopes.php'),
