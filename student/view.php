@@ -180,6 +180,10 @@ if ($academicyear === null) {
 } else if ($tab === 'tutorias') {
     if (!$islimitedview && has_capability('local/monlaututoria:createentry', $context)) {
         $entryurlparams = ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id];
+        // mb-4 (not the smaller mb-2 gap-only spacing used before): this row
+        // sits directly above the filter toolbar below, and the two were
+        // reported as visually running into each other with no clear
+        // separation.
         echo html_writer::div(
             $OUTPUT->single_button(
                 new moodle_url('/local/monlaututoria/entries/create.php', $entryurlparams),
@@ -189,7 +193,7 @@ if ($academicyear === null) {
                 new moodle_url('/local/monlaututoria/entries/create_full.php', $entryurlparams),
                 get_string('entry_full_register', 'local_monlaututoria')
             ),
-            'd-flex gap-2'
+            'd-flex flex-wrap gap-2 mb-4'
         );
     }
 
@@ -252,48 +256,56 @@ if ($academicyear === null) {
         'id' => $studentid, 'tab' => 'tutorias', 'academicyearid' => $requestedacademicyearid ?: null,
     ]);
     $statusfilterurl = new moodle_url('/local/monlaututoria/student/view.php', $entryfilterurlparams);
-    echo $OUTPUT->single_select(
-        $statusfilterurl,
-        'entrystatus',
+
+    // Each select gets a visible label (single_select's own label is
+    // screen-reader-only by default) and the whole row shares the
+    // .local-monlaututoria-toolbar wrapper (flex-wrap + gap + margin,
+    // already defined in styles.css) — previously these were echoed bare,
+    // one after another with no container, which is what made the filter
+    // row look cramped directly under the buttons above.
+    $entrystatusselect = new single_select(
+        $statusfilterurl, 'entrystatus',
         ['' => get_string('choosedots')] + \local_monlaututoria\domain\entry_status::get_options(),
-        $statusfilter,
-        [],
-        'entrystatusselector'
+        $statusfilter, [], 'entrystatusselector'
     );
-    echo $OUTPUT->single_select(
-        $statusfilterurl,
-        'modalityid',
+    $entrystatusselect->set_label(get_string('filter_status', 'local_monlaututoria'));
+
+    $entrymodalityselect = new single_select(
+        $statusfilterurl, 'modalityid',
         [0 => get_string('choosedots')] + $modalityoptionsmap,
-        $modalityfilter,
-        [],
-        'entrymodalityselector'
+        $modalityfilter, [], 'entrymodalityselector'
     );
+    $entrymodalityselect->set_label(get_string('entry_field_modality', 'local_monlaututoria'));
+
+    $toolbar = $OUTPUT->render($entrystatusselect) . $OUTPUT->render($entrymodalityselect);
+
     if (!$islimitedview) {
         $reasonoptionsmap = [];
         foreach ($reasonrepository->get_all(true) as $reason) {
             $reasonoptionsmap[(int) $reason->id] = format_string($reason->name);
         }
-        echo $OUTPUT->single_select(
-            $statusfilterurl,
-            'reasonid',
+        $entryreasonselect = new single_select(
+            $statusfilterurl, 'reasonid',
             [0 => get_string('choosedots')] + $reasonoptionsmap,
-            $reasonfilter,
-            [],
-            'entryreasonselector'
+            $reasonfilter, [], 'entryreasonselector'
         );
-        echo $OUTPUT->single_select(
-            $statusfilterurl,
-            'visibilitytier',
+        $entryreasonselect->set_label(get_string('entry_field_reason', 'local_monlaututoria'));
+
+        $entryvisibilityselect = new single_select(
+            $statusfilterurl, 'visibilitytier',
             ['' => get_string('choosedots')] + [
                 'contentvisible'  => get_string('entry_field_contentvisible', 'local_monlaututoria'),
                 'noteinternal'    => get_string('entry_field_noteinternal', 'local_monlaututoria'),
                 'noterestricted'  => get_string('entry_field_noterestricted', 'local_monlaututoria'),
             ],
-            $visibilityfilter,
-            [],
-            'entryvisibilityselector'
+            $visibilityfilter, [], 'entryvisibilityselector'
         );
+        $entryvisibilityselect->set_label(get_string('entry_field_visibilitytier', 'local_monlaututoria'));
+
+        $toolbar .= $OUTPUT->render($entryreasonselect) . $OUTPUT->render($entryvisibilityselect);
     }
+
+    echo html_writer::div($toolbar, 'local-monlaututoria-toolbar');
 
     echo $renderer->entry_history_table($entries, $entrytutors, $allmodalities, $reasonsbyentry, $allreasons, $islimitedview);
 

@@ -1,6 +1,17 @@
 # Changelog — local_monlaututoria
 
-## 0.8.4 ??? 2026-07-24
+## 0.10.2 — 2026-07-25
+
+**Correcciones de uso real reportadas en pruebas manuales.** Sin cambio de esquema.
+
+- **Registro de tutorías (formularios rápido y completo)**: la pestaña "Nota interna" ahora lleva un botón de ayuda aclarando que solo la ven tutores y coordinación, nunca el alumno (el enmascarado del lado servidor ya era correcto — `entry_service::mask_content()` — esto solo lo hace visible a quien rellena el formulario). Ambos formularios permiten ahora adjuntar archivos (con categoría documental) directamente al registrar la tutoría, sin necesitar un paso aparte en `entries/attachments.php` — gateado por la misma regla de capacidad que ya exige esa página (`editanyentry`/`editownentry`).
+- **Ficha del alumno, pestaña "Tutorías"**: los botones "Registrar tutoría"/"Registro completo" y la fila de filtros se veían pegados entre sí, y los desplegables de filtro no mostraban ninguna etiqueta visible ("Elegir..." sin contexto). Corregido con más separación y usando `.local-monlaututoria-toolbar` (ya definida en `styles.css` pero sin usar hasta ahora) más etiquetas visibles en cada filtro.
+- **Hallazgo real corregido**: un campo de casilla independiente ("Marcar como tutor principal") en `assignments/create.php` permitía crear una asignación etiquetada "Tutor principal" con `isprimary=0` en la base de datos — invisible para el panel del tutor, el bloque y la opción de reasignar tutor, todos los cuales exigen `isprimary=1`. Corregido quitando la casilla (la creación manual ahora deriva `isprimary` directamente del tipo elegido) y con un paso de reparación de datos en `db/upgrade.php` para filas ya creadas con el fallo. También corregidos caracteres de codificación corrupta ("�") en `assignments/index.php`.
+  - ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en todo el plugin).
+
+---
+
+## 0.8.4 — 2026-07-24 (entrada de Codex; conservada tal cual, con corrupción de codificación original sin corregir aquí — fuera del alcance de este cambio)
 
 **Panel del tutor ??? cierre de la Fase 7.** Completa 7.1-7.5 sobre la Fase 6 ya cerrada. **Cierra la Fase 7 completa.**
 

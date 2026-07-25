@@ -21,6 +21,8 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
+use local_monlaututoria\domain\entry_attachment_category;
+
 /**
  * Quick tutoring entry registration form (phase 5.2 — "menos de un minuto").
  * Student, tutor and academic year are never fields here: the student comes
@@ -80,6 +82,13 @@ final class entry_quick_form extends \moodleform {
 
         $mform->addElement('textarea', 'noteinternal', get_string('entry_field_noteinternal', 'local_monlaututoria'));
         $mform->setType('noteinternal', PARAM_TEXT);
+        // "Debe quedar claro que solo lo verá el tutor y coordinadores, no el
+        // alumno" — a real point of confusion in manual testing, since
+        // nothing next to the field said so before. The hard floor itself
+        // was already correct (entry_service::mask_content() never shows
+        // noteinternal to the student, see its docblock); this only makes
+        // that rule visible to whoever is filling in the form.
+        $mform->addHelpButton('noteinternal', 'entry_field_noteinternal', 'local_monlaututoria');
 
         $mform->addElement(
             'date_selector',
@@ -87,6 +96,29 @@ final class entry_quick_form extends \moodleform {
             get_string('entry_field_nextfollowupdate', 'local_monlaututoria'),
             ['optional' => true]
         );
+
+        // Optional, only when the page decided the current user is entitled
+        // to attach files at all (same editanyentry/editownentry rule
+        // entries/attachments.php already enforces — see entries/create.php).
+        // Uploading here at creation time saves a separate trip to that page
+        // right afterwards, without duplicating its access rule.
+        if (!empty($customdata['canupload'])) {
+            $mform->addElement(
+                'select',
+                'attachmentcategory',
+                get_string('entry_attachment_category', 'local_monlaututoria'),
+                entry_attachment_category::get_options()
+            );
+            $mform->setType('attachmentcategory', PARAM_ALPHA);
+
+            $mform->addElement(
+                'filemanager',
+                'attachments',
+                get_string('entry_attachment_files', 'local_monlaututoria'),
+                null,
+                ['subdirs' => 0, 'maxfiles' => 10, 'accepted_types' => '*']
+            );
+        }
 
         $this->add_action_buttons(true, get_string('entry_register', 'local_monlaututoria'));
     }

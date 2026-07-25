@@ -17,9 +17,10 @@
 /**
  * Full tutoring entry registration (phase 5.3): multiple related reasons,
  * internal/external participants, and the restricted note (only when the
- * user holds local/monlaututoria:viewrestrictednotes). Attachments are
- * explicitly out of scope, deferred to phase 5.6. Same 2-layer security
- * pattern as entries/create.php (phase 5.2): capability + scope_service.
+ * user holds local/monlaututoria:viewrestrictednotes). Optionally also lets
+ * the user attach files at creation time — see entries/create.php's own
+ * canupload logic, reused here identically. Same 2-layer security pattern
+ * as entries/create.php (phase 5.2): capability + scope_service.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
@@ -72,13 +73,28 @@ foreach ((new \local_monlaututoria\repository\reason_repository())->get_all(true
 }
 
 $showrestricted = has_capability('local/monlaututoria:viewrestrictednotes', $context);
+$canupload = has_capability('local/monlaututoria:editanyentry', $context)
+    || has_capability('local/monlaututoria:editownentry', $context);
 
 $form = new \local_monlaututoria\form\entry_full_form(null, [
     'modalities'     => $modalityoptions,
     'reasons'        => $reasonoptions,
     'showrestricted' => $showrestricted,
+    'canupload'      => $canupload,
 ]);
-$form->set_data((object) ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id, 'followupid' => $followupid]);
+
+$attachmentdraftitemid = null;
+if ($canupload) {
+    $attachmentdraftitemid = file_get_submitted_draft_itemid('attachments');
+    file_prepare_draft_area($attachmentdraftitemid, null, 'user', 'draft', null);
+}
+
+$form->set_data((object) array_filter([
+    'studentid'      => $studentid,
+    'academicyearid' => (int) $academicyear->id,
+    'followupid'     => $followupid,
+    'attachments'    => $attachmentdraftitemid,
+], static fn ($value) => $value !== null));
 
 $returnurl = new moodle_url('/local/monlaututoria/student/view.php', ['id' => $studentid, 'academicyearid' => $academicyear->id]);
 
@@ -133,6 +149,12 @@ if ($form->is_cancelled()) {
 
         (new \local_monlaututoria\service\followup_service())->close_with_entry(
             (int) $data->followupid, $newentryid, (int) $USER->id
+        );
+    }
+
+    if ($canupload && !empty($data->attachments)) {
+        (new \local_monlaututoria\service\entry_attachment_service())->save_uploaded_files(
+            $newentryid, (int) $data->attachments, $data->attachmentcategory, (int) $USER->id
         );
     }
 

@@ -62,6 +62,7 @@ final class entry_edit_form extends \moodleform {
 
         $mform->addElement('textarea', 'noteinternal', get_string('entry_field_noteinternal', 'local_monlaututoria'));
         $mform->setType('noteinternal', PARAM_TEXT);
+        $mform->addHelpButton('noteinternal', 'entry_field_noteinternal', 'local_monlaututoria');
 
         if (!empty($customdata['showrestricted'])) {
             $mform->addElement('textarea', 'noterestricted', get_string('entry_field_noterestricted', 'local_monlaututoria'));

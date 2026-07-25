@@ -22,12 +22,14 @@ global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
 use local_monlaututoria\domain\entry_participant_type;
+use local_monlaututoria\domain\entry_attachment_category;
 
 /**
  * Full tutoring entry registration form (phase 5.3): everything the quick
  * form (phase 5.2) deliberately left out — multiple related reasons,
- * internal/external participants, and the restricted note. Attachments are
- * explicitly out of scope here, deferred to phase 5.6.
+ * internal/external participants, and the restricted note. Optionally also
+ * lets the user attach files at creation time (same as entry_quick_form),
+ * gated by customdata['canupload'] — see entries/create_full.php.
  *
  * The restricted note element is only added to the form at all when the
  * caller passes customdata['showrestricted'] = true (resolved by the page
@@ -90,6 +92,7 @@ final class entry_full_form extends \moodleform {
 
         $mform->addElement('textarea', 'noteinternal', get_string('entry_field_noteinternal', 'local_monlaututoria'));
         $mform->setType('noteinternal', PARAM_TEXT);
+        $mform->addHelpButton('noteinternal', 'entry_field_noteinternal', 'local_monlaututoria');
 
         if (!empty($customdata['showrestricted'])) {
             $mform->addElement('textarea', 'noterestricted', get_string('entry_field_noterestricted', 'local_monlaututoria'));
@@ -102,6 +105,24 @@ final class entry_full_form extends \moodleform {
             get_string('entry_field_nextfollowupdate', 'local_monlaututoria'),
             ['optional' => true]
         );
+
+        if (!empty($customdata['canupload'])) {
+            $mform->addElement(
+                'select',
+                'attachmentcategory',
+                get_string('entry_attachment_category', 'local_monlaututoria'),
+                entry_attachment_category::get_options()
+            );
+            $mform->setType('attachmentcategory', PARAM_ALPHA);
+
+            $mform->addElement(
+                'filemanager',
+                'attachments',
+                get_string('entry_attachment_files', 'local_monlaututoria'),
+                null,
+                ['subdirs' => 0, 'maxfiles' => 10, 'accepted_types' => '*']
+            );
+        }
 
         $mform->addElement('header', 'participantsheader', get_string('entry_participants_header', 'local_monlaututoria'));
         $mform->setExpanded('participantsheader');

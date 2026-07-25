@@ -75,11 +75,31 @@ foreach ((new \local_monlaututoria\repository\reason_repository())->get_all(true
     $reasonoptions[(int) $reason->id] = format_string($reason->name);
 }
 
+// Same rule entries/attachments.php already enforces for uploading to an
+// existing entry (editanyentry, or editownentry limited to entries this
+// user authored) — "isowner" is trivially true here since the entry does
+// not exist yet and this user is about to become its createdby.
+$canupload = has_capability('local/monlaututoria:editanyentry', $context)
+    || has_capability('local/monlaututoria:editownentry', $context);
+
 $form = new \local_monlaututoria\form\entry_quick_form(null, [
     'modalities' => $modalityoptions,
     'reasons'    => $reasonoptions,
+    'canupload'  => $canupload,
 ]);
-$form->set_data((object) ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id, 'followupid' => $followupid]);
+
+$attachmentdraftitemid = null;
+if ($canupload) {
+    $attachmentdraftitemid = file_get_submitted_draft_itemid('attachments');
+    file_prepare_draft_area($attachmentdraftitemid, null, 'user', 'draft', null);
+}
+
+$form->set_data((object) array_filter([
+    'studentid'      => $studentid,
+    'academicyearid' => (int) $academicyear->id,
+    'followupid'     => $followupid,
+    'attachments'    => $attachmentdraftitemid,
+], static fn ($value) => $value !== null));
 
 $returnurl = new moodle_url('/local/monlaututoria/student/view.php', ['id' => $studentid, 'academicyearid' => $academicyear->id]);
 
@@ -119,6 +139,12 @@ if ($form->is_cancelled()) {
 
         (new \local_monlaututoria\service\followup_service())->close_with_entry(
             (int) $data->followupid, $newentryid, (int) $USER->id
+        );
+    }
+
+    if ($canupload && !empty($data->attachments)) {
+        (new \local_monlaututoria\service\entry_attachment_service())->save_uploaded_files(
+            $newentryid, (int) $data->attachments, $data->attachmentcategory, (int) $USER->id
         );
     }
 
