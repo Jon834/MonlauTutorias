@@ -38,25 +38,25 @@ use core_privacy\local\request\writer;
  * gap this class previously left open:**
  *
  * - `local_tut_assignment`: studentid/tutorid ARE the personal data, not
- *   incidental attribution — tutoring relationship history is kept
+ *   incidental attribution Ã¢â‚¬â€ tutoring relationship history is kept
  *   indefinitely (no expiry), but a subject access/erasure request is now
  *   fully honoured. Export returns every row the requesting user appears in,
  *   as student or tutor, with the other party resolved to a readable name.
  *   Erasure never deletes a row (that would destroy the other party's own
- *   history) — it anonymises it instead: studentid/tutorid/createdby/
+ *   history) Ã¢â‚¬â€ it anonymises it instead: studentid/tutorid/createdby/
  *   modifiedby referencing the erased user are reassigned to the Moodle
  *   "no-reply" user (same mechanism reassign_attribution() already uses for
  *   the 3 catalogues), and the free-text `note` on any row the erased user
  *   appears in (as student or tutor) is cleared, since prose notes can name
  *   a person even after their id reference is gone. assignmenttype/
- *   isprimary/status/dates/source/closereason are left untouched — the fact
+ *   isprimary/status/dates/source/closereason are left untouched Ã¢â‚¬â€ the fact
  *   that some tutoring relationship existed, when, and why it ended, remains
  *   available for institutional history once anonymised.
  * - `local_tut_bulkoperation`: same anonymisation treatment for
  *   primarytutorid/cotutorid/createdby. On top of that, this table now has an
  *   actual retention limit: `cleanup_bulk_operations_task` purges operations
  *   in a terminal status (completed/completed_with_errors/failed/cancelled)
- *   after 90 days — see TERMINAL_TTL_SECONDS there. Abandoned draft/previewed
+ *   after 90 days Ã¢â‚¬â€ see TERMINAL_TTL_SECONDS there. Abandoned draft/previewed
  *   operations were already purged after 1 day (phase 3D.4); this adds the
  *   missing other half of the policy.
  *
@@ -64,7 +64,7 @@ use core_privacy\local\request\writer;
  * `local_tut_assignment`, decided by the user together with this table's own
  * introduction:** conserved indefinitely; erasure anonymises
  * studentid/tutorid/createdby/modifiedby to the "no-reply" user but leaves
- * `contentvisible`/`noteinternal`/`noterestricted` untouched — this is the
+ * `contentvisible`/`noteinternal`/`noterestricted` untouched Ã¢â‚¬â€ this is the
  * tutoring record itself, with institutional history value, same reasoning
  * already applied to `note` on `local_tut_assignment`. Export includes all 3
  * note fields unmasked, regardless of the requesting user's normal
@@ -74,32 +74,32 @@ use core_privacy\local\request\writer;
  * unmasked today. `local_tut_entryparticipant.userid` is anonymised the same
  * way when it matches the erased user; `externalname` is out of scope (not
  * tied to any Moodle userid). `local_tut_entryreason` (a pure join, no
- * personal data of its own) is not declared separately — reassigning
+ * personal data of its own) is not declared separately Ã¢â‚¬â€ reassigning
  * studentid/tutorid on its parent `local_tut_entry` row already covers it,
  * there is nothing else in it to anonymise.
  *
  * **`local_tut_entryversion` (phase 5.5, closed by this class in phase
- * 5.7's "pruebas de filtración de datos" review — it was left undeclared
+ * 5.7's "pruebas de filtraciÃƒÂ³n de datos" review Ã¢â‚¬â€ it was left undeclared
  * when 5.5 first wired a writer for it, a real gap this review caught and
  * fixed):** the table never stores studentid/tutorid at all (a version
  * snapshot only captures the entry's editable content fields, not who the
  * relationship is between), so its only personal-data footprint is
- * `createdby` (who made the edit) — scoped and anonymised by that field
+ * `createdby` (who made the edit) Ã¢â‚¬â€ scoped and anonymised by that field
  * alone, same as `local_tut_entryparticipant` is scoped by `userid` alone
  * rather than by joining back to the parent entry. `snapshotjson` and
  * `changereason` are conserved untouched on erasure, same institutional-
- * history reasoning as `local_tut_entry`'s own content fields — a snapshot
+ * history reasoning as `local_tut_entry`'s own content fields Ã¢â‚¬â€ a snapshot
  * can still incidentally name someone in prose even after the editor's own
  * id is anonymised, the same accepted limitation `note` already has.
  *
  * **`local_tut_entryattachment` (phase 5.6, same review):** likewise scoped
  * by `createdby` alone (no studentid/tutorid column). `description` is
- * cleared on erasure — free text closer in kind to `note` than to
+ * cleared on erasure Ã¢â‚¬â€ free text closer in kind to `note` than to
  * institutional content. `category`, the files themselves and their
  * filenames are left untouched, same reasoning as `contentvisible`. The
  * files (component=local_monlaututoria, filearea=entryattachment) ARE
  * exported via `writer::export_area_files()` for entries the requesting
- * user is student/tutor/creator/modifier/participant of — unlike the
+ * user is student/tutor/creator/modifier/participant of Ã¢â‚¬â€ unlike the
  * transient csvimport file area below, these files are meant to persist
  * and are squarely the kind of record a subject access request should
  * surface.
@@ -109,27 +109,38 @@ use core_privacy\local\request\writer;
  * conserved indefinitely; erasure anonymises identity fields (studentid,
  * plus `responsibleuserid` on agreements, `assignedto` on referrals,
  * createdby/modifiedby throughout) to the "no-reply" user, but leaves the
- * institutional content untouched — `description` (agreement), `reason`/
+ * institutional content untouched Ã¢â‚¬â€ `description` (agreement), `reason`/
  * `resolution` (referral). This is the same content-vs-identity split
  * already applied to `local_tut_entry`'s own note fields; the "no duplicar
  * contenido sensible" rule for referrals (docs/fases/phase-6.md) is a
  * content-origin constraint on referral_create_form.php, not a privacy
- * classification — it does not change how `reason`/`resolution` are treated
+ * classification Ã¢â‚¬â€ it does not change how `reason`/`resolution` are treated
  * here. `local_tut_followup` has no free-text field of its own (see
- * followup_service's class docblock for why) — only identity to anonymise.
+ * followup_service's class docblock for why) Ã¢â‚¬â€ only identity to anonymise.
  * Export includes all 3 exactly as far as each entity is visible per
  * get_for_viewer() would show it to its own creator (unmasked, same
  * "subject access is not gated by ordinary viewing capability" reasoning as
  * `local_tut_entry`).
  *
+ * **`local_tut_notification` (phase 9.1-9.5):** operational delivery logs,
+ * not tutoring content. They still hold personal data (`recipientid`, `actorid`,
+ * related entity ids, delivery errors), so they must be declared in metadata
+ * and export/erasure. The retention policy differs from the institutional-
+ * history tables above: rows where the user is recipient are deleted on
+ * erasure, because they are an operational inbox copy rather than the
+ * canonical tutoring record; rows where they only appear as `actorid` keep
+ * the audit trail but lose that attribution (reassigned to the Moodle
+ * no-reply user). Scheduled cleanup already purges old rows operationally
+ * via `cleanup_notification_logs_task`.
+ *
  * The local_monlaututoria/csvimport file area (phase 3D.4) is unaffected by
  * this: it holds the same kind of personal data as local_tut_assignment's
  * studentid/tutorid (whoever a large CSV import's rows name), but only
- * transiently — a file only exists there between csv_import_dispatch_service
+ * transiently Ã¢â‚¬â€ a file only exists there between csv_import_dispatch_service
  * deferring an import and process_csv_import_task processing it (normally
  * seconds to minutes), and cleanup_bulk_operations_task removes anything left
  * behind. Declared via core_files for completeness but still not wired into
- * export/delete — the file is gone again well before any subject access
+ * export/delete Ã¢â‚¬â€ the file is gone again well before any subject access
  * request could reasonably reach it, and there is nothing meaningful to
  * anonymise in a file that is about to be deleted anyway.
  *
@@ -170,7 +181,7 @@ final class provider implements
 
         // Lighter footprint than local_tut_assignment: this table never
         // stores per-student data (see cohort_assignment_preview_service's
-        // class docblock) — only attribution (createdby) and the selected
+        // class docblock) Ã¢â‚¬â€ only attribution (createdby) and the selected
         // tutor(s) as references. Exported and anonymised on erasure (phase
         // 3E.6) like every other table below, plus a 90-day retention limit
         // for finished operations (see the class docblock).
@@ -185,7 +196,7 @@ final class provider implements
             'timemodified'   => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:bulkoperation');
 
-        // Exported and anonymised on erasure (phase 3E.6) — see the class
+        // Exported and anonymised on erasure (phase 3E.6) Ã¢â‚¬â€ see the class
         // docblock for the retention policy this implements.
         $collection->add_database_table('local_tut_assignment', [
             'studentid'      => 'privacy:metadata:assignment:studentid',
@@ -207,7 +218,7 @@ final class provider implements
             'timemodified'   => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:assignment');
 
-        // Exported and anonymised on erasure (phase 5.1) — see the class
+        // Exported and anonymised on erasure (phase 5.1) Ã¢â‚¬â€ see the class
         // docblock for the retention policy this implements.
         $collection->add_database_table('local_tut_entry', [
             'studentid'        => 'privacy:metadata:entry:studentid',
@@ -235,7 +246,7 @@ final class provider implements
         ], 'privacy:metadata:entryparticipant');
 
         // Exported and anonymised on erasure (phase 5.7, closing a gap left
-        // by phase 5.5) — see the class docblock. No studentid/tutorid: a
+        // by phase 5.5) Ã¢â‚¬â€ see the class docblock. No studentid/tutorid: a
         // version snapshot only captures the entry's own editable fields.
         $collection->add_database_table('local_tut_entryversion', [
             'versionnumber' => 'privacy:metadata:entryversion:versionnumber',
@@ -246,7 +257,7 @@ final class provider implements
         ], 'privacy:metadata:entryversion');
 
         // Exported and anonymised on erasure (phase 5.7, closing a gap left
-        // by phase 5.6) — see the class docblock. The attachment files
+        // by phase 5.6) Ã¢â‚¬â€ see the class docblock. The attachment files
         // themselves are exported via core_files below.
         $collection->add_database_table('local_tut_entryattachment', [
             'category'    => 'privacy:metadata:entryattachment:category',
@@ -255,12 +266,12 @@ final class provider implements
             'timecreated' => 'privacy:metadata:timecreated',
         ], 'privacy:metadata:entryattachment');
 
-        // Persistent, unlike the transient csvimport area below — exported
+        // Persistent, unlike the transient csvimport area below Ã¢â‚¬â€ exported
         // for entries the requesting user is entitled to (see the class
         // docblock and export_entry_attachments()).
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:entryattachmentfiles');
 
-        // Exported and anonymised on erasure (phase 6.1) — see the class docblock.
+        // Exported and anonymised on erasure (phase 6.1) Ã¢â‚¬â€ see the class docblock.
         $collection->add_database_table('local_tut_agreement', [
             'studentid'                => 'privacy:metadata:agreement:studentid',
             'description'              => 'privacy:metadata:agreement:description',
@@ -276,7 +287,7 @@ final class provider implements
             'timemodified'             => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:agreement');
 
-        // Exported and anonymised on erasure (phase 6.2) — see the class docblock.
+        // Exported and anonymised on erasure (phase 6.2) Ã¢â‚¬â€ see the class docblock.
         $collection->add_database_table('local_tut_followup', [
             'studentid'      => 'privacy:metadata:followup:studentid',
             'duedate'        => 'privacy:metadata:followup:duedate',
@@ -289,7 +300,7 @@ final class provider implements
             'timemodified'   => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:followup');
 
-        // Exported and anonymised on erasure (phase 6.4) — see the class docblock.
+        // Exported and anonymised on erasure (phase 6.4) Ã¢â‚¬â€ see the class docblock.
         $collection->add_database_table('local_tut_referral', [
             'studentid'    => 'privacy:metadata:referral:studentid',
             'destination'  => 'privacy:metadata:referral:destination',
@@ -304,7 +315,22 @@ final class provider implements
             'timemodified' => 'privacy:metadata:timemodified',
         ], 'privacy:metadata:referral');
 
-        // Transient only — see the class docblock. Not wired into
+        $collection->add_database_table('local_tut_notification', [
+            'notificationtype' => 'privacy:metadata:notification:notificationtype',
+            'recipientid'      => 'privacy:metadata:notification:recipientid',
+            'actorid'          => 'privacy:metadata:notification:actorid',
+            'entitytype'       => 'privacy:metadata:notification:entitytype',
+            'entityid'         => 'privacy:metadata:notification:entityid',
+            'digestkey'        => 'privacy:metadata:notification:digestkey',
+            'status'           => 'privacy:metadata:notification:status',
+            'attempts'         => 'privacy:metadata:notification:attempts',
+            'lasterror'        => 'privacy:metadata:notification:lasterror',
+            'timesent'         => 'privacy:metadata:notification:timesent',
+            'timecreated'      => 'privacy:metadata:timecreated',
+            'timemodified'     => 'privacy:metadata:timemodified',
+        ], 'privacy:metadata:notification');
+
+        // Transient only Ã¢â‚¬â€ see the class docblock. Not wired into
         // export/delete, same documented reason as local_tut_assignment.
         $collection->add_subsystem_link('core_files', [], 'privacy:metadata:csvimportfiles');
 
@@ -499,7 +525,7 @@ final class provider implements
             }
 
             // The other party in the relationship, resolved to a readable
-            // name — a raw id would not be intelligible in an export meant
+            // name Ã¢â‚¬â€ a raw id would not be intelligible in an export meant
             // for the data subject to actually read.
             $counterpartid = (int) $record->studentid === $userid ? (int) $record->tutorid : (int) $record->studentid;
             $counterpart = \core_user::get_user($counterpartid);
@@ -564,7 +590,7 @@ final class provider implements
     /**
      * Exports every entry where the requesting user is student, tutor,
      * creator, modifier, or an internal participant. Notes are included
-     * unmasked (see the class docblock) — a subject access request is not
+     * unmasked (see the class docblock) Ã¢â‚¬â€ a subject access request is not
      * gated by the normal viewstudentvisiblecontent/viewinternalnotes/
      * viewrestrictednotes capabilities.
      *
@@ -650,7 +676,7 @@ final class provider implements
     /**
      * Exports every attachment the requesting user uploaded (createdby is
      * the only scoping field, same reasoning as export_entry_versions()),
-     * including the file itself via export_area_files() — see the class
+     * including the file itself via export_area_files() Ã¢â‚¬â€ see the class
      * docblock for why these files (unlike the transient csvimport area)
      * are squarely in scope for a subject access request.
      *
@@ -780,7 +806,7 @@ final class provider implements
 
     /**
      * Exports every referral where the requesting user is student, assignee,
-     * creator or modifier. Unmasked, same reasoning as export_entries() —
+     * creator or modifier. Unmasked, same reasoning as export_entries() Ã¢â‚¬â€
      * this is the one export in this method where "unmasked" specifically
      * means it does NOT go through referral_service::get_for_viewer()'s
      * capability check, since a subject access request is about what the
@@ -952,7 +978,7 @@ final class provider implements
 
     /**
      * Anonymises every local_tut_assignment row where $userid appears as
-     * student, tutor, creator or modifier — never deletes a row, since that
+     * student, tutor, creator or modifier Ã¢â‚¬â€ never deletes a row, since that
      * would also destroy the other party's own history. The row ids are
      * collected before reassigning studentid/tutorid, so the WHERE clause
      * used to clear `note` still matches after those fields have changed.
@@ -984,7 +1010,7 @@ final class provider implements
     }
 
     /**
-     * Anonymises every local_tut_assignment row in the system — used only by
+     * Anonymises every local_tut_assignment row in the system Ã¢â‚¬â€ used only by
      * delete_data_for_all_users_in_context() (the whole system context is
      * being purged, e.g. plugin uninstall), never by a single-user erasure
      * request. Clears `note` unconditionally: with no single user left to
@@ -1032,9 +1058,9 @@ final class provider implements
     /**
      * Anonymises local_tut_entry rows where $userid is student, tutor,
      * creator or modifier, and local_tut_entryparticipant.userid where it
-     * matches — never deletes a row, and never touches contentvisible/
+     * matches Ã¢â‚¬â€ never deletes a row, and never touches contentvisible/
      * noteinternal/noterestricted (decided by the user together with this
-     * table's own introduction, phase 5.1 — see the class docblock).
+     * table's own introduction, phase 5.1 Ã¢â‚¬â€ see the class docblock).
      *
      * @param int $userid
      */
@@ -1053,7 +1079,7 @@ final class provider implements
 
     /**
      * Same anonymisation as anonymize_entries(), for every row in the
-     * system — used only by delete_data_for_all_users_in_context().
+     * system Ã¢â‚¬â€ used only by delete_data_for_all_users_in_context().
      */
     private static function anonymize_all_entries(): void {
         global $DB;
@@ -1069,7 +1095,7 @@ final class provider implements
     }
 
     /**
-     * Anonymises local_tut_entryversion rows created by $userid — createdby
+     * Anonymises local_tut_entryversion rows created by $userid Ã¢â‚¬â€ createdby
      * only, no studentid/tutorid on this table (see the class docblock).
      * snapshotjson/changereason are left untouched, same institutional-
      * history reasoning as local_tut_entry's own content fields.
@@ -1086,7 +1112,7 @@ final class provider implements
 
     /**
      * Same anonymisation as anonymize_entry_versions(), for every row in the
-     * system — used only by delete_data_for_all_users_in_context().
+     * system Ã¢â‚¬â€ used only by delete_data_for_all_users_in_context().
      */
     private static function anonymize_all_entry_versions(): void {
         global $DB;
@@ -1097,7 +1123,7 @@ final class provider implements
     }
 
     /**
-     * Anonymises local_tut_entryattachment rows created by $userid —
+     * Anonymises local_tut_entryattachment rows created by $userid Ã¢â‚¬â€
      * createdby only, same reasoning as anonymize_entry_versions(). Clears
      * `description` (free text closer in kind to `note` than to
      * institutional content, see the class docblock); `category` and the
@@ -1116,7 +1142,7 @@ final class provider implements
 
     /**
      * Same anonymisation as anonymize_entry_attachments(), for every row in
-     * the system — used only by delete_data_for_all_users_in_context().
+     * the system Ã¢â‚¬â€ used only by delete_data_for_all_users_in_context().
      */
     private static function anonymize_all_entry_attachments(): void {
         global $DB;
@@ -1129,7 +1155,7 @@ final class provider implements
 
     /**
      * Anonymises local_tut_agreement rows where $userid is student,
-     * responsible user, creator or modifier — never touches `description`
+     * responsible user, creator or modifier Ã¢â‚¬â€ never touches `description`
      * (see the class docblock).
      *
      * @param int $userid
@@ -1147,7 +1173,7 @@ final class provider implements
 
     /**
      * Same anonymisation as anonymize_agreements(), for every row in the
-     * system — used only by delete_data_for_all_users_in_context().
+     * system Ã¢â‚¬â€ used only by delete_data_for_all_users_in_context().
      */
     private static function anonymize_all_agreements(): void {
         global $DB;
@@ -1178,7 +1204,7 @@ final class provider implements
 
     /**
      * Same anonymisation as anonymize_followups(), for every row in the
-     * system — used only by delete_data_for_all_users_in_context().
+     * system Ã¢â‚¬â€ used only by delete_data_for_all_users_in_context().
      */
     private static function anonymize_all_followups(): void {
         global $DB;
@@ -1192,7 +1218,7 @@ final class provider implements
 
     /**
      * Anonymises local_tut_referral rows where $userid is student, assignee,
-     * creator or modifier — never touches `reason`/`resolution` (see the
+     * creator or modifier Ã¢â‚¬â€ never touches `reason`/`resolution` (see the
      * class docblock).
      *
      * @param int $userid
@@ -1210,7 +1236,7 @@ final class provider implements
 
     /**
      * Same anonymisation as anonymize_referrals(), for every row in the
-     * system — used only by delete_data_for_all_users_in_context().
+     * system Ã¢â‚¬â€ used only by delete_data_for_all_users_in_context().
      */
     private static function anonymize_all_referrals(): void {
         global $DB;

@@ -59,9 +59,9 @@ $tutoroptions = [0 => get_string('coordination_tutor_all', 'local_monlaututoria'
 echo $renderer->single_select(new moodle_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid]), 'tutorid', $tutoroptions, $selectedtutorid, null, 'coordinationtutorselector');
 
 echo html_writer::div(
-    html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid, 'format' => 'csv']), get_string('coordination_export_csv', 'local_monlaututoria'))
+    html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid, 'format' => 'csv', 'sesskey' => sesskey()]), get_string('coordination_export_csv', 'local_monlaututoria'))
     . ' | '
-    . html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid, 'format' => 'xlsx']), get_string('coordination_export_xlsx', 'local_monlaututoria')),
+    . html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid, 'format' => 'xlsx', 'sesskey' => sesskey()]), get_string('coordination_export_xlsx', 'local_monlaututoria')),
     'mb-3'
 );
 
