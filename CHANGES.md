@@ -1,5 +1,14 @@
 # Changelog — local_monlaututoria
 
+## 0.12.1 — 2026-07-25
+
+**Corrección: excepción fatal al entrar en "Cohortes habilitadas".** Reportado en uso real.
+
+- `cohort_visibility.php` llamaba a `admin_externalpage_setup()` sin haber cargado antes `$CFG->libdir . '/adminlib.php'` (`Call to undefined function admin_externalpage_setup()`) — el mismo `require_once` que ya tiene `coordination_scopes.php`, olvidado en la pantalla nueva.
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 321 archivos PHP del plugin).
+
+---
+
 ## 0.12.0 — 2026-07-25
 
 **Nueva funcionalidad: el administrador puede elegir qué cohortes de Moodle se muestran en el plugin.** Petición de uso real: cada desplegable de cohortes (crear asignación manual, asignación por cohorte, y el ámbito por defecto de un usuario con `viewallassignments` en coordinación) ofrecía literalmente todas las cohortes del sitio, incluidas las irrelevantes (p. ej. cohortes de personal).
