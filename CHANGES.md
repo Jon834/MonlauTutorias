@@ -1,5 +1,14 @@
 # Changelog — local_monlaututoria
 
+## 0.11.2 — 2026-07-25
+
+**Corrección: excepción fatal al entrar en el panel de coordinación.** Reportado en uso real.
+
+- `coordination_dashboard_service::get_dashboard()` llamaba a `\core_user::get_users_by_id()`, un método que no existe en Moodle core (`Call to undefined method core\user::get_users_by_id()`) — rompía la carga de la pantalla en cuanto había al menos un tutor con asignaciones vigentes en el ámbito consultado. Sustituido por `$DB->get_records_list('user', 'id', ...)`, el mismo patrón de consulta por lote ya usado en el resto del plugin (`dashboard.php`, `block_monlaututoria.php`, `renderer.php`).
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 315 archivos PHP del plugin).
+
+---
+
 ## 0.11.1 — 2026-07-25
 
 **Panel del tutor: derivaciones y alumnos prioritarios ahora opcionales; enlace directo a "Nueva tutoría" en el bloque.** Feedback de uso real: ambas secciones generaban confusión al tutor — una derivación ya se puede explicar dentro del texto de la propia tutoría. Sin cambio de esquema, sin borrar nada: solo se deja de mostrar.

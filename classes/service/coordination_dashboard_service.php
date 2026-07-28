@@ -126,6 +126,8 @@ final class coordination_dashboard_service {
         ?string $studentdepartment = null,
         ?string $tutordepartment = null
     ): coordination_dashboard {
+        global $DB;
+
         $now = $now ?? time();
         $this->academicyearrepository->get($academicyearid);
         $cohortids = array_values(array_unique(array_map('intval', $cohortids)));
@@ -207,7 +209,10 @@ final class coordination_dashboard_service {
         }
         $tutoroptions = [];
         if (!empty($tutorids)) {
-            $users = \core_user::get_users_by_id(array_keys($tutorids));
+            // \core_user::get_users_by_id() does not exist in Moodle core —
+            // every other batch user lookup in this plugin uses this same
+            // $DB call (dashboard.php, block_monlaututoria.php, renderer.php).
+            $users = $DB->get_records_list('user', 'id', array_keys($tutorids));
             foreach ($users as $user) {
                 $tutoroptions[(int) $user->id] = fullname($user);
             }
