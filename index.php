@@ -63,6 +63,10 @@ $links = [
     ['url' => '/local/monlaututoria/modalities.php', 'string' => 'modalities'],
 ];
 
+if (has_capability('local/monlaututoria:managecatalogues', $context)) {
+    $links[] = ['url' => '/local/monlaututoria/cohort_visibility.php', 'string' => 'cohort_visibility_title'];
+}
+
 if (has_capability('local/monlaututoria:managecoordinationscopes', $context)) {
     $links[] = ['url' => '/local/monlaututoria/coordination_scopes.php', 'string' => 'coordination_scopes_title'];
 }

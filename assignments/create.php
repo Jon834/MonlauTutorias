@@ -42,8 +42,10 @@ foreach ($academicyearrepository->get_all() as $year) {
     $academicyearoptions[(int) $year->id] = format_string($year->name);
 }
 
+// Only cohorts an admin has enabled for this plugin (cohort_visibility.php)
+// — defaults to every Moodle cohort until an admin curates a subset.
 $cohortoptions = [];
-foreach ($DB->get_records('cohort', null, 'name ASC', 'id, name') as $cohort) {
+foreach ((new \local_monlaututoria\service\cohort_visibility_service())->get_visible_cohorts() as $cohort) {
     $cohortoptions[(int) $cohort->id] = format_string($cohort->name);
 }
 

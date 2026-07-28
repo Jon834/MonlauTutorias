@@ -179,6 +179,17 @@ final class provider implements
             'shortname' => 'privacy:metadata:modality:shortname',
         ], 'privacy:metadata:modality');
 
+        // Global admin-curated cohort allowlist — cohortid is not personal
+        // data (an FK to Moodle's own cohort table, never a userid); only
+        // createdby is an attribution reference. No modifiedby: the whole
+        // set is replaced at once (cohort_visibility_service::
+        // replace_enabled_cohorts()), never edited row by row.
+        $collection->add_database_table('local_tut_enabledcohort', [
+            'cohortid'    => 'privacy:metadata:enabledcohort:cohortid',
+            'createdby'   => 'privacy:metadata:createdby',
+            'timecreated' => 'privacy:metadata:timecreated',
+        ], 'privacy:metadata:enabledcohort');
+
         // Lighter footprint than local_tut_assignment: this table never
         // stores per-student data (see cohort_assignment_preview_service's
         // class docblock) Ã¢â‚¬â€ only attribution (createdby) and the selected
@@ -348,6 +359,8 @@ final class provider implements
                 UNION
                 SELECT 1 FROM {local_tut_modality} WHERE createdby = :m1 OR modifiedby = :m2
                 UNION
+                SELECT 1 FROM {local_tut_enabledcohort} WHERE createdby = :ec1
+                UNION
                 SELECT 1 FROM {local_tut_assignment}
                     WHERE studentid = :as1 OR tutorid = :as2 OR createdby = :as3 OR modifiedby = :as4
                 UNION
@@ -378,6 +391,7 @@ final class provider implements
             'ay1' => $userid, 'ay2' => $userid,
             'r1'  => $userid, 'r2'  => $userid,
             'm1'  => $userid, 'm2'  => $userid,
+            'ec1' => $userid,
             'as1' => $userid, 'as2' => $userid, 'as3' => $userid, 'as4' => $userid,
             'bo1' => $userid, 'bo2' => $userid, 'bo3' => $userid,
             'en1' => $userid, 'en2' => $userid, 'en3' => $userid, 'en4' => $userid,
@@ -406,6 +420,10 @@ final class provider implements
             $userlist->add_from_sql('createdby', "SELECT createdby FROM {{$table}}", []);
             $userlist->add_from_sql('modifiedby', "SELECT modifiedby FROM {{$table}}", []);
         }
+
+        // No modifiedby on this table (see get_metadata()) — not part of the
+        // generic TABLES loop above.
+        $userlist->add_from_sql('createdby', 'SELECT createdby FROM {local_tut_enabledcohort}', []);
 
         $userlist->add_from_sql('studentid', 'SELECT studentid FROM {local_tut_assignment}', []);
         $userlist->add_from_sql('tutorid', 'SELECT tutorid FROM {local_tut_assignment}', []);
@@ -478,6 +496,12 @@ final class provider implements
                 ];
             }
         }
+
+        $enabledcohorts = $DB->get_records('local_tut_enabledcohort', ['createdby' => $userid]);
+        $data['enabledcohorts'] = array_values(array_map(
+            static fn (\stdClass $record): \stdClass => (object) ['cohortid' => (int) $record->cohortid],
+            $enabledcohorts
+        ));
 
         $data['assignments'] = self::export_assignments($userid);
         $data['bulkoperations'] = self::export_bulk_operations($userid);
@@ -963,6 +987,9 @@ final class provider implements
             $DB->set_field($table, 'createdby', $noreply, ['createdby' => $userid]);
             $DB->set_field($table, 'modifiedby', $noreply, ['modifiedby' => $userid]);
         }
+
+        // No modifiedby on this table (see get_metadata()).
+        $DB->set_field('local_tut_enabledcohort', 'createdby', $noreply, ['createdby' => $userid]);
     }
 
     private static function reassign_all_attribution(): void {
@@ -974,6 +1001,8 @@ final class provider implements
             $DB->set_field($table, 'createdby', $noreply, []);
             $DB->set_field($table, 'modifiedby', $noreply, []);
         }
+
+        $DB->set_field('local_tut_enabledcohort', 'createdby', $noreply, []);
     }
 
     /**

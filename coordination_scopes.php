@@ -11,7 +11,6 @@ $save = optional_param('save', 0, PARAM_BOOL);
 
 $coordscopeservice = new \local_monlaututoria\service\coordination_scope_service();
 $scoperepository = new \local_monlaututoria\repository\coordination_scope_repository();
-$cohortrepository = new \local_monlaututoria\repository\cohort_repository();
 
 $allscopeassignments = $scoperepository->get_all();
 $assigneduserids = array_values(array_unique(array_map(static fn (\stdClass $row): int => (int) $row->userid, $allscopeassignments)));
@@ -64,7 +63,9 @@ $useroptions = [0 => get_string('choose')];
 foreach ($users as $user) {
     $useroptions[(int) $user->id] = fullname($user);
 }
-$cohorts = $cohortrepository->get_all();
+// Only cohorts an admin has enabled for this plugin (cohort_visibility.php)
+// — a coordinator should never be scoped to a cohort nobody can see anyway.
+$cohorts = (new \local_monlaututoria\service\cohort_visibility_service())->get_visible_cohorts();
 $scopecohortids = $scoperepository->get_cohort_ids_for_users(array_keys($users));
 $currentcohortids = $selecteduserid > 0 ? ($scopecohortids[$selecteduserid] ?? []) : [];
 

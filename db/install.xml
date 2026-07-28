@@ -325,6 +325,19 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_tut_enabledcohort" COMMENT="Global admin-curated allowlist of Moodle cohorts this plugin treats as relevant. An empty table means unrestricted (every cohort is offered) — see cohort_visibility_service.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cohortid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Enabled Moodle cohort id; FK to cohort.id, not enforced at DB level"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="ku_cohortid" TYPE="unique" FIELDS="cohortid"/>
+      </KEYS>
+    </TABLE>
+
     <TABLE NAME="local_tut_notification" COMMENT="Notification outbox and deduplication log for phase 9">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>

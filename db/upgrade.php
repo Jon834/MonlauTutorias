@@ -516,6 +516,29 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026090600, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026091400) {
+        // Real-use feedback: an admin has no way to curate which Moodle
+        // cohorts are relevant to this plugin at all (e.g. hiding staff
+        // cohorts) — every cohort dropdown across the plugin, and the
+        // coordination scope a viewallassignments user gets by default,
+        // currently offers literally every cohort on the site. An EMPTY
+        // table means "unrestricted" (cohort_visibility_service falls back
+        // to every cohort) so upgrading never silently hides anything until
+        // an admin explicitly visits the new screen and saves a subset.
+        $table = new xmldb_table('local_tut_enabledcohort');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('createdby', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('ku_cohortid', XMLDB_KEY_UNIQUE, ['cohortid']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026091400, 'local', 'monlaututoria');
+    }
+
     return true;
 }
 

@@ -1,5 +1,17 @@
 # Changelog — local_monlaututoria
 
+## 0.12.0 — 2026-07-25
+
+**Nueva funcionalidad: el administrador puede elegir qué cohortes de Moodle se muestran en el plugin.** Petición de uso real: cada desplegable de cohortes (crear asignación manual, asignación por cohorte, y el ámbito por defecto de un usuario con `viewallassignments` en coordinación) ofrecía literalmente todas las cohortes del sitio, incluidas las irrelevantes (p. ej. cohortes de personal).
+
+- **Nueva tabla `local_tut_enabledcohort`** (lista global, no por usuario — distinta de `local_tut_coordscope`, que restringe cuáles de estas cohortes ve un coordinador concreto). **Vacía significa "sin restricción"**: tras actualizar, no se oculta nada hasta que un administrador entra en la nueva pantalla y guarda un subconjunto — ninguna instalación existente cambia de comportamiento sola.
+- **Nueva pantalla "Cohortes habilitadas"** (Configuración del plugin, o Administración del sitio > Plugins locales > Monlau Tutoría > Cohortes habilitadas): lista de casillas, una por cohorte de Moodle. Aviso incluido en la propia pantalla: si no queda ninguna marcada al guardar, se interpreta como "todas habilitadas" (no como "ninguna"), para evitar que un desmarcado accidental de todo deje el plugin sin cohortes utilizables.
+- **Aplicado en 3 sitios**: el desplegable de cohorte en "Nueva asignación", el de "Asignar por cohorte", y el ámbito por defecto de coordinación (`coordination_scope_service::get_effective_cohort_ids()`) — además, el ámbito explícito de un coordinador concreto (`coordination_scopes.php`) ahora se cruza con esta lista global, así que una cohorte deshabilitada globalmente deja de verse aunque un coordinador ya estuviera apuntado a ella.
+- Privacy API actualizada (`createdby` como único dato de atribución; `cohortid` no es un dato personal, es una referencia a la propia cohorte de Moodle).
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 321 archivos PHP del plugin) y validación XML de `install.xml`. Pruebas nuevas escritas (no ejecutadas): `enabled_cohort_repository_test.php`, `cohort_visibility_service_test.php`, `coordination_scope_service_test.php`, y `local_tut_enabledcohort` añadida a la cobertura de `upgrade_test.php`.
+
+---
+
 ## 0.11.2 — 2026-07-25
 
 **Corrección: excepción fatal al entrar en el panel de coordinación.** Reportado en uso real.

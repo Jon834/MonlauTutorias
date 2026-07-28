@@ -57,6 +57,13 @@ if ($hassiteconfig
     ));
 
     $ADMIN->add('local_monlaututoria', new admin_externalpage(
+        'local_monlaututoria_cohort_visibility',
+        get_string('cohort_visibility_title', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/cohort_visibility.php'),
+        ['local/monlaututoria:managecatalogues']
+    ));
+
+    $ADMIN->add('local_monlaututoria', new admin_externalpage(
         'local_monlaututoria_dashboard',
         get_string('dashboard_title', 'local_monlaututoria'),
         new moodle_url('/local/monlaututoria/dashboard.php'),

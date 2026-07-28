@@ -30,13 +30,16 @@ final class coordination_scope_service {
 
     private coordination_scope_repository $repository;
     private cohort_repository $cohortrepository;
+    private cohort_visibility_service $cohortvisibilityservice;
 
     public function __construct(
         ?coordination_scope_repository $repository = null,
-        ?cohort_repository $cohortrepository = null
+        ?cohort_repository $cohortrepository = null,
+        ?cohort_visibility_service $cohortvisibilityservice = null
     ) {
         $this->repository = $repository ?? new coordination_scope_repository();
         $this->cohortrepository = $cohortrepository ?? new cohort_repository();
+        $this->cohortvisibilityservice = $cohortvisibilityservice ?? new cohort_visibility_service();
     }
 
     /**
@@ -47,12 +50,23 @@ final class coordination_scope_service {
         $context = \context_system::instance();
 
         if (has_capability('local/monlaututoria:viewallassignments', $context, $userid)) {
-            return $this->cohortrepository->get_all_ids();
+            // "All assignments" now means all globally-enabled cohorts, not
+            // literally every Moodle cohort — an admin may have excluded
+            // some (e.g. staff groups) via cohort_visibility_service.
+            return $this->cohortvisibilityservice->get_visible_cohort_ids();
         }
 
         require_capability('local/monlaututoria:viewcoordinationdashboard', $context, $userid);
 
-        return $this->repository->get_cohort_ids_for_user($userid);
+        // Intersected with the globally-visible set: a coordinator explicitly
+        // scoped to a cohort before an admin later disabled it globally
+        // should not keep seeing it — the global allowlist always wins.
+        $visible = array_flip($this->cohortvisibilityservice->get_visible_cohort_ids());
+
+        return array_values(array_filter(
+            $this->repository->get_cohort_ids_for_user($userid),
+            static fn (int $cohortid): bool => isset($visible[$cohortid])
+        ));
     }
 
     /**
