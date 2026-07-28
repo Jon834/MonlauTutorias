@@ -60,10 +60,10 @@
     <td>{{> local_monlaututoria/assignment_status}}</td>
     <td>{{sourcelabel}}</td>
     <td>
-        <a href="{{detailurl}}">{{viewdetaillabel}}</a>
-        | <a href="{{studentfichaurl}}">{{studentfichalabel}}</a>
-        {{#canedit}} | <a href="{{editurl}}">{{editlabel}}</a>{{/canedit}}
-        {{#canreassign}} | <a href="{{reassignurl}}">{{reassignlabel}}</a>{{/canreassign}}
-        {{#canclose}} | <a href="{{closeurl}}">{{closelabel}}</a>{{/canclose}}
+        <a href="{{detailurl}}">{{#pix}} i/info, core, {{/pix}} {{viewdetaillabel}}</a>
+        | <a href="{{studentfichaurl}}">{{#pix}} i/report, core, {{/pix}} {{studentfichalabel}}</a>
+        {{#canedit}} | <a href="{{editurl}}">{{#pix}} t/edit, core, {{/pix}} {{editlabel}}</a>{{/canedit}}
+        {{#canreassign}} | <a href="{{reassignurl}}">{{#pix}} t/switch_roles, core, {{/pix}} {{reassignlabel}}</a>{{/canreassign}}
+        {{#canclose}} | <a href="{{closeurl}}">{{#pix}} t/locked, core, {{/pix}} {{closelabel}}</a>{{/canclose}}
     </td>
 </tr>

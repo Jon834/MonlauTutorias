@@ -1,5 +1,15 @@
 # Changelog — local_monlaututoria
 
+## 0.12.3 — 2026-07-25
+
+**Iconos junto a las acciones del listado de asignaciones.** Petición de uso real, solo visual — sin cambio de esquema ni de lógica.
+
+- `templates/assignment_summary.mustache`: cada acción de la columna "Acciones" (Ver detalle, Ver ficha, Editar, Reasignar tutor, Cerrar) ahora lleva un icono estándar de Moodle core delante del texto, vía el helper `{{#pix}}...{{/pix}}` — sin archivos de icono nuevos. Iconos decorativos (alt vacío): el texto del enlace ya identifica la acción, así que el lector de pantalla no la anuncia dos veces.
+- Iconos usados: `i/info` (Ver detalle), `i/report` (Ver ficha), `t/edit` (Editar), `t/switch_roles` (Reasignar tutor), `t/locked` (Cerrar).
+- ⚠️ No verificado todavía en un Moodle real — los nombres de icono son los estándar de Moodle core, pero conviene confirmar visualmente que `t/switch_roles`/`t/locked` encajan bien antes de darlo por cerrado.
+
+---
+
 ## 0.12.2 — 2026-07-25
 
 **Cohortes habilitadas: el filtro del listado de asignaciones también respeta ahora la lista.** Encontrado en uso real tras el 0.12.0 — se aplicó a los formularios de creación pero no al desplegable de filtro de `assignments/index.php`, que seguía mostrando todas las cohortes de Moodle.
