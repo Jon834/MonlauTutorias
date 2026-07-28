@@ -100,10 +100,21 @@ foreach ($academicyearrepository->get_all() as $year) {
     $academicyearoptions[(int) $year->id] = format_string($year->name);
 }
 
+$repository = new \local_monlaututoria\repository\assignment_repository();
+
+// Filterable cohorts: globally enabled ones (cohort_visibility.php), plus
+// any cohort with at least one existing assignment even if since disabled
+// — hiding a cohort from creation flows should never make existing data
+// harder to find in this filter.
+$filterablecohortids = array_unique(array_merge(
+    (new \local_monlaututoria\service\cohort_visibility_service())->get_visible_cohort_ids(),
+    $repository->get_distinct_cohort_ids()
+));
 $cohortoptions = [];
-foreach ($DB->get_records('cohort', null, 'name ASC', 'id, name') as $cohort) {
+foreach ((new \local_monlaututoria\repository\cohort_repository())->get_many($filterablecohortids) as $cohort) {
     $cohortoptions[(int) $cohort->id] = format_string($cohort->name);
 }
+asort($cohortoptions);
 
 $filterform = new \local_monlaututoria\form\assignment_filter_form(
     $PAGE->url,
@@ -112,7 +123,6 @@ $filterform = new \local_monlaututoria\form\assignment_filter_form(
 );
 $filterform->set_data($filters);
 
-$repository = new \local_monlaututoria\repository\assignment_repository();
 $totalcount = $repository->count_search($filters);
 $records = $repository->search($filters, $page * $perpage, $perpage);
 

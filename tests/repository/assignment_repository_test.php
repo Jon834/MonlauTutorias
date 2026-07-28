@@ -61,6 +61,39 @@ final class assignment_repository_test extends \advanced_testcase {
         $this->assertSame('active', $record->status);
     }
 
+    public function test_get_distinct_cohort_ids_returns_only_cohorts_actually_referenced(): void {
+        $this->resetAfterTest();
+
+        $student1 = $this->getDataGenerator()->create_user();
+        $student2 = $this->getDataGenerator()->create_user();
+        $student3 = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $cohort1 = $this->getDataGenerator()->create_cohort();
+        $cohort2 = $this->getDataGenerator()->create_cohort();
+        $academicyearid = $this->create_academic_year();
+
+        $repository = new assignment_repository();
+        $repository->create((object) [
+            'studentid' => $student1->id, 'tutorid' => $tutor->id, 'academicyearid' => $academicyearid,
+            'cohortid' => $cohort1->id, 'createdby' => get_admin()->id,
+        ]);
+        // Same cohort again, on a different student — must not be duplicated.
+        $repository->create((object) [
+            'studentid' => $student2->id, 'tutorid' => $tutor->id, 'academicyearid' => $academicyearid,
+            'cohortid' => $cohort1->id, 'createdby' => get_admin()->id,
+        ]);
+        // No cohortid at all — must not show up as a phantom id.
+        $repository->create((object) [
+            'studentid' => $student3->id, 'tutorid' => $tutor->id, 'academicyearid' => $academicyearid,
+            'createdby' => get_admin()->id,
+        ]);
+
+        $this->assertSame([(int) $cohort1->id], $repository->get_distinct_cohort_ids());
+
+        // Cohort2 has no assignment at all yet — correctly absent.
+        $this->assertNotContains((int) $cohort2->id, $repository->get_distinct_cohort_ids());
+    }
+
     public function test_find_by_student_and_tutor(): void {
         $this->resetAfterTest();
 

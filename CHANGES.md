@@ -1,5 +1,15 @@
 # Changelog — local_monlaututoria
 
+## 0.12.2 — 2026-07-25
+
+**Cohortes habilitadas: el filtro del listado de asignaciones también respeta ahora la lista.** Encontrado en uso real tras el 0.12.0 — se aplicó a los formularios de creación pero no al desplegable de filtro de `assignments/index.php`, que seguía mostrando todas las cohortes de Moodle.
+
+- El filtro de cohorte del listado de asignaciones ahora muestra las cohortes habilitadas (`cohort_visibility.php`) **más** cualquier cohorte que ya tenga alguna asignación registrada, aunque se haya deshabilitado después — así nunca se pierde la capacidad de filtrar por datos que ya existen, solo se dejan de ofrecer cohortes irrelevantes que nunca se han usado.
+- Nuevo `assignment_repository::get_distinct_cohort_ids()` (una sola consulta `SELECT DISTINCT`, sin N+1).
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 321 archivos PHP del plugin). Prueba nueva escrita (no ejecutada): `test_get_distinct_cohort_ids_returns_only_cohorts_actually_referenced`.
+
+---
+
 ## 0.12.1 — 2026-07-25
 
 **Corrección: excepción fatal al entrar en "Cohortes habilitadas".** Reportado en uso real.

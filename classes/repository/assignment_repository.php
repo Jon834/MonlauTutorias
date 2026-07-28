@@ -85,6 +85,25 @@ class assignment_repository {
     }
 
     /**
+     * Every distinct cohortid referenced by at least one assignment row,
+     * regardless of status/type. Used by assignments/index.php to keep a
+     * cohort filterable there even after an admin later disables it in
+     * cohort_visibility.php — hiding a cohort from creation flows should
+     * never make existing data harder to find.
+     *
+     * @return int[]
+     */
+    public function get_distinct_cohort_ids(): array {
+        global $DB;
+
+        return array_map('intval', $DB->get_fieldset_select(
+            self::TABLE,
+            'DISTINCT cohortid',
+            'cohortid IS NOT NULL'
+        ));
+    }
+
+    /**
      * Returns a typed DTO for an assignment.
      *
      * @param int $id
