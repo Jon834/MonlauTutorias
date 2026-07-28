@@ -14,21 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_monlaututoria\service;
+
 /**
- * Version details for local_monlaututoria.
+ * Internal control-flow signal used only within
+ * cohort_assignment_apply_service::apply_all() to unwind its transaction and
+ * report which student caused the batch to fail. Never bubbles up to the
+ * user — cohort_assignment_apply_service always catches it and turns it into
+ * a proper error/event, so this deliberately does not extend
+ * moodle_exception. Same pattern as csv_import_atomic_failure.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class cohort_assignment_apply_failure extends \Exception {
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026091200;
-// Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
-// este valor es compatible con esa instancia; sigue sin confirmarse el número
-// exacto del core (no bloqueante, solo pendiente de precisión).
-$plugin->requires  = 2025100600;
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.11.0';
+    public function __construct(public readonly int $studentid) {
+        parent::__construct('Cohort assignment apply batch failed at student id ' . $studentid);
+    }
+}

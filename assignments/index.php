@@ -214,6 +214,13 @@ if ($canassignstudents) {
         'title' => get_string('assignments_create_tip', 'local_monlaututoria'),
     ];
 }
+if (has_capability('local/monlaututoria:managecohortassignments', $context)) {
+    $headeractions[] = [
+        'url' => new moodle_url('/local/monlaututoria/assignments/cohort_create.php'),
+        'label' => get_string('cohort_assignment_create', 'local_monlaututoria'),
+        'title' => get_string('cohort_assignment_create_tip', 'local_monlaututoria'),
+    ];
+}
 
 echo $renderer->page_header_card(
     get_string('assignments', 'local_monlaututoria'),

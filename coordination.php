@@ -18,6 +18,8 @@ $availablecohortids = $coordscopeservice->get_effective_cohort_ids((int) $USER->
 $selectedcohortid = optional_param('cohortid', 0, PARAM_INT);
 $selectedtutorid = optional_param('tutorid', 0, PARAM_INT);
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
+$selectedstudentdepartment = optional_param('studentdepartment', '', PARAM_ALPHA);
+$selectedtutordepartment = optional_param('tutordepartment', '', PARAM_ALPHA);
 
 $academicyear = $requestedacademicyearid > 0 ? $academicyearrepository->get($requestedacademicyearid) : $academicyearrepository->get_active();
 if ($academicyear === null) {
@@ -25,12 +27,24 @@ if ($academicyear === null) {
 }
 
 $selectedcohortids = $selectedcohortid > 0 ? [$selectedcohortid] : $availablecohortids;
-$dashboardall = $dashboardservice->get_dashboard((int) $USER->id, (int) $academicyear->id, $selectedcohortids, null);
+$dashboardall = $dashboardservice->get_dashboard(
+    (int) $USER->id, (int) $academicyear->id, $selectedcohortids, null, null,
+    $selectedstudentdepartment, $selectedtutordepartment
+);
 $dashboard = $selectedtutorid > 0
-    ? $dashboardservice->get_dashboard((int) $USER->id, (int) $academicyear->id, $selectedcohortids, $selectedtutorid)
+    ? $dashboardservice->get_dashboard(
+        (int) $USER->id, (int) $academicyear->id, $selectedcohortids, $selectedtutorid, null,
+        $selectedstudentdepartment, $selectedtutordepartment
+    )
     : $dashboardall;
 
-$PAGE->set_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid]);
+$PAGE->set_url('/local/monlaututoria/coordination.php', [
+    'academicyearid' => $academicyear->id,
+    'cohortid' => $selectedcohortid,
+    'tutorid' => $selectedtutorid,
+    'studentdepartment' => $selectedstudentdepartment,
+    'tutordepartment' => $selectedtutordepartment,
+]);
 $PAGE->set_title(get_string('coordination_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('coordination_title', 'local_monlaututoria'));
 $PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
@@ -63,26 +77,72 @@ if (empty($availablecohortids)) {
     return;
 }
 
+// Every filter's own URL carries the OTHER current filters, so changing one
+// never resets the rest — "mantener filtros al volver a una página".
+$commonparams = [
+    'academicyearid' => $academicyear->id,
+    'cohortid' => $selectedcohortid,
+    'tutorid' => $selectedtutorid,
+    'studentdepartment' => $selectedstudentdepartment,
+    'tutordepartment' => $selectedtutordepartment,
+];
+
 $academicyearoptions = [];
 foreach ($academicyearrepository->get_all() as $year) {
     $academicyearoptions[(int) $year->id] = format_string($year->name);
 }
-echo $renderer->single_select(new moodle_url('/local/monlaututoria/coordination.php', ['cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid]), 'academicyearid', $academicyearoptions, (int) $academicyear->id, null, 'coordinationacademicyearselector');
+echo $renderer->single_select(
+    new moodle_url('/local/monlaututoria/coordination.php', array_diff_key($commonparams, ['academicyearid' => null])),
+    'academicyearid', $academicyearoptions, (int) $academicyear->id, null, 'coordinationacademicyearselector'
+);
 
 $cohortoptions = [0 => get_string('coordination_cohort_all', 'local_monlaututoria')];
 foreach ($dashboardall->cohortlabels as $cohortid => $label) {
     $cohortoptions[$cohortid] = $label;
 }
 echo html_writer::tag('p', get_string('coordination_filter_help', 'local_monlaututoria'), ['class' => 'text-muted']);
-echo $renderer->single_select(new moodle_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'tutorid' => $selectedtutorid]), 'cohortid', $cohortoptions, $selectedcohortid, null, 'coordinationcohortselector');
+echo $renderer->single_select(
+    new moodle_url('/local/monlaututoria/coordination.php', array_diff_key($commonparams, ['cohortid' => null])),
+    'cohortid', $cohortoptions, $selectedcohortid, null, 'coordinationcohortselector'
+);
 
 $tutoroptions = [0 => get_string('coordination_tutor_all', 'local_monlaututoria')] + $dashboardall->tutoroptions;
-echo $renderer->single_select(new moodle_url('/local/monlaututoria/coordination.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid]), 'tutorid', $tutoroptions, $selectedtutorid, null, 'coordinationtutorselector');
+echo $renderer->single_select(
+    new moodle_url('/local/monlaututoria/coordination.php', array_diff_key($commonparams, ['tutorid' => null])),
+    'tutorid', $tutoroptions, $selectedtutorid, null, 'coordinationtutorselector'
+);
+
+$departmentoptions = $dashboardservice->get_department_options();
+if (!empty($departmentoptions)) {
+    $departmentoptionlist = array_combine($departmentoptions, $departmentoptions);
+
+    // Both selects share the same option values (FP/ESO/CORP/MM) — without a
+    // visible label, picking a department on either one would look identical
+    // on screen with no way to tell which is which (same "Elegir..." problem
+    // already fixed elsewhere for single_select — see student/view.php).
+    $studentdepartmentselect = new single_select(
+        new moodle_url('/local/monlaututoria/coordination.php', array_diff_key($commonparams, ['studentdepartment' => null])),
+        'studentdepartment',
+        ['' => get_string('coordination_department_all', 'local_monlaututoria')] + $departmentoptionlist,
+        $selectedstudentdepartment, null, 'coordinationstudentdepartmentselector'
+    );
+    $studentdepartmentselect->set_label(get_string('coordination_studentdepartment_label', 'local_monlaututoria'));
+    echo $OUTPUT->render($studentdepartmentselect);
+
+    $tutordepartmentselect = new single_select(
+        new moodle_url('/local/monlaututoria/coordination.php', array_diff_key($commonparams, ['tutordepartment' => null])),
+        'tutordepartment',
+        ['' => get_string('coordination_department_all', 'local_monlaututoria')] + $departmentoptionlist,
+        $selectedtutordepartment, null, 'coordinationtutordepartmentselector'
+    );
+    $tutordepartmentselect->set_label(get_string('coordination_tutordepartment_label', 'local_monlaututoria'));
+    echo $OUTPUT->render($tutordepartmentselect);
+}
 
 echo html_writer::div(
-    html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid, 'format' => 'csv', 'sesskey' => sesskey()]), get_string('coordination_export_csv', 'local_monlaututoria'))
+    html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', $commonparams + ['format' => 'csv', 'sesskey' => sesskey()]), get_string('coordination_export_csv', 'local_monlaututoria'))
     . ' | '
-    . html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', ['academicyearid' => $academicyear->id, 'cohortid' => $selectedcohortid, 'tutorid' => $selectedtutorid, 'format' => 'xlsx', 'sesskey' => sesskey()]), get_string('coordination_export_xlsx', 'local_monlaututoria')),
+    . html_writer::link(new moodle_url('/local/monlaututoria/coordination_export.php', $commonparams + ['format' => 'xlsx', 'sesskey' => sesskey()]), get_string('coordination_export_xlsx', 'local_monlaututoria')),
     'mb-3'
 );
 

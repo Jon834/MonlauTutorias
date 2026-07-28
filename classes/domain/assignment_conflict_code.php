@@ -48,4 +48,16 @@ final class assignment_conflict_code {
             self::DUPLICATE_HISTORICAL, self::DELETED_TUTOR_ACTIVE,
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function get_options(): array {
+        return [
+            self::MULTIPLE_ACTIVE_PRIMARY => get_string('conflictcode_multipleactiveprimary', 'local_monlaututoria'),
+            self::OVERLAPPING_FUTURE      => get_string('conflictcode_overlappingfuture', 'local_monlaututoria'),
+            self::DUPLICATE_HISTORICAL    => get_string('conflictcode_duplicatehistorical', 'local_monlaututoria'),
+            self::DELETED_TUTOR_ACTIVE    => get_string('conflictcode_deletedtutoractive', 'local_monlaututoria'),
+        ];
+    }
 }

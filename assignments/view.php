@@ -96,17 +96,17 @@ $detaildata = (object) ($badge + [
     'studentname'         => $student ? fullname($student) : ('#' . $assignment->studentid),
     'tutorname'           => $tutor ? fullname($tutor) : ('#' . $assignment->tutorid),
     'typelabel'           => $typeoptions[$assignment->assignmenttype] ?? $assignment->assignmenttype,
-    'academicyearname'    => $academicyear ? format_string($academicyear->name) : '—',
-    'cohortname'          => $cohort ? format_string($cohort->name) : '—',
+    'academicyearname'    => $academicyear ? format_string($academicyear->name) : 'â€”',
+    'cohortname'          => $cohort ? format_string($cohort->name) : 'â€”',
     'timestartformatted'  => userdate($assignment->timestart, $dateformat),
-    'timeendformatted'    => !empty($assignment->timeend) ? userdate($assignment->timeend, $dateformat) : '—',
+    'timeendformatted'    => !empty($assignment->timeend) ? userdate($assignment->timeend, $dateformat) : 'â€”',
     'sourcelabel'         => $sourceoptions[$assignment->source] ?? $assignment->source,
     'studentfichaurl'     => (new moodle_url('/local/monlaututoria/student/view.php', ['id' => $assignment->studentid]))->out(false),
     'studentfichalabel'   => get_string('student_viewficha', 'local_monlaututoria'),
-    'noteformatted'       => !empty($assignment->note) ? format_text($assignment->note, FORMAT_PLAIN) : '—',
+    'noteformatted'       => !empty($assignment->note) ? format_text($assignment->note, FORMAT_PLAIN) : 'â€”',
     'closereasonlabel'    => !empty($assignment->closereason)
         ? ($closereasonoptions[$assignment->closereason] ?? $assignment->closereason)
-        : '—',
+        : 'â€”',
     'createdbyname'       => $createdby ? fullname($createdby) : ('#' . $assignment->createdby),
     'createdonformatted'  => userdate($assignment->timecreated, $datetimeformat),
     'modifiedbyname'      => $modifiedby ? fullname($modifiedby) : ('#' . $assignment->modifiedby),
@@ -146,7 +146,7 @@ foreach ($historyrecords as $entry) {
         'tutorname'          => $entrytutor ? fullname($entrytutor) : ('#' . $entry->tutorid),
         'typelabel'          => $typeoptions[$entry->assignmenttype] ?? $entry->assignmenttype,
         'timestartformatted' => userdate($entry->timestart, $dateformat),
-        'timeendformatted'   => !empty($entry->timeend) ? userdate($entry->timeend, $dateformat) : '—',
+        'timeendformatted'   => !empty($entry->timeend) ? userdate($entry->timeend, $dateformat) : 'â€”',
     ];
 }
 

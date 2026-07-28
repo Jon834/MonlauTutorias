@@ -1,5 +1,37 @@
 # Changelog — local_monlaututoria
 
+## 0.11.0 — 2026-07-25
+
+**Nueva funcionalidad: asignación por cohorte completa, con vista previa y confirmación.** Cierra el hueco de la fase 3C — `cohort_assignment_preview_service` ya calculaba la clasificación desde hacía tiempo, pero no existía ni pantalla ni el paso de "confirmar" que escribe de verdad las asignaciones (reportado en uso real: la creación manual de asignaciones no permitía elegir una cohorte entera, solo un alumno cada vez). Sin cambio de esquema — reutiliza `local_tut_bulkoperation`, ya creado para esto.
+
+- **Nueva pantalla `assignments/cohort_create.php`** ("Asignar por cohorte"), enlazada desde el listado de asignaciones y desde el propio formulario de creación manual (que ahora aclara que su campo "Cohorte" es solo una etiqueta, no un disparador masivo). Flujo de 3 pasos en una sola URL, igual que la importación CSV: elegir cohorte + curso académico + tutor principal (+ cotutor opcional) + modo → previsualizar (resumen y tabla por alumno, sin escribir nada) → confirmar y aplicar.
+- **Nuevo `cohort_assignment_apply_service`**, el paso de "confirmar" que faltaba: nunca se fía de la previsualización guardada — recalcula la clasificación desde los propios parámetros de la operación y rechaza aplicar si algo ha cambiado desde que se generó. Solo se puede aplicar una vez (`bulk_operation_repository::claim()`, el mismo compare-and-swap atómico que ya usa la importación CSV). Toda la operación se aplica dentro de una única transacción (a diferencia de la importación CSV, aquí no hay elección de estrategia parcial/atómica: todo o nada). El modo "Solo previsualizar" nunca se puede confirmar, por diseño.
+- **4 modos de sincronización**: solo previsualizar (nunca escribe, siempre disponible); añadir asignaciones a quien no tenga tutor; además cerrar las de alumnos que ya no están en la cohorte; reemplazar el tutor principal de quien ya tenía uno (acción de mayor impacto). Capacidades, exactamente la matriz que `docs/seguridad-permisos.md` ya proponía desde la Fase 3C.1, sin capacidades nuevas: `local/monlaututoria:managecohortassignments` (ya existía sin consumidor) da acceso a la pantalla y a "solo previsualizar"; `assignstudents` habilita "añadir asignaciones" y es requisito de los otros dos modos reales también (pueden crear una asignación nueva para un alumno sin tutor previo, no solo cerrar/reasignar); `manageassignments` habilita además "cerrar ausentes"; `reassignstudents`/`manageassignments` habilita además "reemplazar tutor principal".
+- **Corrección de ortografía y cadenas de idioma faltantes** encontradas durante esta revisión: 8 cadenas que solo existían en `es` (mostraban `[[assignments_create_tip]]` literal en catalán/inglés) añadidas también a `en`/`ca`; 3 cadenas que solo existían en `en`/`es` añadidas a `ca`; varios acentos y apóstrofes catalanes corregidos en las cadenas tocadas (`Tauler de coordinació`, `àmbits`, etc. — no se ha hecho una auditoría completa del archivo `ca`, hay más casos sin corregir fuera del alcance de este cambio).
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 315 archivos PHP del plugin). Pruebas nuevas escritas (no ejecutadas): `tests/service/cohort_assignment_apply_service_test.php` (9 casos: creación, cotutor, reasignación, cierre de ausentes, ya aplicado, modo solo-previsualizar, previsualización caducada, eventos de éxito/fallo con rollback), y `tests/behat/cohort_assignment.feature` (3 escenarios).
+
+---
+
+## 0.10.6 — 2026-07-25
+
+**Corrección: `unassigned_students_service` ya no cuenta cuentas suspendidas/eliminadas como "sin tutor vigente".** Sin cambio de esquema.
+
+- Las cohortes de Moodle no se vacían automáticamente cuando termina la matrícula de un alumno, así que un alumno que ya se fue (cuenta suspendida al terminar el curso) podía seguir apareciendo en `search()`/`count()` como pendiente de tutor, y restaba en el denominador de `get_coverage_summary()` — bajando la cobertura por gente que nadie necesita asignar. Ahora `is_active_student()` excluye del cálculo a cualquier alumno con la cuenta suspendida o eliminada; `suspendedcount` sigue reportando cuántas hay, como dato informativo para coordinación.
+- Este servicio todavía no está conectado a ninguna pantalla (solo tiene pruebas) — la corrección se hace ahora, antes de construir esa pantalla, para no arrastrar el problema.
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l`. Prueba existente actualizada (`test_suspended_student_flag_is_reported` → `test_suspended_student_is_excluded_from_the_unassigned_list`, ahora comprueba exclusión en vez de solo el flag) y prueba nueva para `get_coverage_summary()`.
+
+---
+
+## 0.10.5 — 2026-07-25
+
+**Corrección de uso real: edición de tutorías y caracteres corruptos en el detalle de asignación.** Sin cambio de esquema.
+
+- **Editar tutoría (`entries/edit.php`)**: ahora se pueden cambiar los "motivos" (`entry_field_reasons`, antes solo elegibles al crear) y adjuntar archivos directamente en la misma pantalla, sin un viaje aparte a `entries/attachments.php` — misma regla de capacidad (`editanyentry`/`editownentry` sobre el propietario) ya usada allí. Nuevo `entry_reason_repository::sync()` sustituye por completo el conjunto de motivos de una tutoría; `entry_service::update()` acepta un `$reasonids` opcional (`null` deja los motivos existentes intactos, un array vacío los borra todos).
+- **Caracteres ilegibles corregidos**: `assignments/view.php` construía 6 valores de la pantalla "Detall de l'assignació" (curs acadèmic, cohort, data de finalització, observació, motiu de tancament, creat/modificat per) con un carácter de codificación corrupta (`�`) como marcador de "vacío" — sustituido por un guion largo limpio (`—`). Mismo carácter corrupto corregido también en `templates/assignment_detail.mustache` y en comentarios de `entry_repository.php` (cosmético, sin efecto funcional).
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 304 archivos PHP del plugin). Pruebas nuevas escritas (no ejecutadas): `entry_service_test.php` (sync/mantener/rechazar motivo inválido al editar), `entry_reason_repository_test.php` (`sync()`), y 2 escenarios Behat nuevos en `entry_edit_annul.feature`.
+
+---
+
 ## 0.10.4 — 2026-07-25
 
 **Página de ayuda estática + ayuda contextual por pantalla.** Sin cambio de esquema.

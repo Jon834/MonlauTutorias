@@ -106,4 +106,53 @@ final class entry_reason_repository_test extends \advanced_testcase {
 
         $this->assertSame([], (new entry_reason_repository())->get_for_entries([]));
     }
+
+    public function test_sync_replaces_existing_links(): void {
+        $this->resetAfterTest();
+
+        $entryid = $this->create_entry();
+        $reasonrepo = new reason_repository();
+        $oldreason = $reasonrepo->create((object) ['name' => 'Old', 'shortname' => 'old-' . uniqid(), 'createdby' => get_admin()->id]);
+        $newreason = $reasonrepo->create((object) ['name' => 'New', 'shortname' => 'new-' . uniqid(), 'createdby' => get_admin()->id]);
+
+        $repository = new entry_reason_repository();
+        $repository->attach($entryid, [$oldreason]);
+
+        $repository->sync($entryid, [$newreason]);
+
+        $this->assertSame([$newreason], $repository->get_for_entry($entryid));
+    }
+
+    public function test_sync_with_empty_array_clears_all_links(): void {
+        $this->resetAfterTest();
+
+        $entryid = $this->create_entry();
+        $reasonrepo = new reason_repository();
+        $reasonid = $reasonrepo->create((object) ['name' => 'R1', 'shortname' => 'r1-' . uniqid(), 'createdby' => get_admin()->id]);
+
+        $repository = new entry_reason_repository();
+        $repository->attach($entryid, [$reasonid]);
+
+        $repository->sync($entryid, []);
+
+        $this->assertSame([], $repository->get_for_entry($entryid));
+    }
+
+    public function test_sync_does_not_touch_other_entries(): void {
+        $this->resetAfterTest();
+
+        $entry1 = $this->create_entry();
+        $entry2 = $this->create_entry();
+        $reasonrepo = new reason_repository();
+        $reasonid = $reasonrepo->create((object) ['name' => 'R1', 'shortname' => 'r1-' . uniqid(), 'createdby' => get_admin()->id]);
+
+        $repository = new entry_reason_repository();
+        $repository->attach($entry1, [$reasonid]);
+        $repository->attach($entry2, [$reasonid]);
+
+        $repository->sync($entry1, []);
+
+        $this->assertSame([], $repository->get_for_entry($entry1));
+        $this->assertSame([$reasonid], $repository->get_for_entry($entry2));
+    }
 }

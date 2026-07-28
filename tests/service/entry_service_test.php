@@ -602,6 +602,75 @@ final class entry_service_test extends \advanced_testcase {
         $this->assertSame('Restricted note', $updated->noterestricted);
     }
 
+    public function test_update_replaces_reasonids_when_given(): void {
+        $this->resetAfterTest();
+        set_config('entryeditwindow', DAYSECS, 'local_monlaututoria');
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+        $reasonrepo = new reason_repository();
+        $oldreasonid = $reasonrepo->create((object) [
+            'name' => 'Old', 'shortname' => 'old-' . uniqid(), 'createdby' => get_admin()->id,
+        ]);
+        $newreasonid = $reasonrepo->create((object) [
+            'name' => 'New', 'shortname' => 'new-' . uniqid(), 'createdby' => get_admin()->id,
+        ]);
+
+        $command = new entry_create_command(
+            $student->id, $tutor->id, $academicyearid, strtotime('2026-10-01'),
+            null, 'Shared content', null, null, null, [$oldreasonid]
+        );
+
+        $service = new entry_service();
+        $id = $service->create($command, get_admin()->id);
+
+        $service->update($id, (object) ['contentvisible' => 'Corrected'], get_admin()->id, false, null, [$newreasonid]);
+
+        $reasonlinkrepository = new \local_monlaututoria\repository\entry_reason_repository();
+        $this->assertSame([$newreasonid], $reasonlinkrepository->get_for_entry($id));
+    }
+
+    public function test_update_leaves_reasonids_untouched_when_omitted(): void {
+        $this->resetAfterTest();
+        set_config('entryeditwindow', DAYSECS, 'local_monlaututoria');
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+        $reasonid = (new reason_repository())->create((object) [
+            'name' => 'Kept', 'shortname' => 'kept-' . uniqid(), 'createdby' => get_admin()->id,
+        ]);
+
+        $command = new entry_create_command(
+            $student->id, $tutor->id, $academicyearid, strtotime('2026-10-01'),
+            null, 'Shared content', null, null, null, [$reasonid]
+        );
+
+        $service = new entry_service();
+        $id = $service->create($command, get_admin()->id);
+
+        $service->update($id, (object) ['contentvisible' => 'Corrected'], get_admin()->id);
+
+        $reasonlinkrepository = new \local_monlaututoria\repository\entry_reason_repository();
+        $this->assertSame([$reasonid], $reasonlinkrepository->get_for_entry($id));
+    }
+
+    public function test_update_rejects_invalid_reasonid(): void {
+        $this->resetAfterTest();
+        set_config('entryeditwindow', DAYSECS, 'local_monlaututoria');
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $service = new entry_service();
+        $id = $service->create($this->valid_command($student->id, $tutor->id, $academicyearid), get_admin()->id);
+
+        $this->expectException(\moodle_exception::class);
+        $service->update($id, (object) ['contentvisible' => 'Corrected'], get_admin()->id, false, null, [999999]);
+    }
+
     public function test_update_rejects_editing_an_annulled_entry(): void {
         $this->resetAfterTest();
         set_config('entryeditwindow', DAYSECS, 'local_monlaututoria');

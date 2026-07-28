@@ -44,6 +44,16 @@ use local_monlaututoria\domain\coverage_summary;
  * in the phase 3B.5 requirements); a true SQL-level filter would be needed
  * well beyond that and is noted here as a known future optimisation.
  *
+ * Suspended or deleted Moodle accounts (cohort_membership_repository::
+ * get_members() returns both) are excluded from search()/count() and from
+ * get_coverage_summary()'s coverage math entirely — see is_active_student().
+ * Cohorts do not empty automatically when a student's enrolment ends, so a
+ * student who already left (their account suspended at year-end) would
+ * otherwise still be reported as "sin tutor vigente" and drag the coverage
+ * percentage down, even though nobody actually needs to assign them a tutor.
+ * suspendedcount on coverage_summary still reports how many such accounts
+ * exist in the cohort, for coordination's own visibility.
+ *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -104,6 +114,22 @@ final class unassigned_students_service {
     }
 
     /**
+     * A suspended or deleted Moodle account is never "a student who needs a
+     * tutor" — the common real-world case is a student who has already left
+     * (finished the previous year, graduated) whose account was suspended but
+     * whose cohort membership was never cleaned up (cohorts do not empty
+     * automatically when enrolment ends). Counting them would both inflate
+     * "sin tutor vigente" with people nobody needs to assign, and drag down
+     * coveragepercent for a population that was never really pending.
+     *
+     * @param unassigned_student $student
+     * @return bool
+     */
+    private function is_active_student(unassigned_student $student): bool {
+        return !$student->suspended && !$student->deleted;
+    }
+
+    /**
      * @param int[] $cohortids
      * @param int $academicyearid
      * @param int|null $referencedate
@@ -116,18 +142,27 @@ final class unassigned_students_service {
     ): coverage_summary {
         $classified = $this->classify_population($cohortids, $academicyearid, $referencedate);
 
-        $analyzed = count($classified);
+        $analyzed = 0;
         $withprimary = 0;
         $suspended = 0;
         $futurepending = 0;
         $conflicts = 0;
 
         foreach ($classified as $student) {
-            if ($student->hasactiveprimary) {
-                $withprimary++;
-            }
             if ($student->suspended) {
                 $suspended++;
+            }
+
+            // Excluded from the coverage math itself (see is_active_student()),
+            // but still counted above towards suspendedcount so coordination
+            // can see how many such accounts exist in the cohort.
+            if (!$this->is_active_student($student)) {
+                continue;
+            }
+
+            $analyzed++;
+            if ($student->hasactiveprimary) {
+                $withprimary++;
             }
             if (!$student->hasactiveprimary && $student->futureprimaryassignmentid !== null) {
                 $futurepending++;
@@ -155,12 +190,16 @@ final class unassigned_students_service {
      * @param int[] $cohortids
      * @param int $academicyearid
      * @param int|null $referencedate
-     * @return unassigned_student[] re-indexed from 0, hasactiveprimary=false only
+     * @return unassigned_student[] re-indexed from 0, hasactiveprimary=false and
+     *                              a live (non-suspended, non-deleted) account only
      */
     private function get_unassigned(array $cohortids, int $academicyearid, ?int $referencedate): array {
         $classified = $this->classify_population($cohortids, $academicyearid, $referencedate);
 
-        return array_values(array_filter($classified, static fn (unassigned_student $s) => !$s->hasactiveprimary));
+        return array_values(array_filter(
+            $classified,
+            fn (unassigned_student $s) => !$s->hasactiveprimary && $this->is_active_student($s)
+        ));
     }
 
     /**

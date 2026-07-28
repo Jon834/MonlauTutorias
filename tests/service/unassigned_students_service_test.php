@@ -207,19 +207,47 @@ final class unassigned_students_service_test extends \advanced_testcase {
         $this->assertSame(unassigned_status_code::NEVER_ASSIGNED, $results[0]->statuscode);
     }
 
-    public function test_suspended_student_flag_is_reported(): void {
+    public function test_suspended_student_is_excluded_from_the_unassigned_list(): void {
         $this->resetAfterTest();
 
+        // The common real case: a student who already left (account
+        // suspended at year-end) but whose cohort membership was never
+        // cleaned up. They must not be reported as "sin tutor vigente".
         $cohort = $this->getDataGenerator()->create_cohort();
         $student = $this->getDataGenerator()->create_user(['suspended' => 1]);
         cohort_add_member($cohort->id, $student->id);
         $academicyearid = $this->create_academic_year();
 
         $service = new unassigned_students_service();
-        $results = $service->search([$cohort->id], $academicyearid);
 
-        $this->assertCount(1, $results);
-        $this->assertTrue($results[0]->suspended);
+        $this->assertSame([], $service->search([$cohort->id], $academicyearid));
+        $this->assertSame(0, $service->count([$cohort->id], $academicyearid));
+    }
+
+    public function test_coverage_summary_excludes_suspended_students_from_the_denominator(): void {
+        $this->resetAfterTest();
+
+        $cohort = $this->getDataGenerator()->create_cohort();
+        $activestudent = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $suspendedstudent = $this->getDataGenerator()->create_user(['suspended' => 1]);
+        cohort_add_member($cohort->id, $activestudent->id);
+        cohort_add_member($cohort->id, $suspendedstudent->id);
+        $academicyearid = $this->create_academic_year();
+
+        $this->create_row($activestudent->id, $tutor->id, $academicyearid, ['timestart' => time() - DAYSECS]);
+
+        $summary = (new unassigned_students_service())->get_coverage_summary([$cohort->id], $academicyearid);
+
+        // Only the active (non-suspended) student counts towards coverage:
+        // 1/1 = 100%, not 1/2 = 50% — a suspended account without a tutor
+        // must never drag coverage down or appear as "needing one".
+        $this->assertSame(1, $summary->analyzedcount);
+        $this->assertSame(1, $summary->withprimarycount);
+        $this->assertSame(0, $summary->withoutprimarycount);
+        $this->assertSame(100.0, $summary->coveragepercent);
+        // Still visible to coordination as an informational count.
+        $this->assertSame(1, $summary->suspendedcount);
     }
 
     public function test_student_in_multiple_selected_cohorts_appears_once_with_both(): void {

@@ -21,6 +21,8 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
+use local_monlaututoria\domain\entry_attachment_category;
+
 /**
  * Tutoring entry edit form (phase 5.5). Student, tutor, academic year,
  * entry date and status are never fields here — the same rationale as
@@ -34,6 +36,14 @@ require_once($CFG->libdir . '/formslib.php');
  * The change-reason field is only added, and only required, when
  * customdata['requirereason'] is true — the edit is happening outside the
  * configurable edit window (see entry_service::update()).
+ *
+ * "Motivos" (reasonids) and attachments were originally out of scope for
+ * 5.5 (see entry_repository::update_editable_fields()'s own docblock) — a
+ * gap reported in real usage (tutors could not correct a wrong motivo, nor
+ * attach a file, without leaving this screen). Both are added here as
+ * optional, never-required fields: an entry created via entry_quick_form has
+ * no reasons at all, and editing unrelated fields should not force adding
+ * one; attachments reuse the same canupload gate as entries/create.php.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
@@ -55,6 +65,14 @@ final class entry_edit_form extends \moodleform {
             [0 => get_string('choosedots')] + $customdata['modalities']
         );
         $mform->setType('modalityid', PARAM_INT);
+
+        $mform->addElement(
+            'select',
+            'reasonids',
+            get_string('entry_field_reasons', 'local_monlaututoria'),
+            $customdata['reasons'],
+            ['multiple' => true]
+        );
 
         $mform->addElement('textarea', 'contentvisible', get_string('entry_field_contentvisible', 'local_monlaututoria'));
         $mform->setType('contentvisible', PARAM_TEXT);
@@ -80,6 +98,27 @@ final class entry_edit_form extends \moodleform {
             $mform->addElement('textarea', 'reason', get_string('entry_field_editreason', 'local_monlaututoria'));
             $mform->setType('reason', PARAM_TEXT);
             $mform->addRule('reason', get_string('required'), 'required', null, 'client');
+        }
+
+        // Same canupload gate and field names as entries/create.php's
+        // entry_quick_form — lets a tutor attach a file while correcting an
+        // entry without a separate trip to entries/attachments.php.
+        if (!empty($customdata['canupload'])) {
+            $mform->addElement(
+                'select',
+                'attachmentcategory',
+                get_string('entry_attachment_category', 'local_monlaututoria'),
+                entry_attachment_category::get_options()
+            );
+            $mform->setType('attachmentcategory', PARAM_ALPHA);
+
+            $mform->addElement(
+                'filemanager',
+                'attachments',
+                get_string('entry_attachment_files', 'local_monlaututoria'),
+                null,
+                ['subdirs' => 0, 'maxfiles' => 10, 'accepted_types' => '*']
+            );
         }
 
         $mform->addElement('hidden', 'id');

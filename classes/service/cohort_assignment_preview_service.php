@@ -154,9 +154,29 @@ final class cohort_assignment_preview_service {
      */
     public function has_changed_since_preview(string $operationuuid): bool {
         $operation = $this->bulkoperationrepository->get_by_uuid($operationuuid);
+        $command = $this->command_from_operation($operation);
+
+        [$freshsummary] = $this->classify($command);
+        $storedsummary = cohort_assignment_summary::from_array(json_decode($operation->summaryjson ?? '{}', true) ?: []);
+
+        return $freshsummary->differs_from($storedsummary);
+    }
+
+    /**
+     * Rebuilds the exact cohort_assignment_command a stored local_tut_bulkoperation
+     * row was previewed with, from its own columns plus parametersjson. Shared
+     * by has_changed_since_preview() and cohort_assignment_apply_service — both
+     * need to recompute the identical classification from nothing but the
+     * operationuuid, never a value carried over from the request.
+     *
+     * @param \stdClass $operation a local_tut_bulkoperation row,
+     *                             operationtype=cohort_assignment
+     * @return cohort_assignment_command
+     */
+    public function command_from_operation(\stdClass $operation): cohort_assignment_command {
         $parameters = json_decode($operation->parametersjson ?? '{}', true) ?: [];
 
-        $command = new cohort_assignment_command(
+        return new cohort_assignment_command(
             (int) $operation->cohortid,
             (int) $operation->academicyearid,
             (int) $operation->primarytutorid,
@@ -168,11 +188,6 @@ final class cohort_assignment_preview_service {
             !empty($parameters['allowsuspendedtutor']),
             !empty($parameters['canoverridelock'])
         );
-
-        [$freshsummary] = $this->classify($command);
-        $storedsummary = cohort_assignment_summary::from_array(json_decode($operation->summaryjson ?? '{}', true) ?: []);
-
-        return $freshsummary->differs_from($storedsummary);
     }
 
     /**
@@ -199,10 +214,17 @@ final class cohort_assignment_preview_service {
     }
 
     /**
+     * Classifies the cohort's current membership against the given command.
+     * Public — cohort_assignment_apply_service recomputes the same
+     * classification it is about to execute, rather than trusting the
+     * summary stored at preview time (same "recompute, don't trust a
+     * snapshot" principle this class already documents for
+     * has_changed_since_preview()).
+     *
      * @param cohort_assignment_command $command
      * @return array{0: cohort_assignment_summary, 1: cohort_assignment_item[]}
      */
-    private function classify(cohort_assignment_command $command): array {
+    public function classify(cohort_assignment_command $command): array {
         global $DB;
 
         $now = time();

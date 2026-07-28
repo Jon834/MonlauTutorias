@@ -56,6 +56,10 @@ $scope->require_user_can_access_student((int) $USER->id, (int) $existing->studen
 $editwindow = (int) get_config('local_monlaututoria', 'entryeditwindow');
 $requirereason = time() > ((int) $existing->timecreated + $editwindow);
 $showrestricted = has_capability('local/monlaututoria:viewrestrictednotes', $context);
+// Same rule already enforced above to reach this page at all (editanyentry,
+// or isowner + editownentry) — restated here, same as entries/attachments.php,
+// so this stays correct even if the page-level check above is ever relaxed.
+$canupload = $caneditany || ($isowner && has_capability('local/monlaututoria:editownentry', $context));
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/monlaututoria/entries/edit.php', ['id' => $id]);
@@ -70,21 +74,40 @@ foreach ((new \local_monlaututoria\repository\modality_repository())->get_all(tr
     $modalityoptions[(int) $modality->id] = format_string($modality->name);
 }
 
+$reasonoptions = [];
+foreach ((new \local_monlaututoria\repository\reason_repository())->get_all(true) as $reason) {
+    $reasonoptions[(int) $reason->id] = format_string($reason->name);
+}
+
+$reasonlinkrepository = new \local_monlaututoria\repository\entry_reason_repository();
+$currentreasonids = $reasonlinkrepository->get_for_entry($id);
+
 $form = new \local_monlaututoria\form\entry_edit_form(null, [
     'modalities'         => $modalityoptions,
+    'reasons'            => $reasonoptions,
     'studentname'        => $student ? fullname($student) : ('#' . $existing->studentid),
     'entrydateformatted' => userdate((int) $existing->entrydate, get_string('strftimedatefullshort', 'langconfig')),
     'showrestricted'     => $showrestricted,
     'requirereason'      => $requirereason,
+    'canupload'          => $canupload,
 ]);
-$form->set_data((object) [
+
+$attachmentdraftitemid = null;
+if ($canupload) {
+    $attachmentdraftitemid = file_get_submitted_draft_itemid('attachments');
+    file_prepare_draft_area($attachmentdraftitemid, null, 'user', 'draft', null);
+}
+
+$form->set_data((object) array_filter([
     'id'               => $id,
     'modalityid'       => $existing->modalityid,
+    'reasonids'        => $currentreasonids,
     'contentvisible'   => $existing->contentvisible ?? '',
     'noteinternal'     => $existing->noteinternal ?? '',
     'noterestricted'   => $showrestricted ? ($existing->noterestricted ?? '') : '',
     'nextfollowupdate' => $existing->nextfollowupdate,
-]);
+    'attachments'      => $attachmentdraftitemid,
+], static fn ($value) => $value !== null));
 
 $returnurl = new moodle_url('/local/monlaututoria/entries/view.php', ['id' => $id]);
 
@@ -101,8 +124,21 @@ if ($form->is_cancelled()) {
         $updatedata->noterestricted = $data->noterestricted ?? '';
     }
 
-    $service = new \local_monlaututoria\service\entry_service($repository);
-    $service->update($id, $updatedata, (int) $USER->id, $showrestricted, $data->reason ?? null);
+    $service = new \local_monlaututoria\service\entry_service($repository, null, $reasonlinkrepository);
+    $service->update(
+        $id,
+        $updatedata,
+        (int) $USER->id,
+        $showrestricted,
+        $data->reason ?? null,
+        array_map('intval', $data->reasonids ?? [])
+    );
+
+    if ($canupload && !empty($data->attachments)) {
+        (new \local_monlaututoria\service\entry_attachment_service($repository))->save_uploaded_files(
+            $id, (int) $data->attachments, $data->attachmentcategory, (int) $USER->id
+        );
+    }
 
     redirect(
         $returnurl,

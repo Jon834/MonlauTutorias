@@ -86,6 +86,15 @@ if ($form->is_cancelled()) {
 /** @var \local_monlaututoria\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
+$cohortcreateaction = [];
+if (has_capability('local/monlaututoria:managecohortassignments', $context)) {
+    $cohortcreateaction[] = [
+        'url' => new moodle_url('/local/monlaututoria/assignments/cohort_create.php'),
+        'label' => get_string('cohort_assignment_create', 'local_monlaututoria'),
+        'title' => get_string('cohort_assignment_create_tip', 'local_monlaututoria'),
+    ];
+}
+
 echo $OUTPUT->header();
 echo $renderer->plugin_navigation('assignments');
 echo $renderer->page_header_card(
@@ -93,8 +102,14 @@ echo $renderer->page_header_card(
     get_string('assignments_create_tip', 'local_monlaututoria'),
     $returnurl,
     get_string('page_back_assignments', 'local_monlaututoria'),
-    [],
+    $cohortcreateaction,
     get_string('pluginname', 'local_monlaututoria')
 );
+// This form is deliberately single-student only — "Cohorte" here is just a
+// descriptive tag on this one manual row (see assignment_form's own
+// docblock), never a bulk trigger. A real report from manual testing:
+// picking a cohort here without also picking a student silently did
+// nothing, because nothing on this screen ever assigned the whole group.
+echo $OUTPUT->box(get_string('cohort_assignment_manual_hint', 'local_monlaututoria'));
 $form->display();
 echo $OUTPUT->footer();

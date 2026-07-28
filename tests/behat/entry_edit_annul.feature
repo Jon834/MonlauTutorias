@@ -26,6 +26,7 @@ Feature: Editing and annulling a tutoring entry (phase 5.5)
       | local/monlaututoria:createentry          | Allow      | monlaututoriatutor | System       |           |
       | local/monlaututoria:editownentry         | Allow      | monlaututoriatutor | System       |           |
       | local/monlaututoria:annulentry           | Allow      | monlaututoriatutor | System       |           |
+      | local/monlaututoria:viewinternalnotes    | Allow      | monlaututoriatutor | System       |           |
     And the following "role assigns" exist:
       | user   | role               | contextlevel | reference |
       | tutor1 | monlaututoriatutor | System       |           |
@@ -36,6 +37,15 @@ Feature: Editing and annulling a tutoring entry (phase 5.5)
     And I set the field "Short name" to "2026-2027"
     And I press "Save changes"
     And I press "Activate"
+    And I navigate to "Plugins > Local plugins > Monlau Tutoria > Tutoring reasons" in site administration
+    And I press "New reason"
+    And I set the field "Name" to "Seguimiento"
+    And I set the field "Short name" to "seguimiento"
+    And I press "Save changes"
+    And I press "New reason"
+    And I set the field "Name" to "Convivencia"
+    And I set the field "Short name" to "convivencia"
+    And I press "Save changes"
     And I navigate to "Plugins > Local plugins > Monlau Tutoria > Asignaciones" in site administration
     And I press "New assignment"
     And I set the field "Student" to "Student One"
@@ -57,6 +67,29 @@ Feature: Editing and annulling a tutoring entry (phase 5.5)
     And I press "Guardar cambios"
     Then I should see "Tutoría actualizada correctamente."
     And I should see "Version corregida"
+
+  Scenario: The author changes the motivo of their own entry while editing it
+    Given I am on "local/monlaututoria/student/view.php?id=2" logged in as "tutor1"
+    And I click on "Tutorías" "link"
+    And I click on "Ver detalle" "link"
+    When I click on "Editar tutoría" "link"
+    And I set the field "Motivos" to "Convivencia"
+    And I press "Guardar cambios"
+    Then I should see "Tutoría actualizada correctamente."
+    And I am on "local/monlaututoria/entries/edit.php?id=1" logged in as "tutor1"
+    And the field "Motivos" matches value "Convivencia"
+
+  Scenario: The author attaches a file while editing their own entry, without a separate trip to the attachments page
+    Given I am on "local/monlaututoria/student/view.php?id=2" logged in as "tutor1"
+    And I click on "Tutorías" "link"
+    And I click on "Ver detalle" "link"
+    When I click on "Editar tutoría" "link"
+    And I set the field "Categoría documental" to "Autorización"
+    And I upload "local/monlaututoria/tests/fixtures/sample_import.csv" file to "Archivos" filemanager
+    And I press "Guardar cambios"
+    Then I should see "Tutoría actualizada correctamente."
+    And I am on "local/monlaututoria/entries/attachments.php?id=1"
+    And I should see "sample_import.csv"
 
   Scenario: A tutor without editownentry/editanyentry cannot reach the edit page
     Given I am on "local/monlaututoria/student/view.php?id=2" logged in as "tutor1"

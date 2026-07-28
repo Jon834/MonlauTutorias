@@ -1117,6 +1117,128 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * Renders the per-student classification of a cohort assignment preview
+     * (the "confirm" step cohort_assignment_preview_service's own docblock
+     * names as phases 3C.3-3C.5). Plain html_writer table on an internal
+     * admin screen, same rationale as csv_import_preview_table.
+     *
+     * @param \local_monlaututoria\domain\cohort_assignment_item[] $items
+     * @return string
+     */
+    public function cohort_assignment_preview_table(array $items): string {
+        if (empty($items)) {
+            return $this->output->notification(
+                get_string('cohort_assignment_preview_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        global $DB;
+
+        $userids = [];
+        foreach ($items as $item) {
+            $userids[$item->studentid] = true;
+            if ($item->currentprimarytutorid !== null) {
+                $userids[$item->currentprimarytutorid] = true;
+            }
+        }
+        $users = !empty($userids) ? $DB->get_records_list('user', 'id', array_keys($userids)) : [];
+
+        $conflictoptions = \local_monlaututoria\domain\assignment_conflict_code::get_options();
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('cohort_assignment_col_action', 'local_monlaututoria'),
+            get_string('cohort_assignment_col_currenttutor', 'local_monlaututoria'),
+            get_string('cohort_assignment_col_cotutoraction', 'local_monlaututoria'),
+            get_string('cohort_assignment_col_conflicts', 'local_monlaututoria'),
+        ];
+
+        foreach ($items as $item) {
+            $student = $users[$item->studentid] ?? null;
+            $currenttutor = $item->currentprimarytutorid !== null ? ($users[$item->currentprimarytutorid] ?? null) : null;
+
+            $conflictlabels = array_map(
+                static fn (string $code): string => $conflictoptions[$code] ?? $code,
+                $item->conflictcodes
+            );
+
+            $table->data[] = [
+                $student ? fullname($student) : ('#' . $item->studentid),
+                $this->cohort_assignment_action_badge($item->action),
+                $currenttutor ? fullname($currenttutor) : '—',
+                $item->cotutoraction !== null ? $this->cohort_assignment_action_badge($item->cotutoraction) : '—',
+                !empty($conflictlabels) ? s(implode(', ', $conflictlabels)) : '—',
+            ];
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * Renders the per-student result of an applied cohort assignment
+     * operation.
+     *
+     * @param \local_monlaututoria\domain\cohort_assignment_apply_result_row[] $rows
+     * @return string
+     */
+    public function cohort_assignment_apply_result_table(array $rows): string {
+        if (empty($rows)) {
+            return $this->output->notification(
+                get_string('cohort_assignment_apply_result_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        global $DB;
+
+        $userids = array_unique(array_map(static fn ($row) => $row->studentid, $rows));
+        $users = !empty($userids) ? $DB->get_records_list('user', 'id', $userids) : [];
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('cohort_assignment_col_action', 'local_monlaututoria'),
+            get_string('cohort_assignment_col_cotutoraction', 'local_monlaututoria'),
+        ];
+
+        foreach ($rows as $row) {
+            $student = $users[$row->studentid] ?? null;
+
+            $table->data[] = [
+                $student ? fullname($student) : ('#' . $row->studentid),
+                $this->cohort_assignment_action_badge($row->outcome),
+                $row->cotutoroutcome !== null ? $this->cohort_assignment_action_badge($row->cotutoroutcome) : '—',
+            ];
+        }
+
+        return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * @param string $action one of cohort_assignment_action::values()
+     * @return string
+     */
+    private function cohort_assignment_action_badge(string $action): string {
+        $map = [
+            \local_monlaututoria\domain\cohort_assignment_action::CREATE_PRIMARY    => ['success', 'cohort_action_create_primary'],
+            \local_monlaututoria\domain\cohort_assignment_action::CREATE_COTUTOR    => ['success', 'cohort_action_create_cotutor'],
+            \local_monlaututoria\domain\cohort_assignment_action::REASSIGN_PRIMARY  => ['success', 'cohort_action_reassign_primary'],
+            \local_monlaututoria\domain\cohort_assignment_action::CLOSE_MISSING     => ['warning', 'cohort_action_close_missing'],
+            \local_monlaututoria\domain\cohort_assignment_action::NO_CHANGE         => ['secondary', 'cohort_action_no_change'],
+            \local_monlaututoria\domain\cohort_assignment_action::SKIP_EXISTING     => ['secondary', 'cohort_action_skip_existing'],
+            \local_monlaututoria\domain\cohort_assignment_action::SKIP_SUSPENDED    => ['warning', 'cohort_action_skip_suspended'],
+            \local_monlaututoria\domain\cohort_assignment_action::SKIP_INVALID      => ['warning', 'cohort_action_skip_invalid'],
+            \local_monlaututoria\domain\cohort_assignment_action::CONFLICT_PRIMARY  => ['danger', 'cohort_action_conflict_primary'],
+            \local_monlaututoria\domain\cohort_assignment_action::ERROR             => ['danger', 'cohort_action_error'],
+        ];
+        [$class, $stringkey] = $map[$action] ?? ['secondary', $action];
+
+        return \html_writer::span(get_string($stringkey, 'local_monlaututoria'), 'badge badge-' . $class);
+    }
+
+    /**
      * Renders the "Tutorías" history tab of the student ficha (phase 5.4):
      * a chronological table of tutoring entries within the selected academic
      * year. Only metadata columns — content/notes stay on the detail page

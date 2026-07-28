@@ -51,6 +51,25 @@ final class entry_reason_repository {
     }
 
     /**
+     * Replaces every existing (entryid, reasonid) link with exactly the set
+     * given — used by entry_service::update() (phase 5.5 edit) to let a
+     * tutor change the "motivos" of an already-created entry, something
+     * create() never needed to do since it always starts from zero links.
+     * Callers are responsible for validating each reasonid beforehand, same
+     * as attach().
+     *
+     * @param int $entryid
+     * @param int[] $reasonids the complete new set; an empty array removes
+     *                         every existing link and attaches none
+     */
+    public function sync(int $entryid, array $reasonids): void {
+        global $DB;
+
+        $DB->delete_records(self::TABLE, ['entryid' => $entryid]);
+        $this->attach($entryid, $reasonids);
+    }
+
+    /**
      * @param int $entryid
      * @return int[]
      */

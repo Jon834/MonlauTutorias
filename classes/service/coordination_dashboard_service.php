@@ -31,6 +31,7 @@ use local_monlaututoria\repository\entry_reason_repository;
 use local_monlaututoria\repository\entry_repository;
 use local_monlaututoria\repository\followup_repository;
 use local_monlaututoria\repository\reason_repository;
+use local_monlaututoria\repository\user_profile_field_repository;
 
 /**
  * Aggregated coordination dashboard and export source (phase 8).
@@ -40,6 +41,15 @@ use local_monlaututoria\repository\reason_repository;
  * from tutoring entries, agreements or referrals.
  */
 final class coordination_dashboard_service {
+
+    /**
+     * Shortname of the Moodle "additional user profile field" this plugin
+     * treats as "Departamento" (FP/ESO/CORP/MM, site-specific) — an existing
+     * field the school already created via Site administration > Users >
+     * Profile fields, never installed or written by this plugin. See
+     * user_profile_field_repository's class docblock.
+     */
+    public const DEPARTMENT_PROFILE_FIELD = 'department';
 
     private assignment_repository $assignmentrepository;
     private entry_repository $entryrepository;
@@ -52,6 +62,7 @@ final class coordination_dashboard_service {
     private cohort_repository $cohortrepository;
     private academic_year_repository $academicyearrepository;
     private coordination_scope_service $coordscopeservice;
+    private user_profile_field_repository $profilefieldrepository;
 
     public function __construct(
         ?assignment_repository $assignmentrepository = null,
@@ -64,7 +75,8 @@ final class coordination_dashboard_service {
         ?cohort_membership_repository $cohortmembershiprepository = null,
         ?cohort_repository $cohortrepository = null,
         ?academic_year_repository $academicyearrepository = null,
-        ?coordination_scope_service $coordscopeservice = null
+        ?coordination_scope_service $coordscopeservice = null,
+        ?user_profile_field_repository $profilefieldrepository = null
     ) {
         $this->assignmentrepository = $assignmentrepository ?? new assignment_repository();
         $this->entryrepository = $entryrepository ?? new entry_repository();
@@ -77,6 +89,18 @@ final class coordination_dashboard_service {
         $this->cohortrepository = $cohortrepository ?? new cohort_repository();
         $this->academicyearrepository = $academicyearrepository ?? new academic_year_repository();
         $this->coordscopeservice = $coordscopeservice ?? new coordination_scope_service();
+        $this->profilefieldrepository = $profilefieldrepository ?? new user_profile_field_repository();
+    }
+
+    /**
+     * The configured "Departamento" choices (FP/ESO/CORP/MM or whatever the
+     * site defined), or [] if the profile field does not exist — callers use
+     * this to decide whether to render the filter at all.
+     *
+     * @return string[]
+     */
+    public function get_department_options(): array {
+        return $this->profilefieldrepository->get_menu_options(self::DEPARTMENT_PROFILE_FIELD);
     }
 
     /**
@@ -85,6 +109,12 @@ final class coordination_dashboard_service {
      * @param int[] $cohortids
      * @param int|null $selectedtutorid
      * @param int|null $now injectable for tests
+     * @param string|null $studentdepartment exact value of the "Departamento"
+     *                     profile field (self::DEPARTMENT_PROFILE_FIELD) to
+     *                     restrict students by; null or '' means no filter
+     * @param string|null $tutordepartment same, but restricts by the
+     *                     student's current primary tutor's own department
+     *                     instead of the student's
      * @return coordination_dashboard
      */
     public function get_dashboard(
@@ -92,7 +122,9 @@ final class coordination_dashboard_service {
         int $academicyearid,
         array $cohortids,
         ?int $selectedtutorid = null,
-        ?int $now = null
+        ?int $now = null,
+        ?string $studentdepartment = null,
+        ?string $tutordepartment = null
     ): coordination_dashboard {
         $now = $now ?? time();
         $this->academicyearrepository->get($academicyearid);
@@ -101,6 +133,15 @@ final class coordination_dashboard_service {
 
         $members = $this->cohortmembershiprepository->get_members($cohortids);
         $studentids = array_map('intval', array_keys($members));
+
+        if ($studentdepartment !== null && $studentdepartment !== '') {
+            $indepartment = array_flip($this->profilefieldrepository->get_userids_with_value(
+                self::DEPARTMENT_PROFILE_FIELD,
+                $studentdepartment
+            ));
+            $studentids = array_values(array_filter($studentids, static fn (int $id): bool => isset($indepartment[$id])));
+        }
+
         $cohortlabels = [];
         foreach ($this->cohortrepository->get_many($cohortids) as $cohort) {
             $cohortlabels[(int) $cohort->id] = format_string($cohort->name, true, ['context' => \context_system::instance()]);
@@ -135,6 +176,18 @@ final class coordination_dashboard_service {
             if ($current !== null) {
                 $currentprimarybystudent[$studentid] = $current;
             }
+        }
+
+        if ($tutordepartment !== null && $tutordepartment !== '') {
+            $tutorsindepartment = array_flip($this->profilefieldrepository->get_userids_with_value(
+                self::DEPARTMENT_PROFILE_FIELD,
+                $tutordepartment
+            ));
+            $studentids = array_values(array_filter(
+                $studentids,
+                fn (int $studentid): bool => isset($currentprimarybystudent[$studentid])
+                    && isset($tutorsindepartment[(int) $currentprimarybystudent[$studentid]->tutorid])
+            ));
         }
 
         if ($selectedtutorid !== null) {

@@ -313,9 +313,85 @@ $string['privacy:metadata:assignment:note'] = 'An optional administrative note a
 $string['privacy:metadata:assignment:closereason'] = 'The coded reason why the assignment was closed.';
 
 $string['eventcohortassignmentpreviewed'] = 'Cohort assignment preview generated';
+$string['eventcohortassignmentapplied'] = 'Cohort assignment applied';
+$string['eventcohortassignmentapplyfailed'] = 'Cohort assignment apply failed';
 
 $string['error_cohort_mode_invalid'] = 'Invalid cohort assignment synchronisation mode.';
 $string['error_cohort_same_tutor_cotutor'] = 'The primary tutor and the co-tutor cannot be the same person.';
+$string['error_cohort_operation_not_usable'] = 'This operation is not a cohort assignment.';
+$string['error_cohort_already_applied'] = 'This operation has already been applied or is in progress.';
+$string['error_cohort_mode_preview_only_cannot_apply'] = '"Preview only" mode cannot be applied; generate a new preview with a different mode.';
+$string['error_cohort_preview_changed'] = 'The underlying data has changed since this preview was generated. Generate a new one.';
+$string['error_cohort_apply_row_failed'] = 'The operation could not be applied; nothing was written.';
+$string['error_cohort_apply_not_confirmed'] = 'You must confirm that you want to apply this cohort assignment.';
+
+$string['cohort_assignment_create'] = 'Assign by cohort';
+$string['cohort_assignment_create_tip'] = 'Assign a tutor to every student in a cohort at once, with a preview before confirming.';
+$string['cohort_assignment_manual_hint'] = 'This form creates a single manual assignment. The "Cohort" field is only a descriptive tag on that one assignment, not a bulk trigger. To assign a tutor to a whole cohort, use "Assign by cohort".';
+
+$string['cohort_assignment_title'] = 'Cohort assignment';
+$string['cohort_assignment_intro'] = 'Pick a cohort, an academic year and a tutor, preview the result and confirm to write the assignments.';
+
+$string['cohort_assignment_field_cohort'] = 'Cohort';
+$string['cohort_assignment_field_primarytutor'] = 'Primary tutor';
+$string['cohort_assignment_field_cotutor'] = 'Co-tutor (optional)';
+$string['cohort_assignment_field_mode'] = 'Synchronisation mode';
+$string['cohort_assignment_field_mode_help'] = 'Add assignments: creates tutoring assignments for students who do not have one yet, without touching existing ones. Add and close missing: also closes the assignments of students no longer in the cohort. Replace primary tutor: reassigns students who already have one to a new tutor (the highest-impact action). Preview only: shows the result without being able to confirm it.';
+$string['cohort_assignment_field_includesuspended'] = 'Include students with a suspended account';
+$string['cohort_assignment_field_allowsuspendedtutor'] = 'Allow a tutor or co-tutor with a suspended account';
+$string['cohort_assignment_preview_button'] = 'Preview';
+
+$string['cohort_assignment_mode_add_only'] = 'Add assignments';
+$string['cohort_assignment_mode_add_and_close_missing'] = 'Add and close missing';
+$string['cohort_assignment_mode_replace_primary'] = 'Replace primary tutor';
+$string['cohort_assignment_mode_preview_only'] = 'Preview only';
+
+$string['cohort_assignment_preview_summary_title'] = 'Preview summary';
+$string['cohort_assignment_summary_total'] = 'Students analysed: {$a}';
+$string['cohort_assignment_summary_tocreate'] = 'New assignments: {$a}';
+$string['cohort_assignment_summary_toreassign'] = 'Reassignments: {$a}';
+$string['cohort_assignment_summary_tocreatecotutor'] = 'New co-tutors: {$a}';
+$string['cohort_assignment_summary_toclose'] = 'Assignments to close (departed students): {$a}';
+$string['cohort_assignment_summary_nochange'] = 'No change: {$a}';
+$string['cohort_assignment_summary_skipped'] = 'Skipped: {$a}';
+$string['cohort_assignment_summary_suspended'] = 'Suspended accounts: {$a}';
+$string['cohort_assignment_summary_conflicts'] = 'Conflicts detected: {$a}';
+$string['cohort_assignment_conflicts_warning'] = 'Data conflicts were detected for some students; review them before confirming.';
+$string['cohort_assignment_preview_empty'] = 'The selected cohort has no members.';
+
+$string['cohort_assignment_col_action'] = 'Action';
+$string['cohort_assignment_col_currenttutor'] = 'Current tutor';
+$string['cohort_assignment_col_cotutoraction'] = 'Co-tutor action';
+$string['cohort_assignment_col_conflicts'] = 'Conflicts';
+
+$string['cohort_assignment_apply_title'] = 'Confirm apply';
+$string['cohort_assignment_apply_intro'] = 'Confirming will actually write the assignments described above. This action cannot be undone from here.';
+$string['cohort_assignment_apply_confirm_checkbox'] = 'I confirm that I want to apply this cohort assignment.';
+$string['cohort_assignment_apply_button'] = 'Apply';
+$string['cohort_assignment_apply_result_title'] = 'Apply result';
+$string['cohort_assignment_apply_success'] = 'Cohort assignment applied successfully.';
+$string['cohort_assignment_apply_created'] = 'Assignments created: {$a}';
+$string['cohort_assignment_apply_reassigned'] = 'Reassignments made: {$a}';
+$string['cohort_assignment_apply_closed'] = 'Assignments closed: {$a}';
+$string['cohort_assignment_apply_nochange'] = 'No change: {$a}';
+$string['cohort_assignment_apply_skipped'] = 'Skipped: {$a}';
+$string['cohort_assignment_apply_result_empty'] = 'There are no results to show.';
+
+$string['cohort_action_create_primary'] = 'Create primary tutor';
+$string['cohort_action_create_cotutor'] = 'Create co-tutor';
+$string['cohort_action_reassign_primary'] = 'Reassign primary tutor';
+$string['cohort_action_close_missing'] = 'Close (departed)';
+$string['cohort_action_no_change'] = 'No change';
+$string['cohort_action_skip_existing'] = 'Skipped (already has a tutor)';
+$string['cohort_action_skip_suspended'] = 'Skipped (suspended)';
+$string['cohort_action_skip_invalid'] = 'Skipped (invalid)';
+$string['cohort_action_conflict_primary'] = 'Conflict';
+$string['cohort_action_error'] = 'Error';
+
+$string['conflictcode_multipleactiveprimary'] = 'More than one active primary tutor at once';
+$string['conflictcode_overlappingfuture'] = 'More than one overlapping future assignment';
+$string['conflictcode_duplicatehistorical'] = 'Overlapping historical assignments';
+$string['conflictcode_deletedtutoractive'] = 'The active assignment\'s tutor account is deleted';
 
 $string['privacy:metadata:bulkoperation'] = 'Cohort-based bulk assignment operations';
 $string['privacy:metadata:bulkoperation:cohortid'] = 'The cohort used as the student population source.';
@@ -746,6 +822,7 @@ $string['monlaututoria:viewcoordinationdashboard'] = 'View coordination dashboar
 $string['monlaututoria:exportcoordinationreports'] = 'Export coordination reports';
 $string['monlaututoria:managecoordinationscopes'] = 'Manage coordination scopes';
 $string['coordination_title'] = 'Coordination dashboard';
+$string['coordination_intro'] = 'Analyse coverage, quality and the breakdown of tutoring entries by academic year, cohort or tutor.';
 $string['coordination_scopes_title'] = 'Coordination scopes';
 $string['coordination_dashboard_noscope'] = 'You do not have any coordination scope assigned.';
 $string['coordination_dashboard_empty'] = 'There is no data for the current filters.';
@@ -894,6 +971,16 @@ $string['page_back_assignments'] = 'Back to assignments';
 $string['page_back_referrals'] = 'Back to referrals';
 $string['page_back_student_entries'] = 'Back to student entries';
 $string['page_back_configuration'] = 'Back to configuration';
+
+$string['assignments_create_tip'] = 'Create a new manual assignment and then open its detail.';
+
+$string['studenttab_summary_tip'] = 'Overview of the student in the selected academic year.';
+$string['studenttab_history_tip'] = 'History of assignments and tutor changes over time.';
+$string['studenttab_tutoring_tip'] = 'List of tutoring entries recorded for this student.';
+$string['studenttab_agreements_tip'] = 'Follow-up of agreements linked to the student\'s tutoring entries.';
+$string['studenttab_followups_tip'] = 'Open follow-ups pending for this student.';
+
+$string['configuration_intro'] = 'Entry point for administering the plugin and its base catalogues.';
 
 $string['settings_entryeditwindow_title'] = 'Tutoring entry edit window';
 

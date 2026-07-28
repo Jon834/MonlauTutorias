@@ -197,6 +197,11 @@ final class entry_service {
      *                                without it, a noterestricted value in
      *                                $data is silently dropped, never written
      * @param string|null $reason required once outside the edit window
+     * @param int[]|null $reasonids when given, replaces the entry's complete
+     *                              set of related "motivos" (entry_reason_
+     *                              repository::sync()); null leaves the
+     *                              existing set untouched — distinct from an
+     *                              empty array, which clears it
      * @return bool
      */
     public function update(
@@ -204,7 +209,8 @@ final class entry_service {
         \stdClass $data,
         int $userid,
         bool $caneditrestricted = false,
-        ?string $reason = null
+        ?string $reason = null,
+        ?array $reasonids = null
     ): bool {
         global $DB;
 
@@ -247,6 +253,12 @@ final class entry_service {
             unset($data->noterestricted);
         }
 
+        if ($reasonids !== null) {
+            foreach ($reasonids as $reasonid) {
+                $this->validate_reason((int) $reasonid);
+            }
+        }
+
         $transaction = $DB->start_delegated_transaction();
 
         $recheck = $this->repository->get($id);
@@ -257,6 +269,10 @@ final class entry_service {
         $this->snapshot_current_state($id, $existing, $userid, $reason);
 
         $result = $this->repository->update_editable_fields($id, $data, $userid);
+
+        if ($reasonids !== null) {
+            $this->reasonlinkrepository->sync($id, array_map('intval', $reasonids));
+        }
 
         $transaction->allow_commit();
 

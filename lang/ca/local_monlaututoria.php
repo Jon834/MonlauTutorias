@@ -313,9 +313,85 @@ $string['privacy:metadata:assignment:note'] = 'Una observació administrativa op
 $string['privacy:metadata:assignment:closereason'] = 'El motiu codificat pel qual es va tancar l\'assignació.';
 
 $string['eventcohortassignmentpreviewed'] = 'Previsualització d\'assignació des de cohort generada';
+$string['eventcohortassignmentapplied'] = 'Assignació des de cohort aplicada';
+$string['eventcohortassignmentapplyfailed'] = 'Aplicació d\'assignació des de cohort fallida';
 
 $string['error_cohort_mode_invalid'] = 'Mode de sincronització no vàlid.';
 $string['error_cohort_same_tutor_cotutor'] = 'El tutor principal i el cotutor no poden ser la mateixa persona.';
+$string['error_cohort_operation_not_usable'] = 'Aquesta operació no és una assignació per cohort.';
+$string['error_cohort_already_applied'] = 'Aquesta operació ja s\'ha aplicat o està en curs.';
+$string['error_cohort_mode_preview_only_cannot_apply'] = 'El mode "Només previsualitzar" no es pot aplicar; genera una nova previsualització amb un altre mode.';
+$string['error_cohort_preview_changed'] = 'Les dades han canviat des que es va generar aquesta previsualització. Genera\'n una de nova.';
+$string['error_cohort_apply_row_failed'] = 'No s\'ha pogut aplicar l\'operació; no s\'ha escrit cap canvi.';
+$string['error_cohort_apply_not_confirmed'] = 'Has de confirmar que vols aplicar aquesta assignació per cohort.';
+
+$string['cohort_assignment_create'] = 'Assignar per cohort';
+$string['cohort_assignment_create_tip'] = 'Assigna un tutor a tots els alumnes d\'una cohort alhora, amb previsualització abans de confirmar.';
+$string['cohort_assignment_manual_hint'] = 'Aquest formulari crea una única assignació manual. El camp "Cohort" és només una etiqueta descriptiva sobre aquesta assignació, no assigna tot el grup. Per assignar un tutor a una cohort sencera, fes servir "Assignar per cohort".';
+
+$string['cohort_assignment_title'] = 'Assignació per cohort';
+$string['cohort_assignment_intro'] = 'Tria una cohort, un curs acadèmic i un tutor, previsualitza el resultat i confirma per escriure les assignacions.';
+
+$string['cohort_assignment_field_cohort'] = 'Cohort';
+$string['cohort_assignment_field_primarytutor'] = 'Tutor principal';
+$string['cohort_assignment_field_cotutor'] = 'Cotutor (opcional)';
+$string['cohort_assignment_field_mode'] = 'Mode de sincronització';
+$string['cohort_assignment_field_mode_help'] = 'Afegir assignacions: crea tutories per als alumnes que encara no en tenen, sense tocar les existents. Afegir i tancar absents: a més tanca les assignacions dels alumnes que ja no són a la cohort. Reemplaçar tutor principal: reassigna a un nou tutor els alumnes que ja en tenien un (l\'acció de més impacte). Només previsualitzar: mostra el resultat sense poder confirmar-lo.';
+$string['cohort_assignment_field_includesuspended'] = 'Incloure alumnes amb el compte suspès';
+$string['cohort_assignment_field_allowsuspendedtutor'] = 'Permetre tutor o cotutor amb el compte suspès';
+$string['cohort_assignment_preview_button'] = 'Previsualitzar';
+
+$string['cohort_assignment_mode_add_only'] = 'Afegir assignacions';
+$string['cohort_assignment_mode_add_and_close_missing'] = 'Afegir i tancar absents';
+$string['cohort_assignment_mode_replace_primary'] = 'Reemplaçar tutor principal';
+$string['cohort_assignment_mode_preview_only'] = 'Només previsualitzar';
+
+$string['cohort_assignment_preview_summary_title'] = 'Resum de la previsualització';
+$string['cohort_assignment_summary_total'] = 'Alumnes analitzats: {$a}';
+$string['cohort_assignment_summary_tocreate'] = 'Assignacions noves: {$a}';
+$string['cohort_assignment_summary_toreassign'] = 'Reassignacions: {$a}';
+$string['cohort_assignment_summary_tocreatecotutor'] = 'Cotutors nous: {$a}';
+$string['cohort_assignment_summary_toclose'] = 'Assignacions a tancar (alumnes absents): {$a}';
+$string['cohort_assignment_summary_nochange'] = 'Sense canvis: {$a}';
+$string['cohort_assignment_summary_skipped'] = 'Omesos: {$a}';
+$string['cohort_assignment_summary_suspended'] = 'Comptes suspesos: {$a}';
+$string['cohort_assignment_summary_conflicts'] = 'Conflictes detectats: {$a}';
+$string['cohort_assignment_conflicts_warning'] = 'S\'han detectat conflictes de dades en alguns alumnes; revisa\'ls abans de confirmar.';
+$string['cohort_assignment_preview_empty'] = 'La cohort seleccionada no té membres.';
+
+$string['cohort_assignment_col_action'] = 'Acció';
+$string['cohort_assignment_col_currenttutor'] = 'Tutor actual';
+$string['cohort_assignment_col_cotutoraction'] = 'Acció cotutor';
+$string['cohort_assignment_col_conflicts'] = 'Conflictes';
+
+$string['cohort_assignment_apply_title'] = 'Confirmar aplicació';
+$string['cohort_assignment_apply_intro'] = 'En confirmar s\'escriuran de veritat les assignacions descrites a dalt. Aquesta acció no es pot desfer des d\'aquí.';
+$string['cohort_assignment_apply_confirm_checkbox'] = 'Confirmo que vull aplicar aquesta assignació per cohort.';
+$string['cohort_assignment_apply_button'] = 'Aplicar';
+$string['cohort_assignment_apply_result_title'] = 'Resultat de l\'aplicació';
+$string['cohort_assignment_apply_success'] = 'Assignació per cohort aplicada correctament.';
+$string['cohort_assignment_apply_created'] = 'Assignacions creades: {$a}';
+$string['cohort_assignment_apply_reassigned'] = 'Reassignacions fetes: {$a}';
+$string['cohort_assignment_apply_closed'] = 'Assignacions tancades: {$a}';
+$string['cohort_assignment_apply_nochange'] = 'Sense canvis: {$a}';
+$string['cohort_assignment_apply_skipped'] = 'Omesos: {$a}';
+$string['cohort_assignment_apply_result_empty'] = 'No hi ha resultats per mostrar.';
+
+$string['cohort_action_create_primary'] = 'Crear tutor principal';
+$string['cohort_action_create_cotutor'] = 'Crear cotutor';
+$string['cohort_action_reassign_primary'] = 'Reassignar tutor principal';
+$string['cohort_action_close_missing'] = 'Tancar (absent)';
+$string['cohort_action_no_change'] = 'Sense canvis';
+$string['cohort_action_skip_existing'] = 'Omès (ja té tutor)';
+$string['cohort_action_skip_suspended'] = 'Omès (suspès)';
+$string['cohort_action_skip_invalid'] = 'Omès (no vàlid)';
+$string['cohort_action_conflict_primary'] = 'Conflicte';
+$string['cohort_action_error'] = 'Error';
+
+$string['conflictcode_multipleactiveprimary'] = 'Més d\'un tutor principal actiu alhora';
+$string['conflictcode_overlappingfuture'] = 'Més d\'una assignació futura solapada';
+$string['conflictcode_duplicatehistorical'] = 'Assignacions històriques solapades';
+$string['conflictcode_deletedtutoractive'] = 'El tutor de l\'assignació activa té el compte eliminat';
 
 $string['privacy:metadata:bulkoperation'] = 'Operacions massives d\'assignació des de cohorts';
 $string['privacy:metadata:bulkoperation:cohortid'] = 'La cohort utilitzada com a font de població d\'alumnes.';
@@ -745,7 +821,8 @@ $string['dashboard_priority_empty'] = 'No hi ha alumnes prioritaris amb el filtr
 $string['monlaututoria:viewcoordinationdashboard'] = 'Veure el tauler de coordinacio';
 $string['monlaututoria:exportcoordinationreports'] = 'Exportar informes de coordinacio';
 $string['monlaututoria:managecoordinationscopes'] = 'Gestionar ambits de coordinacio';
-$string['coordination_title'] = 'Tauler de coordinacio';
+$string['coordination_title'] = 'Tauler de coordinació';
+$string['coordination_intro'] = 'Analitza la cobertura, la qualitat i el desglossament de tutories per curs, cohort o tutor.';
 $string['coordination_scopes_title'] = 'Ambits de coordinacio';
 $string['coordination_dashboard_noscope'] = 'No tens cap ambit de coordinacio assignat.';
 $string['coordination_dashboard_empty'] = 'No hi ha dades per als filtres actuals.';
@@ -844,6 +921,8 @@ $string['nav_referrals'] = 'Derivacions';
 $string['nav_referrals_tip'] = 'Gestiona les derivacions obertes i revisa\'n l estat.';
 $string['nav_coordination'] = 'Coordinació';
 $string['nav_coordination_tip'] = 'Visió global per curs, cohort i tutor.';
+$string['nav_coordinators'] = 'Coordinadors';
+$string['nav_coordinators_tip'] = 'Defineix qui pot accedir a coordinació i quines cohorts supervisa cadascú.';
 $string['nav_notifications'] = 'Notificacions';
 $string['nav_notifications_tip'] = 'Ajusta recordatoris, canvis i resums del connector.';
 $string['nav_configuration'] = 'Configuració';
@@ -892,6 +971,16 @@ $string['page_back_referrals'] = 'Tornar a derivacions';
 $string['page_back_student_entries'] = 'Tornar a tutories de l alumne';
 $string['page_back_configuration'] = 'Tornar a configuració';
 
+$string['assignments_create_tip'] = 'Crea una nova assignació manual i després accedeix al seu detall.';
+
+$string['studenttab_summary_tip'] = 'Vista general de l\'alumne en el curs acadèmic seleccionat.';
+$string['studenttab_history_tip'] = 'Historial d\'assignacions i canvis de tutor al llarg del temps.';
+$string['studenttab_tutoring_tip'] = 'Llistat de tutories registrades per a aquest alumne.';
+$string['studenttab_agreements_tip'] = 'Seguiment d\'acords associats a tutories de l\'alumne.';
+$string['studenttab_followups_tip'] = 'Seguiments pendents oberts per a aquest alumne.';
+
+$string['configuration_intro'] = 'Punt d\'entrada per a l\'administració del connector i els seus catàlegs base.';
+
 $string['settings_entryeditwindow_title'] = 'Finestra d edició de tutories';
 
 $string['assignment_reassign'] = 'Reassignar tutor';
@@ -915,3 +1004,4 @@ $string['coordination_dashboard_intro'] = 'Vista agregada per a coordinació. L 
 $string['coordination_filter_help'] = 'Primer acota per cohort i després, si cal, filtra per tutor dins d aquestes cohorts.';
 $string['error_coordination_scope_invalid_user'] = 'Només pots assignar àmbits a usuaris amb accés al tauler de coordinació.';
 $string['coordination_scope_intro'] = 'Selecciona un coordinador i assigna-li les cohorts que podrà supervisar. Dins del panell després podrà filtrar per tutor.';
+$string['coordination_scope_help_steps'] = 'Per habilitar un coordinador: 1) assigna a l\'usuari un rol amb la capacitat local/monlaututoria:viewcoordinationdashboard en context de sistema, 2) selecciona\'l en aquesta pantalla i 3) marca les cohorts que podrà supervisar.';

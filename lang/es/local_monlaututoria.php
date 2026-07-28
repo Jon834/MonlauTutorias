@@ -313,9 +313,85 @@ $string['privacy:metadata:assignment:note'] = 'Una observación administrativa o
 $string['privacy:metadata:assignment:closereason'] = 'El motivo codificado por el que se cerró la asignación.';
 
 $string['eventcohortassignmentpreviewed'] = 'Previsualización de asignación desde cohorte generada';
+$string['eventcohortassignmentapplied'] = 'Asignación desde cohorte aplicada';
+$string['eventcohortassignmentapplyfailed'] = 'Aplicación de asignación desde cohorte fallida';
 
 $string['error_cohort_mode_invalid'] = 'Modo de sincronización no válido.';
 $string['error_cohort_same_tutor_cotutor'] = 'El tutor principal y el cotutor no pueden ser la misma persona.';
+$string['error_cohort_operation_not_usable'] = 'Esta operación no es una asignación por cohorte.';
+$string['error_cohort_already_applied'] = 'Esta operación ya se ha aplicado o está en curso.';
+$string['error_cohort_mode_preview_only_cannot_apply'] = 'El modo "Solo previsualizar" no se puede aplicar; genera una nueva previsualización con otro modo.';
+$string['error_cohort_preview_changed'] = 'Los datos han cambiado desde que se generó esta previsualización. Genera una nueva.';
+$string['error_cohort_apply_row_failed'] = 'No se ha podido aplicar la operación; no se ha escrito ningún cambio.';
+$string['error_cohort_apply_not_confirmed'] = 'Debes confirmar que quieres aplicar esta asignación por cohorte.';
+
+$string['cohort_assignment_create'] = 'Asignar por cohorte';
+$string['cohort_assignment_create_tip'] = 'Asigna un tutor a todos los alumnos de una cohorte de una vez, con previsualización antes de confirmar.';
+$string['cohort_assignment_manual_hint'] = 'Este formulario crea una única asignación manual. El campo "Cohorte" es solo una etiqueta descriptiva sobre esa asignación, no asigna a todo el grupo. Para asignar un tutor a una cohorte entera, usa "Asignar por cohorte".';
+
+$string['cohort_assignment_title'] = 'Asignación por cohorte';
+$string['cohort_assignment_intro'] = 'Elige una cohorte, un curso académico y un tutor, previsualiza el resultado y confirma para escribir las asignaciones.';
+
+$string['cohort_assignment_field_cohort'] = 'Cohorte';
+$string['cohort_assignment_field_primarytutor'] = 'Tutor principal';
+$string['cohort_assignment_field_cotutor'] = 'Cotutor (opcional)';
+$string['cohort_assignment_field_mode'] = 'Modo de sincronización';
+$string['cohort_assignment_field_mode_help'] = 'Añadir asignaciones: crea tutorías para los alumnos que aún no tienen una, sin tocar las existentes. Añadir y cerrar ausentes: además cierra las asignaciones de alumnos que ya no están en la cohorte. Reemplazar tutor principal: reasigna a un nuevo tutor a los alumnos que ya tenían uno (acción de mayor impacto). Solo previsualizar: muestra el resultado sin poder confirmarlo.';
+$string['cohort_assignment_field_includesuspended'] = 'Incluir alumnos con la cuenta suspendida';
+$string['cohort_assignment_field_allowsuspendedtutor'] = 'Permitir tutor o cotutor con la cuenta suspendida';
+$string['cohort_assignment_preview_button'] = 'Previsualizar';
+
+$string['cohort_assignment_mode_add_only'] = 'Añadir asignaciones';
+$string['cohort_assignment_mode_add_and_close_missing'] = 'Añadir y cerrar ausentes';
+$string['cohort_assignment_mode_replace_primary'] = 'Reemplazar tutor principal';
+$string['cohort_assignment_mode_preview_only'] = 'Solo previsualizar';
+
+$string['cohort_assignment_preview_summary_title'] = 'Resumen de la previsualización';
+$string['cohort_assignment_summary_total'] = 'Alumnos analizados: {$a}';
+$string['cohort_assignment_summary_tocreate'] = 'Asignaciones nuevas: {$a}';
+$string['cohort_assignment_summary_toreassign'] = 'Reasignaciones: {$a}';
+$string['cohort_assignment_summary_tocreatecotutor'] = 'Cotutores nuevos: {$a}';
+$string['cohort_assignment_summary_toclose'] = 'Asignaciones a cerrar (alumnos ausentes): {$a}';
+$string['cohort_assignment_summary_nochange'] = 'Sin cambios: {$a}';
+$string['cohort_assignment_summary_skipped'] = 'Omitidos: {$a}';
+$string['cohort_assignment_summary_suspended'] = 'Cuentas suspendidas: {$a}';
+$string['cohort_assignment_summary_conflicts'] = 'Conflictos detectados: {$a}';
+$string['cohort_assignment_conflicts_warning'] = 'Se han detectado conflictos de datos en algunos alumnos; revísalos antes de confirmar.';
+$string['cohort_assignment_preview_empty'] = 'La cohorte seleccionada no tiene alumnos.';
+
+$string['cohort_assignment_col_action'] = 'Acción';
+$string['cohort_assignment_col_currenttutor'] = 'Tutor actual';
+$string['cohort_assignment_col_cotutoraction'] = 'Acción cotutor';
+$string['cohort_assignment_col_conflicts'] = 'Conflictos';
+
+$string['cohort_assignment_apply_title'] = 'Confirmar aplicación';
+$string['cohort_assignment_apply_intro'] = 'Al confirmar se escribirán de verdad las asignaciones descritas arriba. Esta acción no se puede deshacer desde aquí.';
+$string['cohort_assignment_apply_confirm_checkbox'] = 'Confirmo que quiero aplicar esta asignación por cohorte.';
+$string['cohort_assignment_apply_button'] = 'Aplicar';
+$string['cohort_assignment_apply_result_title'] = 'Resultado de la aplicación';
+$string['cohort_assignment_apply_success'] = 'Asignación por cohorte aplicada correctamente.';
+$string['cohort_assignment_apply_created'] = 'Asignaciones creadas: {$a}';
+$string['cohort_assignment_apply_reassigned'] = 'Reasignaciones realizadas: {$a}';
+$string['cohort_assignment_apply_closed'] = 'Asignaciones cerradas: {$a}';
+$string['cohort_assignment_apply_nochange'] = 'Sin cambios: {$a}';
+$string['cohort_assignment_apply_skipped'] = 'Omitidos: {$a}';
+$string['cohort_assignment_apply_result_empty'] = 'No hay resultados que mostrar.';
+
+$string['cohort_action_create_primary'] = 'Crear tutor principal';
+$string['cohort_action_create_cotutor'] = 'Crear cotutor';
+$string['cohort_action_reassign_primary'] = 'Reasignar tutor principal';
+$string['cohort_action_close_missing'] = 'Cerrar (ausente)';
+$string['cohort_action_no_change'] = 'Sin cambios';
+$string['cohort_action_skip_existing'] = 'Omitido (ya tiene tutor)';
+$string['cohort_action_skip_suspended'] = 'Omitido (suspendido)';
+$string['cohort_action_skip_invalid'] = 'Omitido (no válido)';
+$string['cohort_action_conflict_primary'] = 'Conflicto';
+$string['cohort_action_error'] = 'Error';
+
+$string['conflictcode_multipleactiveprimary'] = 'Más de un tutor principal activo a la vez';
+$string['conflictcode_overlappingfuture'] = 'Más de una asignación futura solapada';
+$string['conflictcode_duplicatehistorical'] = 'Asignaciones históricas solapadas';
+$string['conflictcode_deletedtutoractive'] = 'El tutor de la asignación activa tiene la cuenta eliminada';
 
 $string['privacy:metadata:bulkoperation'] = 'Operaciones masivas de asignación desde cohortes';
 $string['privacy:metadata:bulkoperation:cohortid'] = 'La cohorte usada como fuente de población de alumnos.';

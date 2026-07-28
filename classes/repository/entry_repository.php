@@ -19,7 +19,7 @@ namespace local_monlaututoria\repository;
 use local_monlaututoria\domain\entry_status;
 
 /**
- * Data access for local_tut_entry. No business rules, no security here â€”
+ * Data access for local_tut_entry. No business rules, no security here —
  * scope_service/entry_service resolve who may see what; this class returns
  * raw rows to whoever calls it, same layering as assignment_repository.
  *
@@ -108,12 +108,12 @@ final class entry_repository {
     }
 
     /**
-     * Paginated, filterable listing â€” same shape as assignment_repository::search(),
-     * used by the student ficha's "TutorÃ­as" history tab (phase 5.4).
+     * Paginated, filterable listing — same shape as assignment_repository::search(),
+     * used by the student ficha's "Tutorías" history tab (phase 5.4).
      *
      * @param array $filters optional keys: studentid, tutorid, academicyearid, status,
      *                        modalityid, reasonid, visibilitytier ('contentvisible',
-     *                        'noteinternal' or 'noterestricted' â€” rows where that
+     *                        'noteinternal' or 'noterestricted' — rows where that
      *                        column is not null), entrydatefrom, entrydateto
      * @param int $limitfrom
      * @param int $limitnum
@@ -144,10 +144,12 @@ final class entry_repository {
     /**
      * Updates only the editable fields of a tutoring entry. Deliberately
      * never reads or touches studentid, tutorid, academicyearid, entrydate or
-     * status from $data, even if present â€” changing status is annul()'s job
-     * (a separate flow), not a generic edit. Participants and reasonids are
-     * not handled here either (phase 5.5 does not build participant/reason
-     * editing, an accepted gap â€” see docs/seguridad-permisos.md).
+     * status from $data, even if present — changing status is annul()'s job
+     * (a separate flow), not a generic edit. Reasonids ("motivos") are edited
+     * too, but not through here — entry_service::update() syncs them
+     * separately via entry_reason_repository::sync(), since they live in
+     * their own link table, not as a column on this one. Participants still
+     * have no edit path (accepted gap — see docs/seguridad-permisos.md).
      *
      * @param int $id
      * @param \stdClass $data may contain modalityid, contentvisible, noteinternal,
@@ -182,7 +184,7 @@ final class entry_repository {
     }
 
     /**
-     * Annuls a tutoring entry (status=annulled) â€” never a physical delete.
+     * Annuls a tutoring entry (status=annulled) — never a physical delete.
      * Callers are responsible for enforcing business guards (reason
      * required, not already annulled) before calling this.
      *
