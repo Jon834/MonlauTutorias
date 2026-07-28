@@ -41,7 +41,23 @@ if ($requestedacademicyearid > 0) {
     $academicyear = $academicyearrepository->get_active();
 }
 
-$validstudentfilters = ['all', 'pendinginitial', 'withpending', 'priority'];
+// Both default enabled (Site administration > Local plugins > Monlau
+// Tutoria > Settings) — real-use feedback found the referrals/priority
+// sections of this dashboard confusing for tutors, who can already mention
+// a derivación in the tutoring entry's own text; a school can turn either
+// off without losing the underlying data (referral_service/dashboard_service
+// keep computing them exactly as before, only the rendering is gated).
+// !== '0', not (bool) cast: get_config() returns false (not '0') when the
+// setting has never been written yet (e.g. right after upgrade, before
+// anyone has opened the settings page) — casting that to bool would default
+// a brand-new install to "hidden", the opposite of the intended default.
+$showreferrals = get_config('local_monlaututoria', 'dashboard_showreferrals') !== '0';
+$showpriority = get_config('local_monlaututoria', 'dashboard_showpriority') !== '0';
+
+$validstudentfilters = ['all', 'pendinginitial', 'withpending'];
+if ($showpriority) {
+    $validstudentfilters[] = 'priority';
+}
 $validpendingfilters = ['all', 'open', 'overdue'];
 $studentfilter = optional_param(
     'studentfilter',
@@ -85,8 +101,10 @@ $studentfilteroptions = [
     'all' => get_string('dashboard_studentfilter_all', 'local_monlaututoria'),
     'pendinginitial' => get_string('dashboard_studentfilter_pendinginitial', 'local_monlaututoria'),
     'withpending' => get_string('dashboard_studentfilter_withpending', 'local_monlaututoria'),
-    'priority' => get_string('dashboard_studentfilter_priority', 'local_monlaututoria'),
 ];
+if ($showpriority) {
+    $studentfilteroptions['priority'] = get_string('dashboard_studentfilter_priority', 'local_monlaututoria');
+}
 $pendingfilteroptions = [
     'all' => get_string('dashboard_pendingfilter_all', 'local_monlaututoria'),
     'open' => get_string('dashboard_pendingfilter_open', 'local_monlaututoria'),
@@ -204,14 +222,15 @@ $responsibleusers = !empty($responsibleuserids)
     ? $DB->get_records_list('user', 'id', array_unique($responsibleuserids), '', 'id, firstname, lastname, email')
     : [];
 
-echo $renderer->dashboard_summary_cards($dashboard->summary);
+echo $renderer->dashboard_summary_cards($dashboard->summary, $showreferrals, $showpriority);
 echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
 echo $renderer->dashboard_students_table(
     $filteredstudents,
     $studentusers,
     (int) $academicyear->id,
     $cancreateentry,
-    $cancreatefollowup
+    $cancreatefollowup,
+    $showpriority
 );
 
 echo $renderer->heading(get_string('dashboard_section_followups', 'local_monlaututoria'), 3);
@@ -241,11 +260,15 @@ if (empty($overdueagreements) && empty($pendingagreements)) {
     }
 }
 
-echo $renderer->heading(get_string('dashboard_section_referrals', 'local_monlaututoria'), 3);
-echo $renderer->referrals_table($referrals, $studentusers);
+if ($showreferrals) {
+    echo $renderer->heading(get_string('dashboard_section_referrals', 'local_monlaututoria'), 3);
+    echo $renderer->referrals_table($referrals, $studentusers);
+}
 
-echo $renderer->heading(get_string('dashboard_section_priority', 'local_monlaututoria'), 3);
-echo $renderer->dashboard_priority_students_list($dashboard->prioritystudents, $studentusers, (int) $academicyear->id);
+if ($showpriority) {
+    echo $renderer->heading(get_string('dashboard_section_priority', 'local_monlaututoria'), 3);
+    echo $renderer->dashboard_priority_students_list($dashboard->prioritystudents, $studentusers, (int) $academicyear->id);
+}
 
 echo $OUTPUT->footer();
 

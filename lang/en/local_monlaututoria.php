@@ -591,6 +591,10 @@ $string['entry_field_nextfollowupdate'] = 'Next follow-up';
 $string['entry_register'] = 'Register entry';
 $string['entry_register_title'] = 'Register tutoring entry — {$a}';
 $string['entry_register_success'] = 'Tutoring entry registered successfully.';
+$string['entry_pick_student_title'] = 'Choose a student';
+$string['entry_pick_student_intro'] = 'Choose one of your students to register a new tutoring entry.';
+$string['entry_pick_student_label'] = 'Student';
+$string['entry_pick_student_empty'] = 'You have no students with a current primary tutoring assignment in the active academic year.';
 
 // Phase 5.3 — full tutoring entry registration.
 $string['entry_full_register'] = 'Full registration';
@@ -615,6 +619,10 @@ $string['monlaututoria:editanyentry'] = 'Edit any tutoring entry';
 $string['monlaututoria:annulentry'] = 'Annul a tutoring entry';
 $string['setting_entryeditwindow'] = 'Entry edit window';
 $string['setting_entryeditwindow_desc'] = 'How long after a tutoring entry is recorded it can be edited without giving a reason. Past this window, any edit requires a change reason.';
+$string['setting_dashboard_showreferrals'] = 'Show referrals on the tutor dashboard';
+$string['setting_dashboard_showreferrals_desc'] = 'Shows the referrals card and section on the tutor dashboard. Turning this off does not delete or hide referrals themselves — it only stops showing them there; the referral management screen keeps working exactly the same.';
+$string['setting_dashboard_showpriority'] = 'Show priority students on the tutor dashboard';
+$string['setting_dashboard_showpriority_desc'] = 'Shows the priority-student card, column and section (an automatic calculation, not something a tutor sets) on the tutor dashboard and the block. Turning this off does not change the calculation, only whether it is shown.';
 $string['entry_edit_title'] = 'Edit tutoring entry';
 $string['entry_edit_success'] = 'Tutoring entry updated successfully.';
 $string['entry_field_editreason'] = 'Reason for change';

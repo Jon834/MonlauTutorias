@@ -1,5 +1,15 @@
 # Changelog — local_monlaututoria
 
+## 0.11.1 — 2026-07-25
+
+**Panel del tutor: derivaciones y alumnos prioritarios ahora opcionales; enlace directo a "Nueva tutoría" en el bloque.** Feedback de uso real: ambas secciones generaban confusión al tutor — una derivación ya se puede explicar dentro del texto de la propia tutoría. Sin cambio de esquema, sin borrar nada: solo se deja de mostrar.
+
+- **2 ajustes nuevos** (Administración del sitio > Plugins locales > Monlau Tutoría > Configuración): "Mostrar derivaciones en el panel del tutor" y "Mostrar alumnos prioritarios en el panel del tutor", ambos activados por defecto para no cambiar el comportamiento de una instalación existente sin que el administrador lo decida explícitamente. Al desactivarlos: desaparecen del panel del tutor la tarjeta, la sección/tabla, la columna "Prioridad" y el filtro "Alumnos prioritarios"; en el bloque desaparece el enlace "Abrir alumnos prioritarios". `dashboard_service`/`referral_service` siguen calculando exactamente lo mismo por debajo — es un ajuste de visualización, no de datos. **Deliberadamente sin tocar** `referrals/index.php` ni `coordination.php`: son pantallas de gestión para quien tiene el permiso de coordinación, no la vista del tutor que generaba la confusión.
+- **Nuevo enlace "Nueva tutoría" en el bloque**, sin necesidad de conocer de antemano un alumno: `entries/create.php` ahora acepta llegar sin `studentid` y, en ese caso, muestra un selector limitado a los alumnos con tutoría principal vigente del propio tutor (`assignment_repository::find_current_primary_by_tutor()`) antes de continuar con el registro habitual — ningún alumno fuera de su ámbito aparece en la lista, por construcción.
+- ⚠️ No ejecutado todavía en este entorno; solo `php -l` (0 errores en los 315 archivos PHP del plugin principal y los 7 del bloque).
+
+---
+
 ## 0.11.0 — 2026-07-25
 
 **Nueva funcionalidad: asignación por cohorte completa, con vista previa y confirmación.** Cierra el hueco de la fase 3C — `cohort_assignment_preview_service` ya calculaba la clasificación desde hacía tiempo, pero no existía ni pantalla ni el paso de "confirmar" que escribe de verdad las asignaciones (reportado en uso real: la creación manual de asignaciones no permitía elegir una cohorte entera, solo un alumno cada vez). Sin cambio de esquema — reutiliza `local_tut_bulkoperation`, ya creado para esto.

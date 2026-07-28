@@ -591,6 +591,10 @@ $string['entry_field_nextfollowupdate'] = 'Proper seguiment';
 $string['entry_register'] = 'Registrar tutoria';
 $string['entry_register_title'] = 'Registrar tutoria — {$a}';
 $string['entry_register_success'] = 'Tutoria registrada correctament.';
+$string['entry_pick_student_title'] = 'Triar alumne';
+$string['entry_pick_student_intro'] = 'Tria un dels teus alumnes per registrar una nova tutoria.';
+$string['entry_pick_student_label'] = 'Alumne';
+$string['entry_pick_student_empty'] = 'No tens alumnes amb tutoria principal vigent en el curs acadèmic actiu.';
 
 // Fase 5.3 — registre complet de tutories.
 $string['entry_full_register'] = 'Registre complet';
@@ -615,6 +619,10 @@ $string['monlaututoria:editanyentry'] = 'Editar qualsevol tutoria';
 $string['monlaututoria:annulentry'] = 'Anul·lar una tutoria';
 $string['setting_entryeditwindow'] = 'Finestra d\'edició de tutories';
 $string['setting_entryeditwindow_desc'] = 'Temps després del registre d\'una tutoria durant el qual es pot editar sense indicar un motiu. Passat aquest termini, qualsevol edició exigeix un motiu del canvi.';
+$string['setting_dashboard_showreferrals'] = 'Mostrar derivacions al tauler del tutor';
+$string['setting_dashboard_showreferrals_desc'] = 'Mostra la targeta i la secció de derivacions al tauler del tutor. Desactivar-ho no esborra ni amaga les derivacions en si — només deixa de mostrar-les allà; la pantalla de gestió de derivacions continua funcionant igual.';
+$string['setting_dashboard_showpriority'] = 'Mostrar alumnes prioritaris al tauler del tutor';
+$string['setting_dashboard_showpriority_desc'] = 'Mostra la targeta, la columna i la secció d\'alumnes prioritaris (un càlcul automàtic, no una cosa que marqui el tutor) al tauler del tutor i al bloc. Desactivar-ho no canvia el càlcul, només si es mostra.';
 $string['entry_edit_title'] = 'Editar tutoria';
 $string['entry_edit_success'] = 'Tutoria actualitzada correctament.';
 $string['entry_field_editreason'] = 'Motiu del canvi';

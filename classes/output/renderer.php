@@ -415,9 +415,17 @@ final class renderer extends \plugin_renderer_base {
 
     /**
      * @param \local_monlaututoria\domain\tutor_dashboard_summary $summary
+     * @param bool $showreferrals site setting local_monlaututoria/dashboard_showreferrals —
+     *                            the underlying count is always computed, this only
+     *                            controls whether the card is rendered
+     * @param bool $showpriority site setting local_monlaututoria/dashboard_showpriority, same idea
      * @return string
      */
-    public function dashboard_summary_cards(\local_monlaututoria\domain\tutor_dashboard_summary $summary): string {
+    public function dashboard_summary_cards(
+        \local_monlaututoria\domain\tutor_dashboard_summary $summary,
+        bool $showreferrals = true,
+        bool $showpriority = true
+    ): string {
         $cards = [
             ['label' => get_string('dashboard_summary_assigned', 'local_monlaututoria'), 'value' => $summary->assignedcount],
             ['label' => get_string('dashboard_summary_attended', 'local_monlaututoria'), 'value' => $summary->attendedcount],
@@ -425,10 +433,14 @@ final class renderer extends \plugin_renderer_base {
             ['label' => get_string('dashboard_summary_coverage', 'local_monlaututoria'), 'value' => format_float($summary->coveragepercent, 2) . ' %'],
             ['label' => get_string('dashboard_summary_followupsoverdue', 'local_monlaututoria'), 'value' => $summary->overduefollowupcount],
             ['label' => get_string('dashboard_summary_agreementspending', 'local_monlaututoria'), 'value' => $summary->pendingagreementcount + $summary->overdueagreementcount],
-            ['label' => get_string('dashboard_summary_referrals', 'local_monlaututoria'), 'value' => $summary->openreferralcount],
-            ['label' => get_string('dashboard_summary_priority', 'local_monlaututoria'), 'value' => $summary->prioritystudentcount],
-            ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount],
         ];
+        if ($showreferrals) {
+            $cards[] = ['label' => get_string('dashboard_summary_referrals', 'local_monlaututoria'), 'value' => $summary->openreferralcount];
+        }
+        if ($showpriority) {
+            $cards[] = ['label' => get_string('dashboard_summary_priority', 'local_monlaututoria'), 'value' => $summary->prioritystudentcount];
+        }
+        $cards[] = ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount];
 
         $html = '';
         foreach ($cards as $card) {
@@ -448,6 +460,8 @@ final class renderer extends \plugin_renderer_base {
      * @param int $academicyearid
      * @param bool $cancreateentry
      * @param bool $cancreatefollowup
+     * @param bool $showpriority site setting local_monlaututoria/dashboard_showpriority —
+     *                           only controls whether the "Prioridad" column is rendered
      * @return string
      */
     public function dashboard_students_table(
@@ -455,7 +469,8 @@ final class renderer extends \plugin_renderer_base {
         array $studentusers,
         int $academicyearid,
         bool $cancreateentry,
-        bool $cancreatefollowup
+        bool $cancreatefollowup,
+        bool $showpriority = true
     ): string {
         if (empty($students)) {
             return $this->output->notification(
@@ -472,9 +487,11 @@ final class renderer extends \plugin_renderer_base {
             get_string('dashboard_col_missinginitial', 'local_monlaututoria'),
             get_string('dashboard_col_coverage', 'local_monlaututoria'),
             get_string('dashboard_col_pendingbundle', 'local_monlaututoria'),
-            get_string('dashboard_col_priority', 'local_monlaututoria'),
-            get_string('assignment_col_actions', 'local_monlaututoria'),
         ];
+        if ($showpriority) {
+            $table->head[] = get_string('dashboard_col_priority', 'local_monlaututoria');
+        }
+        $table->head[] = get_string('assignment_col_actions', 'local_monlaututoria');
 
         foreach ($students as $student) {
             $user = $studentusers[$student->studentid] ?? null;
@@ -515,16 +532,19 @@ final class renderer extends \plugin_renderer_base {
                 );
             }
 
-            $table->data[] = [
+            $row = [
                 \html_writer::link($studenturl, format_string($studentname)),
                 $lastentry,
                 $student->activeentrycount,
                 $missinginitial,
                 $coveragestring,
                 s($pendingbundle),
-                $student->ispriority ? get_string('yes') : get_string('no'),
-                implode(' | ', $actions),
             ];
+            if ($showpriority) {
+                $row[] = $student->ispriority ? get_string('yes') : get_string('no');
+            }
+            $row[] = implode(' | ', $actions);
+            $table->data[] = $row;
         }
 
         return \html_writer::div(\html_writer::table($table), 'table-responsive');

@@ -15,14 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Quick tutoring entry registration (phase 5.2). The student is always
- * preselected via the "studentid" param (reached from the student's own
- * ficha, student/view.php) — this page never offers a student picker.
+ * Quick tutoring entry registration (phase 5.2). Usually reached with the
+ * student already preselected via the "studentid" param (from the student's
+ * own ficha, student/view.php) — but when it is missing (e.g. the "Nueva
+ * tutoría" block shortcut, which has no specific student to link to), this
+ * page shows a picker limited to the tutor's own current primary students
+ * (assignment_repository::find_current_primary_by_tutor()) instead of
+ * requiring the caller to already know a studentid.
  *
  * Security: local/monlaututoria:createentry (capability) +
  * scope_service::require_user_can_access_student() (ambito) — same 2-layer
  * pattern as every other page in this plugin exposing a specific student's
- * data (see docs/seguridad-permisos.md).
+ * data (see docs/seguridad-permisos.md). The picker itself needs no separate
+ * check: it is built from the tutor's own current assignments, so every
+ * option it offers already passes scope_service by construction.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
@@ -35,7 +41,7 @@ require_login();
 $context = context_system::instance();
 require_capability('local/monlaututoria:createentry', $context);
 
-$studentid = required_param('studentid', PARAM_INT);
+$studentid = optional_param('studentid', 0, PARAM_INT);
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
 // Phase 6.2: reached with this param when the tutor is registering a new
 // entry specifically to close an existing follow-up ("cierre... mediante
@@ -49,6 +55,53 @@ $academicyear = $requestedacademicyearid > 0
     : $academicyearrepository->get_active();
 if ($academicyear === null) {
     throw new \moodle_exception('error_invalidacademicyearid', 'local_monlaututoria');
+}
+
+if ($studentid <= 0) {
+    $primaryrows = (new \local_monlaututoria\repository\assignment_repository())
+        ->find_current_primary_by_tutor((int) $USER->id, (int) $academicyear->id);
+
+    $studentoptions = [];
+    if (!empty($primaryrows)) {
+        $pickerstudentids = array_map(static fn ($row): int => (int) $row->studentid, $primaryrows);
+        $pickerusers = $DB->get_records_list('user', 'id', $pickerstudentids, '', 'id, firstname, lastname');
+        foreach ($pickerusers as $pickeruser) {
+            $studentoptions[$pickeruser->id] = fullname($pickeruser);
+        }
+        asort($studentoptions);
+    }
+
+    $PAGE->set_context($context);
+    $PAGE->set_url('/local/monlaututoria/entries/create.php', ['academicyearid' => $academicyear->id]);
+    $PAGE->set_pagelayout('admin');
+    $PAGE->set_title(get_string('entry_pick_student_title', 'local_monlaututoria'));
+    $PAGE->set_heading(get_string('entry_pick_student_title', 'local_monlaututoria'));
+
+    echo $OUTPUT->header();
+    echo $OUTPUT->heading(get_string('entry_pick_student_title', 'local_monlaututoria'));
+
+    if (empty($studentoptions)) {
+        echo $OUTPUT->notification(
+            get_string('entry_pick_student_empty', 'local_monlaututoria'),
+            \core\output\notification::NOTIFY_INFO
+        );
+    } else {
+        echo html_writer::tag('p', get_string('entry_pick_student_intro', 'local_monlaututoria'), ['class' => 'text-muted']);
+        $picker = new single_select(
+            new moodle_url('/local/monlaututoria/entries/create.php', ['academicyearid' => $academicyear->id]),
+            'studentid',
+            $studentoptions,
+            '',
+            ['' => get_string('choosedots')],
+            'entrystudentpicker'
+        );
+        $picker->set_label(get_string('entry_pick_student_label', 'local_monlaututoria'));
+        $picker->method = 'get';
+        echo $OUTPUT->render($picker);
+    }
+
+    echo $OUTPUT->footer();
+    exit;
 }
 
 $scope = new \local_monlaututoria\service\scope_service();

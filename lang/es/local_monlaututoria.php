@@ -591,6 +591,10 @@ $string['entry_field_nextfollowupdate'] = 'Próximo seguimiento';
 $string['entry_register'] = 'Registrar tutoría';
 $string['entry_register_title'] = 'Registrar tutoría — {$a}';
 $string['entry_register_success'] = 'Tutoría registrada correctamente.';
+$string['entry_pick_student_title'] = 'Elegir alumno';
+$string['entry_pick_student_intro'] = 'Elige uno de tus alumnos para registrar una nueva tutoría.';
+$string['entry_pick_student_label'] = 'Alumno';
+$string['entry_pick_student_empty'] = 'No tienes alumnos con tutoría principal vigente en el curso académico activo.';
 
 // Fase 5.3 — registro completo de tutorías.
 $string['entry_full_register'] = 'Registro completo';
@@ -615,6 +619,10 @@ $string['monlaututoria:editanyentry'] = 'Editar cualquier tutoría';
 $string['monlaututoria:annulentry'] = 'Anular una tutoría';
 $string['setting_entryeditwindow'] = 'Ventana de edición de tutorías';
 $string['setting_entryeditwindow_desc'] = 'Tiempo tras el registro de una tutoría durante el cual se puede editar sin indicar un motivo. Pasado este plazo, cualquier edición exige un motivo del cambio.';
+$string['setting_dashboard_showreferrals'] = 'Mostrar derivaciones en el panel del tutor';
+$string['setting_dashboard_showreferrals_desc'] = 'Muestra la tarjeta y la sección de derivaciones en el panel del tutor. Desactivarlo no borra ni oculta las derivaciones en sí — solo deja de mostrarlas ahí; la pantalla de gestión de derivaciones sigue funcionando igual.';
+$string['setting_dashboard_showpriority'] = 'Mostrar alumnos prioritarios en el panel del tutor';
+$string['setting_dashboard_showpriority_desc'] = 'Muestra la tarjeta, la columna y la sección de alumnos prioritarios (un cálculo automático, no algo que el tutor marque) en el panel del tutor y en el bloque. Desactivarlo no cambia el cálculo, solo deja de mostrarlo.';
 $string['entry_edit_title'] = 'Editar tutoría';
 $string['entry_edit_success'] = 'Tutoría actualizada correctamente.';
 $string['entry_field_editreason'] = 'Motivo del cambio';

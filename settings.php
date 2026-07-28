@@ -130,6 +130,28 @@ if ($hassiteconfig
         get_string('setting_entryeditwindow_desc', 'local_monlaututoria'),
         3 * DAYSECS
     ));
+
+    // Real-use feedback: the tutor dashboard's referrals/priority sections
+    // were confusing — a derivación can already be mentioned in a tutoring
+    // entry's own text, and "priority" is a derived heuristic, not something
+    // a tutor sets. Turning either off only hides that rendering on
+    // dashboard.php and the block; referral_service/dashboard_service keep
+    // computing everything exactly as before (nothing is deleted), and
+    // referrals/index.php + coordination.php are unaffected — this only
+    // controls what a tutor sees on their own dashboard.
+    $settings->add(new admin_setting_configcheckbox(
+        'local_monlaututoria/dashboard_showreferrals',
+        get_string('setting_dashboard_showreferrals', 'local_monlaututoria'),
+        get_string('setting_dashboard_showreferrals_desc', 'local_monlaututoria'),
+        1
+    ));
+    $settings->add(new admin_setting_configcheckbox(
+        'local_monlaututoria/dashboard_showpriority',
+        get_string('setting_dashboard_showpriority', 'local_monlaututoria'),
+        get_string('setting_dashboard_showpriority_desc', 'local_monlaututoria'),
+        1
+    ));
+
     $ADMIN->add('local_monlaututoria', $settings);
 } else {
     $settings = null;
