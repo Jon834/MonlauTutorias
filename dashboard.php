@@ -111,6 +111,33 @@ $pendingfilteroptions = [
     'overdue' => get_string('dashboard_pendingfilter_overdue', 'local_monlaututoria'),
 ];
 
+// One independent sort per table on this page (studentsort/followupsort/
+// agreementsort/referralsort), each validated against its own small
+// whitelist — never trust the URL value directly into a usort() comparator.
+$studentsort = optional_param('studentsort', '', PARAM_ALPHA);
+if (!in_array($studentsort, ['studentname', 'lastentry', 'entrycount'], true)) {
+    $studentsort = '';
+}
+$studentdir = strtoupper(optional_param('studentdir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
+
+$followupsort = optional_param('followupsort', '', PARAM_ALPHA);
+if (!in_array($followupsort, ['studentname', 'duedate', 'priority'], true)) {
+    $followupsort = '';
+}
+$followupdir = strtoupper(optional_param('followupdir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
+
+$agreementsort = optional_param('agreementsort', '', PARAM_ALPHA);
+if (!in_array($agreementsort, ['studentname', 'duedate'], true)) {
+    $agreementsort = '';
+}
+$agreementdir = strtoupper(optional_param('agreementdir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
+
+$referralsort = optional_param('referralsort', '', PARAM_ALPHA);
+if (!in_array($referralsort, ['studentname', 'destination', 'priority', 'status'], true)) {
+    $referralsort = '';
+}
+$referraldir = strtoupper(optional_param('referraldir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
+
 $cancreateentry = has_capability('local/monlaututoria:createentry', $context);
 $cancreatefollowup = has_capability('local/monlaututoria:createfollowup', $context);
 $canmanageagreements = has_capability('local/monlaututoria:manageagreements', $context);
@@ -222,6 +249,83 @@ $responsibleusers = !empty($responsibleuserids)
     ? $DB->get_records_list('user', 'id', array_unique($responsibleuserids), '', 'id, firstname, lastname, email')
     : [];
 
+// Every table here is already a small, fully-loaded-in-memory array (never
+// a paginated SQL query) — a plain usort() is enough, no repository/service
+// change needed. studentname sorts always fall back to '' for a student
+// whose user record could not be resolved, so they sort first/last
+// predictably instead of raising a notice.
+$studentname = static fn (int $studentid) => isset($studentusers[$studentid]) ? fullname($studentusers[$studentid]) : '';
+$priorityrank = array_flip(\local_monlaututoria\domain\priority_level::values());
+
+if ($studentsort !== '') {
+    usort($filteredstudents, function ($a, $b) use ($studentsort, $studentdir, $studentname): int {
+        $result = match ($studentsort) {
+            'studentname' => strcasecmp($studentname($a->studentid), $studentname($b->studentid)),
+            'lastentry'   => ($a->latestactiveentry->entrydate ?? 0) <=> ($b->latestactiveentry->entrydate ?? 0),
+            'entrycount'  => $a->activeentrycount <=> $b->activeentrycount,
+        };
+
+        return $studentdir === 'DESC' ? -$result : $result;
+    });
+}
+
+if ($followupsort !== '') {
+    $followupsorter = function ($a, $b) use ($followupsort, $followupdir, $studentname, $priorityrank): int {
+        $result = match ($followupsort) {
+            'studentname' => strcasecmp($studentname($a->studentid), $studentname($b->studentid)),
+            'duedate'     => $a->duedate <=> $b->duedate,
+            'priority'    => ($priorityrank[$a->priority] ?? 0) <=> ($priorityrank[$b->priority] ?? 0),
+        };
+
+        return $followupdir === 'DESC' ? -$result : $result;
+    };
+    usort($overduefollowups, $followupsorter);
+    usort($upcomingfollowups, $followupsorter);
+}
+
+if ($agreementsort !== '') {
+    $agreementsorter = function ($a, $b) use ($agreementsort, $agreementdir, $studentname): int {
+        $result = match ($agreementsort) {
+            'studentname' => strcasecmp($studentname($a->studentid), $studentname($b->studentid)),
+            'duedate'     => $a->duedate <=> $b->duedate,
+        };
+
+        return $agreementdir === 'DESC' ? -$result : $result;
+    };
+    usort($overdueagreements, $agreementsorter);
+    usort($pendingagreements, $agreementsorter);
+}
+
+if ($showreferrals && $referralsort !== '') {
+    usort($referrals, function ($a, $b) use ($referralsort, $referraldir, $studentname, $priorityrank): int {
+        $result = match ($referralsort) {
+            'studentname' => strcasecmp($studentname($a->studentid), $studentname($b->studentid)),
+            'destination' => strcasecmp($a->destination, $b->destination),
+            'priority'    => ($priorityrank[$a->priority] ?? 0) <=> ($priorityrank[$b->priority] ?? 0),
+            'status'      => strcasecmp($a->status, $b->status),
+        };
+
+        return $referraldir === 'DESC' ? -$result : $result;
+    });
+}
+
+// Shared by every table's sort links, so choosing a new sort column for one
+// table never resets any of the others — every table's current sort state
+// travels along on every link, not just the one being clicked.
+$sortbaseurl = new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+    'academicyearid'  => $requestedacademicyearid ?: null,
+    'studentfilter'   => $studentfilter,
+    'pendingfilter'   => $pendingfilter,
+    'studentsort'     => $studentsort ?: null,
+    'studentdir'      => $studentsort !== '' ? $studentdir : null,
+    'followupsort'    => $followupsort ?: null,
+    'followupdir'     => $followupsort !== '' ? $followupdir : null,
+    'agreementsort'   => $agreementsort ?: null,
+    'agreementdir'    => $agreementsort !== '' ? $agreementdir : null,
+    'referralsort'    => $referralsort ?: null,
+    'referraldir'     => $referralsort !== '' ? $referraldir : null,
+], static fn ($value) => $value !== null));
+
 echo $renderer->dashboard_summary_cards($dashboard->summary, $showreferrals, $showpriority);
 echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
 echo $renderer->dashboard_students_table(
@@ -230,7 +334,10 @@ echo $renderer->dashboard_students_table(
     (int) $academicyear->id,
     $cancreateentry,
     $cancreatefollowup,
-    $showpriority
+    $showpriority,
+    $studentsort,
+    $studentdir,
+    $sortbaseurl
 );
 
 echo $renderer->heading(get_string('dashboard_section_followups', 'local_monlaututoria'), 3);
@@ -238,31 +345,43 @@ if (empty($overduefollowups) && empty($upcomingfollowups)) {
     // One combined empty note, not two — showing "no overdue follow-ups"
     // directly above a table that DOES have upcoming ones (or vice versa)
     // reads as contradictory, not informative.
-    echo $renderer->dashboard_followups_table([], $studentusers, $canmanagefollowups);
+    echo $renderer->dashboard_followups_table([], $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl);
 } else {
     if (!empty($overduefollowups)) {
-        echo $renderer->dashboard_followups_table($overduefollowups, $studentusers, $canmanagefollowups);
+        echo $renderer->dashboard_followups_table(
+            $overduefollowups, $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl
+        );
     }
     if (!empty($upcomingfollowups)) {
-        echo $renderer->dashboard_followups_table($upcomingfollowups, $studentusers, $canmanagefollowups);
+        echo $renderer->dashboard_followups_table(
+            $upcomingfollowups, $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl
+        );
     }
 }
 
 echo $renderer->heading(get_string('dashboard_section_agreements', 'local_monlaututoria'), 3);
 if (empty($overdueagreements) && empty($pendingagreements)) {
-    echo $renderer->dashboard_agreements_table([], $studentusers, $responsibleusers, $canmanageagreements);
+    echo $renderer->dashboard_agreements_table(
+        [], $studentusers, $responsibleusers, $canmanageagreements, $agreementsort, $agreementdir, $sortbaseurl
+    );
 } else {
     if (!empty($overdueagreements)) {
-        echo $renderer->dashboard_agreements_table($overdueagreements, $studentusers, $responsibleusers, $canmanageagreements);
+        echo $renderer->dashboard_agreements_table(
+            $overdueagreements, $studentusers, $responsibleusers, $canmanageagreements,
+            $agreementsort, $agreementdir, $sortbaseurl
+        );
     }
     if (!empty($pendingagreements)) {
-        echo $renderer->dashboard_agreements_table($pendingagreements, $studentusers, $responsibleusers, $canmanageagreements);
+        echo $renderer->dashboard_agreements_table(
+            $pendingagreements, $studentusers, $responsibleusers, $canmanageagreements,
+            $agreementsort, $agreementdir, $sortbaseurl
+        );
     }
 }
 
 if ($showreferrals) {
     echo $renderer->heading(get_string('dashboard_section_referrals', 'local_monlaututoria'), 3);
-    echo $renderer->referrals_table($referrals, $studentusers);
+    echo $renderer->referrals_table($referrals, $studentusers, $referralsort, $referraldir, $sortbaseurl);
 }
 
 if ($showpriority) {

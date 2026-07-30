@@ -21,6 +21,18 @@ $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
 $selectedstudentdepartment = optional_param('studentdepartment', '', PARAM_ALPHA);
 $selectedtutordepartment = optional_param('tutordepartment', '', PARAM_ALPHA);
 
+$breakdownsortable = ['label', 'studentcount', 'withinitialcount', 'withoutentrycount', 'overduefollowupcount', 'opencasecount'];
+$cohortbreaksort = optional_param('cohortbreaksort', '', PARAM_ALPHA);
+if (!in_array($cohortbreaksort, $breakdownsortable, true)) {
+    $cohortbreaksort = '';
+}
+$cohortbreakdir = strtoupper(optional_param('cohortbreakdir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
+$tutorbreaksort = optional_param('tutorbreaksort', '', PARAM_ALPHA);
+if (!in_array($tutorbreaksort, $breakdownsortable, true)) {
+    $tutorbreaksort = '';
+}
+$tutorbreakdir = strtoupper(optional_param('tutorbreakdir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
+
 $academicyear = $requestedacademicyearid > 0 ? $academicyearrepository->get($requestedacademicyearid) : $academicyearrepository->get_active();
 if ($academicyear === null) {
     throw new \moodle_exception('error_academicyear_required', 'local_monlaututoria');
@@ -38,12 +50,45 @@ $dashboard = $selectedtutorid > 0
     )
     : $dashboardall;
 
+// coordination_dashboard::$cohortbreakdown/$tutorbreakdown are readonly —
+// usort() can't write back into them, so sort local copies instead.
+$breakdownsorter = static function (string $sort, string $dir): \Closure {
+    return function ($a, $b) use ($sort, $dir): int {
+        $result = $sort === 'label' ? strcasecmp($a->label, $b->label) : ($a->{$sort} <=> $b->{$sort});
+        return $dir === 'DESC' ? -$result : $result;
+    };
+};
+$cohortbreakdown = $dashboard->cohortbreakdown;
+$tutorbreakdown = $dashboard->tutorbreakdown;
+if ($cohortbreaksort !== '') {
+    usort($cohortbreakdown, $breakdownsorter($cohortbreaksort, $cohortbreakdir));
+}
+if ($tutorbreaksort !== '') {
+    usort($tutorbreakdown, $breakdownsorter($tutorbreaksort, $tutorbreakdir));
+}
+
+$breakdownbaseurl = new moodle_url('/local/monlaututoria/coordination.php', array_filter([
+    'academicyearid' => $academicyear->id,
+    'cohortid' => $selectedcohortid ?: null,
+    'tutorid' => $selectedtutorid ?: null,
+    'studentdepartment' => $selectedstudentdepartment ?: null,
+    'tutordepartment' => $selectedtutordepartment ?: null,
+    'cohortbreaksort' => $cohortbreaksort ?: null,
+    'cohortbreakdir' => $cohortbreaksort !== '' ? $cohortbreakdir : null,
+    'tutorbreaksort' => $tutorbreaksort ?: null,
+    'tutorbreakdir' => $tutorbreaksort !== '' ? $tutorbreakdir : null,
+], static fn ($value) => $value !== null));
+
 $PAGE->set_url('/local/monlaututoria/coordination.php', [
     'academicyearid' => $academicyear->id,
     'cohortid' => $selectedcohortid,
     'tutorid' => $selectedtutorid,
     'studentdepartment' => $selectedstudentdepartment,
     'tutordepartment' => $selectedtutordepartment,
+    'cohortbreaksort' => $cohortbreaksort,
+    'cohortbreakdir' => $cohortbreakdir,
+    'tutorbreaksort' => $tutorbreaksort,
+    'tutorbreakdir' => $tutorbreakdir,
 ]);
 $PAGE->set_title(get_string('coordination_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('coordination_title', 'local_monlaututoria'));
@@ -151,9 +196,13 @@ echo $renderer->coordination_summary_cards($dashboard->summary);
 echo $renderer->heading(get_string('coordination_quality_title', 'local_monlaututoria'), 3);
 echo $renderer->coordination_quality_cards($dashboard->quality);
 echo $renderer->heading(get_string('coordination_breakdown_cohorts', 'local_monlaututoria'), 3);
-echo $renderer->coordination_breakdown_table($dashboard->cohortbreakdown);
+echo $renderer->coordination_breakdown_table(
+    $cohortbreakdown, $cohortbreaksort, $cohortbreakdir, $breakdownbaseurl, 'cohortbreaksort', 'cohortbreakdir'
+);
 echo $renderer->heading(get_string('coordination_breakdown_tutors', 'local_monlaututoria'), 3);
-echo $renderer->coordination_breakdown_table($dashboard->tutorbreakdown);
+echo $renderer->coordination_breakdown_table(
+    $tutorbreakdown, $tutorbreaksort, $tutorbreakdir, $breakdownbaseurl, 'tutorbreaksort', 'tutorbreakdir'
+);
 
 echo $OUTPUT->footer();
 

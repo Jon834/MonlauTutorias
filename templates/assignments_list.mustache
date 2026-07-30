@@ -28,12 +28,22 @@
     * hasrows bool
     * rows array - see local_monlaututoria/assignment_summary
     * message string - shown instead of the table when hasrows is false
+    * header_timestart string - pre-rendered sortable header link (HTML)
+    * header_timeend string - pre-rendered sortable header link (HTML)
+    * header_status string - pre-rendered sortable header link (HTML)
+    * header_type string - pre-rendered sortable header link (HTML)
+    * header_source string - pre-rendered sortable header link (HTML)
 
     Example context (json):
     {
         "hasrows": false,
         "rows": [],
-        "message": "No assignments have been created yet."
+        "message": "No assignments have been created yet.",
+        "header_timestart": "<a href=\"#\">Start date</a>",
+        "header_timeend": "<a href=\"#\">End date</a>",
+        "header_status": "<a href=\"#\">Status</a>",
+        "header_type": "<a href=\"#\">Type</a>",
+        "header_source": "<a href=\"#\">Source</a>"
     }
 }}
 {{#hasrows}}
@@ -46,11 +56,11 @@
             <th>{{#str}} assignment_col_cotutors, local_monlaututoria {{/str}}</th>
             <th>{{#str}} assignment_col_cohort, local_monlaututoria {{/str}}</th>
             <th>{{#str}} assignment_col_academicyear, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_type, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_timestart, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_timeend, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_status, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_source, local_monlaututoria {{/str}}</th>
+            <th>{{{header_type}}}</th>
+            <th>{{{header_timestart}}}</th>
+            <th>{{{header_timeend}}}</th>
+            <th>{{{header_status}}}</th>
+            <th>{{{header_source}}}</th>
             <th>{{#str}} assignment_col_actions, local_monlaututoria {{/str}}</th>
         </tr>
     </thead>

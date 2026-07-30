@@ -36,6 +36,13 @@ final class referral_repository {
     private const SORTABLE_COLUMNS = ['status', 'priority', 'timecreated'];
 
     /**
+     * @return string[]
+     */
+    public static function sortable_columns(): array {
+        return self::SORTABLE_COLUMNS;
+    }
+
+    /**
      * @param \stdClass $data must contain entryid, studentid, destination, reason, createdby;
      *                        may contain priority (defaults to priority_level::MEDIUM)
      * @return int

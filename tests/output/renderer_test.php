@@ -107,7 +107,9 @@ final class renderer_test extends \advanced_testcase {
             'canclose' => false, 'closeurl' => '', 'closelabel' => '',
         ]];
 
-        $html = $this->get_renderer()->assignments_list($rows);
+        $html = $this->get_renderer()->assignments_list(
+            $rows, 'timestart', 'DESC', new \moodle_url('/local/monlaututoria/assignments/index.php')
+        );
 
         // Substring check, not an exact match against s(): Moodle's Mustache
         // escaper is not guaranteed byte-for-byte identical to s(), only

@@ -88,7 +88,13 @@ if (!$canviewall) {
     $filters['tutorid'] = (int) $USER->id;
 }
 
-$PAGE->set_url('/local/monlaututoria/assignments/index.php', $filters + ['page' => $page]);
+$sort = optional_param('sort', '', PARAM_ALPHA);
+if (!in_array($sort, \local_monlaututoria\repository\assignment_repository::sortable_columns(), true)) {
+    $sort = 'timestart';
+}
+$dir = strtoupper(optional_param('dir', 'DESC', PARAM_ALPHA)) === 'ASC' ? 'ASC' : 'DESC';
+
+$PAGE->set_url('/local/monlaututoria/assignments/index.php', $filters + ['page' => $page, 'sort' => $sort, 'dir' => $dir]);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('assignments', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('assignments', 'local_monlaututoria'));
@@ -124,7 +130,7 @@ $filterform = new \local_monlaututoria\form\assignment_filter_form(
 $filterform->set_data($filters);
 
 $totalcount = $repository->count_search($filters);
-$records = $repository->search($filters, $page * $perpage, $perpage);
+$records = $repository->search($filters, $page * $perpage, $perpage, $sort, $dir);
 
 $studentids = [];
 $tutorids = [];
@@ -243,7 +249,8 @@ echo $renderer->page_header_card(
 
 $filterform->display();
 
-echo $renderer->assignments_list($rows);
+$sortbaseurl = new moodle_url('/local/monlaututoria/assignments/index.php', $filters + ['page' => $page]);
+echo $renderer->assignments_list($rows, $sort, $dir, $sortbaseurl);
 
 echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 

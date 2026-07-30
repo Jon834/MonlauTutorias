@@ -61,9 +61,9 @@
     <td>{{sourcelabel}}</td>
     <td>
         <a href="{{detailurl}}">{{#pix}} i/info, core, {{/pix}} {{viewdetaillabel}}</a>
-        | <a href="{{studentfichaurl}}">{{#pix}} i/report, core, {{/pix}} {{studentfichalabel}}</a>
+        | <a href="{{studentfichaurl}}"><i class="fa-solid fa-address-card" aria-hidden="true"></i> {{studentfichalabel}}</a>
         {{#canedit}} | <a href="{{editurl}}">{{#pix}} t/edit, core, {{/pix}} {{editlabel}}</a>{{/canedit}}
-        {{#canreassign}} | <a href="{{reassignurl}}">{{#pix}} t/switch_roles, core, {{/pix}} {{reassignlabel}}</a>{{/canreassign}}
+        {{#canreassign}} | <a href="{{reassignurl}}"><i class="fa-solid fa-arrows-turn-to-dots" aria-hidden="true"></i> {{reassignlabel}}</a>{{/canreassign}}
         {{#canclose}} | <a href="{{closeurl}}">{{#pix}} t/locked, core, {{/pix}} {{closelabel}}</a>{{/canclose}}
     </td>
 </tr>

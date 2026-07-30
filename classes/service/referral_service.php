@@ -128,12 +128,21 @@ final class referral_service {
      * @param int $viewerid
      * @param int $limitfrom
      * @param int $limitnum
+     * @param string $sort see referral_repository::sortable_columns()
+     * @param string $direction 'ASC' or 'DESC'
      * @return referral[]
      */
-    public function list_for_coordination(array $filters, int $viewerid, int $limitfrom = 0, int $limitnum = 0): array {
+    public function list_for_coordination(
+        array $filters,
+        int $viewerid,
+        int $limitfrom = 0,
+        int $limitnum = 0,
+        string $sort = 'timecreated',
+        string $direction = 'DESC'
+    ): array {
         require_capability('local/monlaututoria:managereferrals', \context_system::instance(), $viewerid);
 
-        $records = $this->repository->search($filters, $limitfrom, $limitnum);
+        $records = $this->repository->search($filters, $limitfrom, $limitnum, $sort, $direction);
 
         return array_map(fn (\stdClass $record) => referral::from_record($record), array_values($records));
     }

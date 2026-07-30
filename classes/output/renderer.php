@@ -462,6 +462,13 @@ final class renderer extends \plugin_renderer_base {
      * @param bool $cancreatefollowup
      * @param bool $showpriority site setting local_monlaututoria/dashboard_showpriority —
      *                           only controls whether the "Prioridad" column is rendered
+     * @param string $currentsort 'studentname', 'lastentry', 'entrycount' or ''
+     *                             — sorting the array itself is the caller's
+     *                             job (dashboard.php), same reasoning as
+     *                             $showpriority: this method only renders
+     * @param string $currentdir 'ASC' or 'DESC'
+     * @param \moodle_url $baseurl current page URL with every other filter
+     *                             already on it except studentsort/studentdir
      * @return string
      */
     public function dashboard_students_table(
@@ -470,7 +477,10 @@ final class renderer extends \plugin_renderer_base {
         int $academicyearid,
         bool $cancreateentry,
         bool $cancreatefollowup,
-        bool $showpriority = true
+        bool $showpriority,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl
     ): string {
         if (empty($students)) {
             return $this->output->notification(
@@ -481,9 +491,18 @@ final class renderer extends \plugin_renderer_base {
 
         $table = new \html_table();
         $table->head = [
-            get_string('assignment_col_student', 'local_monlaututoria'),
-            get_string('dashboard_col_lastentry', 'local_monlaututoria'),
-            get_string('dashboard_col_entrycount', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('assignment_col_student', 'local_monlaututoria'), 'studentname',
+                $currentsort, $currentdir, $baseurl, 'studentsort', 'studentdir'
+            ),
+            $this->sortable_header(
+                get_string('dashboard_col_lastentry', 'local_monlaututoria'), 'lastentry',
+                $currentsort, $currentdir, $baseurl, 'studentsort', 'studentdir'
+            ),
+            $this->sortable_header(
+                get_string('dashboard_col_entrycount', 'local_monlaututoria'), 'entrycount',
+                $currentsort, $currentdir, $baseurl, 'studentsort', 'studentdir'
+            ),
             get_string('dashboard_col_missinginitial', 'local_monlaututoria'),
             get_string('dashboard_col_coverage', 'local_monlaututoria'),
             get_string('dashboard_col_pendingbundle', 'local_monlaututoria'),
@@ -551,6 +570,56 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * A clickable column header that toggles sort direction — click once for
+     * ascending, again for descending; clicking a different column always
+     * starts ascending. Shared by every sortable table in this plugin
+     * instead of duplicating the same toggle-and-arrow logic per table.
+     * Purely a rendering helper: the actual sort (SQL ORDER BY, or a PHP
+     * usort() for the tables built from an already-fully-loaded array) is
+     * each page's own responsibility — this only builds the link and the
+     * ▲/▼ indicator for whichever column is currently active.
+     *
+     * @param string $label
+     * @param string $column stable key sent back as the "sort" URL param —
+     *                        the page must validate it against its own
+     *                        whitelist before using it, same as any other
+     *                        user-supplied param
+     * @param string $currentsort the column currently active, '' for none
+     * @param string $currentdir 'ASC' or 'DESC' — only meaningful when
+     *                            $currentsort === $column
+     * @param \moodle_url $baseurl already carries every other current
+     *                             filter/page param; this only adds sort/dir
+     * @param string $sortparam URL param name for the sort column — defaults
+     *                           to 'sort', but a page with more than one
+     *                           independently-sortable table on it (e.g.
+     *                           dashboard.php) must give each table its own
+     *                           name so their sort states do not collide
+     * @param string $dirparam URL param name for the sort direction, same
+     *                         reasoning as $sortparam
+     * @return string
+     */
+    public function sortable_header(
+        string $label,
+        string $column,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl,
+        string $sortparam = 'sort',
+        string $dirparam = 'dir'
+    ): string {
+        $isactive = $currentsort === $column;
+        $newdir = ($isactive && strtoupper($currentdir) === 'ASC') ? 'DESC' : 'ASC';
+
+        $url = new \moodle_url($baseurl, [$sortparam => $column, $dirparam => $newdir]);
+        $suffix = '';
+        if ($isactive) {
+            $suffix = ' ' . (strtoupper($currentdir) === 'ASC' ? '▲' : '▼');
+        }
+
+        return \html_writer::link($url, s($label) . $suffix);
+    }
+
+    /**
      * A muted, non-boxed line for "nothing to show here" states that are
      * common and expected (an empty dashboard section, one half of a
      * split overdue/upcoming pair) — as opposed to $this->output->notification()'s
@@ -569,9 +638,20 @@ final class renderer extends \plugin_renderer_base {
      * @param \local_monlaututoria\domain\followup[] $followups
      * @param array<int, \stdClass> $students keyed by student id
      * @param bool $canmanage
+     * @param string $currentsort 'studentname', 'duedate', 'priority' or ''
+     * @param string $currentdir 'ASC' or 'DESC'
+     * @param \moodle_url $baseurl current page URL with every other filter
+     *                             already on it except followupsort/followupdir
      * @return string
      */
-    public function dashboard_followups_table(array $followups, array $students, bool $canmanage): string {
+    public function dashboard_followups_table(
+        array $followups,
+        array $students,
+        bool $canmanage,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl
+    ): string {
         if (empty($followups)) {
             return $this->subtle_empty_hint(get_string('dashboard_followups_empty', 'local_monlaututoria'));
         }
@@ -582,9 +662,18 @@ final class renderer extends \plugin_renderer_base {
 
         $table = new \html_table();
         $table->head = [
-            get_string('assignment_col_student', 'local_monlaututoria'),
-            get_string('followup_field_duedate', 'local_monlaututoria'),
-            get_string('followup_field_priority', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('assignment_col_student', 'local_monlaututoria'), 'studentname',
+                $currentsort, $currentdir, $baseurl, 'followupsort', 'followupdir'
+            ),
+            $this->sortable_header(
+                get_string('followup_field_duedate', 'local_monlaututoria'), 'duedate',
+                $currentsort, $currentdir, $baseurl, 'followupsort', 'followupdir'
+            ),
+            $this->sortable_header(
+                get_string('followup_field_priority', 'local_monlaututoria'), 'priority',
+                $currentsort, $currentdir, $baseurl, 'followupsort', 'followupdir'
+            ),
             get_string('followup_field_status', 'local_monlaututoria'),
             '',
         ];
@@ -613,9 +702,21 @@ final class renderer extends \plugin_renderer_base {
      * @param array<int, \stdClass> $students keyed by student id
      * @param array<int, \stdClass> $responsibleusers keyed by user id
      * @param bool $canmanage
+     * @param string $currentsort 'studentname', 'duedate' or ''
+     * @param string $currentdir 'ASC' or 'DESC'
+     * @param \moodle_url $baseurl current page URL with every other filter
+     *                             already on it except agreementsort/agreementdir
      * @return string
      */
-    public function dashboard_agreements_table(array $agreements, array $students, array $responsibleusers, bool $canmanage): string {
+    public function dashboard_agreements_table(
+        array $agreements,
+        array $students,
+        array $responsibleusers,
+        bool $canmanage,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl
+    ): string {
         if (empty($agreements)) {
             return $this->subtle_empty_hint(get_string('dashboard_agreements_empty', 'local_monlaututoria'));
         }
@@ -626,10 +727,16 @@ final class renderer extends \plugin_renderer_base {
 
         $table = new \html_table();
         $table->head = [
-            get_string('assignment_col_student', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('assignment_col_student', 'local_monlaututoria'), 'studentname',
+                $currentsort, $currentdir, $baseurl, 'agreementsort', 'agreementdir'
+            ),
             get_string('agreement_field_description', 'local_monlaututoria'),
             get_string('agreement_field_responsibletype', 'local_monlaututoria'),
-            get_string('agreement_field_duedate', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('agreement_field_duedate', 'local_monlaututoria'), 'duedate',
+                $currentsort, $currentdir, $baseurl, 'agreementsort', 'agreementdir'
+            ),
             get_string('agreement_field_status', 'local_monlaututoria'),
             '',
         ];
@@ -726,11 +833,35 @@ final class renderer extends \plugin_renderer_base {
      *                    names, cohort/academic year names, status badge data, urls)
      * @return string
      */
-    public function assignments_list(array $rows): string {
+    /**
+     * @param \stdClass[] $rows
+     * @param string $currentsort one of assignment_repository::SORTABLE_COLUMNS,
+     *                             or '' — the page has already validated this
+     * @param string $currentdir 'ASC' or 'DESC'
+     * @param \moodle_url $baseurl current page URL with every filter/page
+     *                             param already on it except sort/dir
+     * @return string
+     */
+    public function assignments_list(array $rows, string $currentsort, string $currentdir, \moodle_url $baseurl): string {
         $data = [
             'hasrows' => !empty($rows),
             'rows'    => array_values($rows),
             'message' => get_string('assignments_list_empty', 'local_monlaututoria'),
+            'header_timestart' => $this->sortable_header(
+                get_string('assignment_col_timestart', 'local_monlaututoria'), 'timestart', $currentsort, $currentdir, $baseurl
+            ),
+            'header_timeend' => $this->sortable_header(
+                get_string('assignment_col_timeend', 'local_monlaututoria'), 'timeend', $currentsort, $currentdir, $baseurl
+            ),
+            'header_status' => $this->sortable_header(
+                get_string('assignment_col_status', 'local_monlaututoria'), 'status', $currentsort, $currentdir, $baseurl
+            ),
+            'header_type' => $this->sortable_header(
+                get_string('assignment_col_type', 'local_monlaututoria'), 'assignmenttype', $currentsort, $currentdir, $baseurl
+            ),
+            'header_source' => $this->sortable_header(
+                get_string('assignment_col_source', 'local_monlaututoria'), 'source', $currentsort, $currentdir, $baseurl
+            ),
         ];
 
         return $this->render_from_template('local_monlaututoria/assignments_list', $data);
@@ -1284,7 +1415,10 @@ final class renderer extends \plugin_renderer_base {
         array $modalities,
         array $reasonsbyentry,
         array $allreasons,
-        bool $islimitedview = false
+        bool $islimitedview,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl
     ): string {
         if (empty($entries)) {
             return $this->output->notification(
@@ -1298,10 +1432,16 @@ final class renderer extends \plugin_renderer_base {
 
         $table = new \html_table();
         $table->head = [
-            get_string('entry_field_entrydate', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('entry_field_entrydate', 'local_monlaututoria'), 'entrydate',
+                $currentsort, $currentdir, $baseurl, 'entrysort', 'entrydir'
+            ),
             get_string('assignment_col_tutor', 'local_monlaututoria'),
             get_string('entry_field_modality', 'local_monlaututoria'),
-            get_string('assignment_col_status', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('assignment_col_status', 'local_monlaututoria'), 'status',
+                $currentsort, $currentdir, $baseurl, 'entrysort', 'entrydir'
+            ),
         ];
         if (!$islimitedview) {
             $table->head[] = get_string('entry_field_reasons', 'local_monlaututoria');
@@ -1530,9 +1670,19 @@ final class renderer extends \plugin_renderer_base {
      *
      * @param \local_monlaututoria\domain\referral[] $referrals
      * @param array $students keyed by user id
+     * @param string $currentsort 'studentname', 'destination', 'priority', 'status' or ''
+     * @param string $currentdir 'ASC' or 'DESC'
+     * @param \moodle_url $baseurl current page URL with every other filter
+     *                             already on it except referralsort/referraldir
      * @return string
      */
-    public function referrals_table(array $referrals, array $students): string {
+    public function referrals_table(
+        array $referrals,
+        array $students,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl
+    ): string {
         if (empty($referrals)) {
             return $this->subtle_empty_hint(get_string('referrals_empty', 'local_monlaututoria'));
         }
@@ -1544,10 +1694,22 @@ final class renderer extends \plugin_renderer_base {
 
         $table = new \html_table();
         $table->head = [
-            get_string('assignment_col_student', 'local_monlaututoria'),
-            get_string('referral_field_destination', 'local_monlaututoria'),
-            get_string('followup_field_priority', 'local_monlaututoria'),
-            get_string('referral_field_status', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('assignment_col_student', 'local_monlaututoria'), 'studentname',
+                $currentsort, $currentdir, $baseurl, 'referralsort', 'referraldir'
+            ),
+            $this->sortable_header(
+                get_string('referral_field_destination', 'local_monlaututoria'), 'destination',
+                $currentsort, $currentdir, $baseurl, 'referralsort', 'referraldir'
+            ),
+            $this->sortable_header(
+                get_string('followup_field_priority', 'local_monlaututoria'), 'priority',
+                $currentsort, $currentdir, $baseurl, 'referralsort', 'referraldir'
+            ),
+            $this->sortable_header(
+                get_string('referral_field_status', 'local_monlaututoria'), 'status',
+                $currentsort, $currentdir, $baseurl, 'referralsort', 'referraldir'
+            ),
             '',
         ];
 
@@ -1672,18 +1834,43 @@ final class renderer extends \plugin_renderer_base {
         return \html_writer::div($html, 'local-monlaututoria-dashboard-summary d-grid gap-3 mb-4');
     }
 
-    public function coordination_breakdown_table(array $rows): string {
+    public function coordination_breakdown_table(
+        array $rows,
+        string $currentsort,
+        string $currentdir,
+        \moodle_url $baseurl,
+        string $sortparam,
+        string $dirparam
+    ): string {
         if (empty($rows)) {
             return $this->output->notification(get_string('coordination_dashboard_empty', 'local_monlaututoria'), \core\output\notification::NOTIFY_INFO);
         }
         $table = new \html_table();
         $table->head = [
-            get_string('coordination_breakdown_label', 'local_monlaututoria'),
-            get_string('coordination_breakdown_population', 'local_monlaututoria'),
-            get_string('coordination_breakdown_withinitial', 'local_monlaututoria'),
-            get_string('coordination_breakdown_withoutentry', 'local_monlaututoria'),
-            get_string('coordination_breakdown_overduefollowups', 'local_monlaututoria'),
-            get_string('coordination_breakdown_opencases', 'local_monlaututoria'),
+            $this->sortable_header(
+                get_string('coordination_breakdown_label', 'local_monlaututoria'), 'label',
+                $currentsort, $currentdir, $baseurl, $sortparam, $dirparam
+            ),
+            $this->sortable_header(
+                get_string('coordination_breakdown_population', 'local_monlaututoria'), 'studentcount',
+                $currentsort, $currentdir, $baseurl, $sortparam, $dirparam
+            ),
+            $this->sortable_header(
+                get_string('coordination_breakdown_withinitial', 'local_monlaututoria'), 'withinitialcount',
+                $currentsort, $currentdir, $baseurl, $sortparam, $dirparam
+            ),
+            $this->sortable_header(
+                get_string('coordination_breakdown_withoutentry', 'local_monlaututoria'), 'withoutentrycount',
+                $currentsort, $currentdir, $baseurl, $sortparam, $dirparam
+            ),
+            $this->sortable_header(
+                get_string('coordination_breakdown_overduefollowups', 'local_monlaututoria'), 'overduefollowupcount',
+                $currentsort, $currentdir, $baseurl, $sortparam, $dirparam
+            ),
+            $this->sortable_header(
+                get_string('coordination_breakdown_opencases', 'local_monlaututoria'), 'opencasecount',
+                $currentsort, $currentdir, $baseurl, $sortparam, $dirparam
+            ),
         ];
         foreach ($rows as $row) {
             $table->data[] = [format_string($row->label), $row->studentcount, $row->withinitialcount, $row->withoutentrycount, $row->overduefollowupcount, $row->opencasecount];

@@ -240,12 +240,19 @@ if ($academicyear === null) {
     $entrypage = optional_param('entrypage', 0, PARAM_INT);
     $entryperpage = 20;
 
+    $entrysort = optional_param('entrysort', '', PARAM_ALPHA);
+    if (!in_array($entrysort, \local_monlaututoria\repository\entry_repository::sortable_columns(), true)) {
+        $entrysort = 'entrydate';
+    }
+    $entrydir = strtoupper(optional_param('entrydir', 'DESC', PARAM_ALPHA)) === 'ASC' ? 'ASC' : 'DESC';
+
     $entryservice = new \local_monlaututoria\service\entry_service();
     $entrytotalcount = $entryservice->count_history_for_student(
         $studentid, (int) $academicyear->id, $entryfilters, (int) $USER->id
     );
     $entries = $entryservice->get_history_for_student(
-        $studentid, (int) $academicyear->id, $entryfilters, (int) $USER->id, $entrypage * $entryperpage, $entryperpage
+        $studentid, (int) $academicyear->id, $entryfilters, (int) $USER->id,
+        $entrypage * $entryperpage, $entryperpage, $entrysort, $entrydir
     );
 
     $modalityrepository = new \local_monlaututoria\repository\modality_repository();
@@ -322,7 +329,16 @@ if ($academicyear === null) {
 
     echo html_writer::div($toolbar, 'local-monlaututoria-toolbar');
 
-    echo $renderer->entry_history_table($entries, $entrytutors, $allmodalities, $reasonsbyentry, $allreasons, $islimitedview);
+    $entrysortbaseurl = new moodle_url('/local/monlaututoria/student/view.php', $entryfilterurlparams + array_filter([
+        'entrystatus' => $statusfilter ?: null,
+        'modalityid' => $modalityfilter ?: null,
+        'reasonid' => $reasonfilter ?: null,
+        'visibilitytier' => $visibilityfilter ?: null,
+    ], static fn ($value) => $value !== null));
+    echo $renderer->entry_history_table(
+        $entries, $entrytutors, $allmodalities, $reasonsbyentry, $allreasons, $islimitedview,
+        $entrysort, $entrydir, $entrysortbaseurl
+    );
 
     echo $OUTPUT->paging_bar($entrytotalcount, $entrypage, $entryperpage, $PAGE->url);
 } else if ($tab === 'acuerdos') {

@@ -1,5 +1,26 @@
 # Changelog — local_monlaututoria
 
+## 0.12.5 — 2026-07-30
+
+**Encabezados de columna ordenables en todas las tablas principales.** Petición de uso real ("en todas las tablas estaria bien poder filtrar por el encabezado"), aclarada a "ordenar al hacer clic" aplicado de una vez a las tablas principales — no filtros por columna. Solo comportamiento de listado, sin cambio de esquema.
+
+- Nuevo `renderer::sortable_header()`: helper compartido que pinta un enlace de encabezado — clic alterna ASC/DESC, cambiar de columna siempre empieza en ASC, con un indicador ▲/▼. Acepta nombres de parámetro de URL configurables (`$sortparam`/`$dirparam`) para que varias tablas independientes convivan en la misma página sin pisarse el estado de orden entre sí.
+- **7 tablas ahora ordenables**: listado de asignaciones (`assignments/index.php`, ordenado en servidor vía `assignment_repository::search()`, que ya soportaba `ORDER BY` desde antes), las 4 tablas del panel del tutor (`dashboard.php`: alumnos, seguimientos, acuerdos, derivaciones — ordenadas en memoria con `usort()`, porque llegan como arrays ya completos sin paginar), el listado de derivaciones de coordinación (`referrals/index.php`, en servidor vía `referral_repository::search()`) y el historial de tutorías de la ficha del alumno (`student/view.php`, en servidor vía `entry_repository::search()`, al que se le añadió el parámetro de orden que ya soportaba el repositorio pero no usaba nadie). Las 2 tablas de desglose del panel de coordinación (`coordination.php`, por cohorte y por tutor) también son ordenables, en memoria.
+- Limitación conocida y documentada (comentario en `referrals/index.php`): esa página comparte `renderer::referrals_table()` con `dashboard.php`, pero solo puede ordenar por las columnas que soporta `referral_repository::sortable_columns()` (estado/prioridad/fecha) porque el listado está paginado en SQL — no por alumno/destino, que si funcionan en el panel del tutor por venir de un array completo en memoria. Clic en esas dos columnas ahí no tiene efecto, mismo criterio de "orden desconocido cae al valor por defecto" que ya usa el resto de repositorios del plugin.
+- Sin tablas nuevas de esquema, sin capacidades nuevas.
+- ⚠️ No verificado todavía en un Moodle real; solo `php -l` (0 errores) en los 321 archivos PHP del plugin. `tests/output/renderer_test.php::test_assignments_list_escapes_hostile_row_values` actualizado a la nueva firma de `assignments_list()` (no ejecutado).
+
+---
+
+## 0.12.4 — 2026-07-30
+
+**Ajuste de iconos: "Ver ficha" y "Reasignar tutor" pasan a Font Awesome, elegidos por el usuario.** Solo visual.
+
+- `templates/assignment_summary.mustache`: "Ver ficha" usa `fa-solid fa-address-card` y "Reasignar tutor" usa `fa-solid fa-arrows-turn-to-dots`, embebidos directamente (`<i class="...">`, `aria-hidden="true"` por ser decorativos junto a texto ya visible) en vez del helper `{{#pix}}`. El resto (Ver detalle, Editar, Cerrar) sigue con los iconos de Moodle core del cambio anterior — ambos mecanismos conviven sin problema en un tema Boost, que ya carga Font Awesome globalmente.
+- ⚠️ No verificado todavía en un Moodle real.
+
+---
+
 ## 0.12.3 — 2026-07-25
 
 **Iconos junto a las acciones del listado de asignaciones.** Petición de uso real, solo visual — sin cambio de esquema ni de lógica.

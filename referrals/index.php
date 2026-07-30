@@ -40,8 +40,25 @@ if (in_array($statusfilter, \local_monlaututoria\domain\referral_status::values(
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = 20;
 
+// referrals_table() offers 4 columns (shared with dashboard.php's in-memory
+// version), but this page is SQL-paginated — only a real ORDER BY can sort
+// correctly across the full result set, not just the current page. Only
+// referral_repository::sortable_columns() (status/priority/timecreated) can
+// do that; clicking "Alumno"/"Destino" here silently has no effect, same
+// "unknown sort falls back to the default" behaviour already established
+// for every other sortable listing in this plugin.
+$referralsort = optional_param('referralsort', '', PARAM_ALPHA);
+if (!in_array($referralsort, \local_monlaututoria\repository\referral_repository::sortable_columns(), true)) {
+    $referralsort = 'timecreated';
+}
+$referraldir = strtoupper(optional_param('referraldir', 'DESC', PARAM_ALPHA)) === 'ASC' ? 'ASC' : 'DESC';
+
 $PAGE->set_context($context);
-$PAGE->set_url('/local/monlaututoria/referrals/index.php', array_filter(['status' => $statusfilter ?: null]));
+$PAGE->set_url('/local/monlaututoria/referrals/index.php', array_filter([
+    'status' => $statusfilter ?: null,
+    'referralsort' => $referralsort,
+    'referraldir' => $referraldir,
+]));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('referrals_title', 'local_monlaututoria'));
 $PAGE->set_heading(get_string('referrals_title', 'local_monlaututoria'));
@@ -49,7 +66,9 @@ $PAGE->requires->css(new moodle_url('/local/monlaututoria/styles.css'));
 
 $service = new \local_monlaututoria\service\referral_service();
 $totalcount = $service->count_for_coordination($filters, (int) $USER->id);
-$referrals = $service->list_for_coordination($filters, (int) $USER->id, $page * $perpage, $perpage);
+$referrals = $service->list_for_coordination(
+    $filters, (int) $USER->id, $page * $perpage, $perpage, $referralsort, $referraldir
+);
 
 $studentids = array_unique(array_map(static fn ($referral) => $referral->studentid, $referrals));
 $students = !empty($studentids) ? $DB->get_records_list('user', 'id', $studentids, '', 'id, firstname, lastname, email') : [];
@@ -68,7 +87,7 @@ echo $renderer->page_header_card(
     get_string('pluginname', 'local_monlaututoria')
 );
 echo $OUTPUT->single_select(
-    new moodle_url('/local/monlaututoria/referrals/index.php'),
+    new moodle_url('/local/monlaututoria/referrals/index.php', ['referralsort' => $referralsort, 'referraldir' => $referraldir]),
     'status',
     $statusoptions,
     $statusfilter,
@@ -76,9 +95,8 @@ echo $OUTPUT->single_select(
     'referralstatusselector'
 );
 
-/** @var \local_monlaututoria\output\renderer $renderer */
-$renderer = $PAGE->get_renderer('local_monlaututoria');
-echo $renderer->referrals_table($referrals, $students);
+$sortbaseurl = new moodle_url('/local/monlaututoria/referrals/index.php', array_filter(['status' => $statusfilter ?: null]));
+echo $renderer->referrals_table($referrals, $students, $referralsort, $referraldir, $sortbaseurl);
 
 echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 echo $OUTPUT->footer();

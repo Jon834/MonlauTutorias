@@ -410,6 +410,8 @@ final class entry_service {
      * @param int $viewerid
      * @param int $limitfrom
      * @param int $limitnum
+     * @param string $sort see entry_repository::sortable_columns()
+     * @param string $direction 'ASC' or 'DESC'
      * @return entry[]
      */
     public function get_history_for_student(
@@ -418,13 +420,15 @@ final class entry_service {
         array $filters,
         int $viewerid,
         int $limitfrom = 0,
-        int $limitnum = 0
+        int $limitnum = 0,
+        string $sort = 'entrydate',
+        string $direction = 'DESC'
     ): array {
         $this->scopeservice->require_user_can_access_student($viewerid, $studentid, $academicyearid);
 
         $filters['studentid'] = $studentid;
         $filters['academicyearid'] = $academicyearid;
-        $records = $this->repository->search($filters, $limitfrom, $limitnum);
+        $records = $this->repository->search($filters, $limitfrom, $limitnum, $sort, $direction);
 
         return array_map(
             fn (\stdClass $record) => entry::from_record($this->mask_content($record, $viewerid)),

@@ -36,6 +36,13 @@ final class entry_repository {
     private const SORTABLE_COLUMNS = ['entrydate', 'status', 'timecreated'];
 
     /**
+     * @return string[]
+     */
+    public static function sortable_columns(): array {
+        return self::SORTABLE_COLUMNS;
+    }
+
+    /**
      * Inserts a new tutoring entry and returns its id.
      *
      * @param \stdClass $data must contain studentid, tutorid, academicyearid, entrydate, createdby;

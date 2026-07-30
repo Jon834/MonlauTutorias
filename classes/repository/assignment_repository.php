@@ -514,6 +514,18 @@ class assignment_repository {
     private const SORTABLE_COLUMNS = ['timestart', 'timeend', 'status', 'assignmenttype', 'source'];
 
     /**
+     * Exposes the same whitelist search() itself validates against, so a
+     * page building a sortable column header (assignments/index.php) has one
+     * place to validate the "sort" URL param instead of duplicating this
+     * literal list.
+     *
+     * @return string[]
+     */
+    public static function sortable_columns(): array {
+        return self::SORTABLE_COLUMNS;
+    }
+
+    /**
      * Paginated, filterable listing of assignments for the administration
      * pages. Never joins against `user`/`cohort`: callers must batch-fetch
      * display data for the returned rows themselves (see
