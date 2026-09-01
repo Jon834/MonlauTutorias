@@ -73,10 +73,14 @@ final class cohort_assignment_create_form extends \moodleform {
         $mform->setType('primarytutorid', PARAM_INT);
         $mform->addRule('primarytutorid', get_string('required'), 'required', null, 'client');
 
-        $mform->addElement(
-            'autocomplete', 'cotutorid', get_string('cohort_assignment_field_cotutor', 'local_monlaututoria'), [], $userselectoroptions
-        );
-        $mform->setType('cotutorid', PARAM_INT);
+        // Fase 13 — no co-tutor in simple mode; the service treats a missing
+        // cotutorid exactly as "none".
+        if (!\local_monlaututoria\feature::simple_mode()) {
+            $mform->addElement(
+                'autocomplete', 'cotutorid', get_string('cohort_assignment_field_cotutor', 'local_monlaututoria'), [], $userselectoroptions
+            );
+            $mform->setType('cotutorid', PARAM_INT);
+        }
 
         $mform->addElement(
             'select', 'mode', get_string('cohort_assignment_field_mode', 'local_monlaututoria'), $customdata['modeoptions']

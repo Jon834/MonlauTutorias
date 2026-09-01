@@ -539,6 +539,27 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091400, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026091701) {
+        // Fase 13 — real-use feedback: on some deployments a student opening
+        // "Mis tutorías" was denied because local/monlaututoria:viewownfile
+        // was not actually granted to the authenticated-user role (the
+        // capability's archetype default is 'user', but a default only
+        // applies on the capability's very first install, and can be lost to
+        // a later role customisation). Re-assert it here — assign_capability()
+        // with the value already set is a no-op, so this never clobbers an
+        // admin who deliberately kept it and only fixes the ones missing it.
+        $syscontext = context_system::instance();
+        $userroleid = isset($CFG->defaultuserroleid) && $CFG->defaultuserroleid
+            ? (int) $CFG->defaultuserroleid
+            : (int) $DB->get_field('role', 'id', ['archetype' => 'user'], IGNORE_MULTIPLE);
+        if ($userroleid) {
+            assign_capability('local/monlaututoria:viewownfile', CAP_ALLOW, $userroleid, $syscontext->id, true);
+            $syscontext->mark_dirty();
+        }
+
+        upgrade_plugin_savepoint(true, 2026091701, 'local', 'monlaututoria');
+    }
+
     return true;
 }
 

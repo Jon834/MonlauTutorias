@@ -56,7 +56,13 @@ final class feature {
     /** @var string Notifications and their scheduled reminders. */
     public const NOTIFICATIONS = 'notifications';
 
-    /** @var string Bulk assignment imports (CSV and from cohorts) plus per-cohort visibility. */
+    /**
+     * CSV assignment import plus per-cohort visibility config. NOTE: cohort ->
+     * tutor bulk assignment (assignments/cohort_create.php) is NOT covered by
+     * this — it stays available in simple mode as a coordination tool.
+     *
+     * @var string
+     */
     public const IMPORTS = 'imports';
 
     /** @var string Co-tutor management and primary-tutor reassignment screens. */

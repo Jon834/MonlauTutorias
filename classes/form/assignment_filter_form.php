@@ -61,11 +61,13 @@ final class assignment_filter_form extends \moodleform {
         if (!$simplemode) {
             $sourceoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + assignment_source::get_options();
             $mform->addElement('select', 'source', get_string('filter_source', 'local_monlaututoria'), $sourceoptions);
-
-            $cohortoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + $customdata['cohorts'];
-            $mform->addElement('select', 'cohortid', get_string('filter_cohort', 'local_monlaututoria'), $cohortoptions);
-            $mform->setType('cohortid', PARAM_INT);
         }
+
+        // Cohort filter stays in simple mode: cohort -> tutor bulk assignment
+        // is available there, so filtering the listing by cohort is useful.
+        $cohortoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + $customdata['cohorts'];
+        $mform->addElement('select', 'cohortid', get_string('filter_cohort', 'local_monlaututoria'), $cohortoptions);
+        $mform->setType('cohortid', PARAM_INT);
 
         // NOTE: 'core_user/form_user_selector' is the AJAX transport this form
         // relies on for a search-as-you-type user picker instead of a full

@@ -80,6 +80,16 @@ final class renderer extends \plugin_renderer_base {
                 'url' => new \moodle_url('/local/monlaututoria/dashboard.php'),
                 'title' => get_string('nav_dashboard_tip', 'local_monlaututoria'),
             ];
+        }
+
+        // Fase 13 — in simple mode "Asignaciones" belongs to coordination
+        // only: a plain tutor manages their students from the panel and the
+        // ficha, and does not create/close assignments. In full mode a tutor
+        // with viewownstudents still sees it (scoped to their own students).
+        $canseeassignments = \local_monlaututoria\feature::simple_mode()
+            ? has_capability('local/monlaututoria:viewallassignments', $systemcontext)
+            : has_any_capability(['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments'], $systemcontext);
+        if ($canseeassignments) {
             $items[] = [
                 'key' => 'assignments',
                 'label' => get_string('nav_assignments', 'local_monlaututoria'),

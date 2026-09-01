@@ -31,7 +31,9 @@ require(__DIR__ . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
-\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::IMPORTS);
+// Fase 13 — cohort → tutor bulk assignment stays available in simple mode
+// (a real coordination need); only the CSV import path is hidden. Gated by
+// the managecohortassignments capability, same as before.
 // A purpose-built capability, not assignstudents: created in phase 3C.1
 // specifically for this feature (see db/access.php), left without a
 // consumer until now. Grants access to the page and to PREVIEW_ONLY (which

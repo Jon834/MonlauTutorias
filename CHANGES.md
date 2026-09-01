@@ -1,5 +1,16 @@
 # Changelog — local_monlaututoria
 
+## 0.13.1 — 2026-09-01
+
+**Ajustes de la Fase 13 tras la primera prueba en Moodle real.**
+
+- **El alumno no podía ver sus tutorías.** Paso nuevo en `db/upgrade.php` (`2026091701`) que reasigna `local/monlaututoria:viewownfile` (CAP_ALLOW) al rol de usuario autenticado — en algunas instalaciones el valor por defecto del arquetipo no había llegado a aplicarse o se había perdido. `assign_capability()` con el valor ya puesto es no-op, así que no pisa una personalización deliberada.
+- **El tutor ya no ve "Asignaciones"** en modo simple: la navegación, la página `assignments/index.php`, la `admin_externalpage` y el enlace del bloque exigen ahora `viewallassignments` (coordinación) en modo simple, no `viewownstudents`. El tutor gestiona a sus alumnos desde el panel y la ficha.
+- **Asignación de una cohorte entera a un tutor disponible en modo simple**: `assignments/cohort_create.php` deja de estar bajo `feature::IMPORTS` (solo la importación CSV sigue oculta). Sigue protegida por la capacidad `managecohortassignments`. En modo simple el formulario oculta el cotutor. El filtro por cohorte del listado vuelve a mostrarse en modo simple.
+- `version.php` → `2026091701` / `0.13.1` (por encima del `2026091601` preexistente).
+
+---
+
 ## 0.13.0 — 2026-09-01
 
 **Fase 13 (S1–S5) — "modo simple", roster del tutor y manuales.** Nuevo ajuste de sitio `local_monlaututoria/simplemode` (checkbox, **desactivado por defecto** — una instalación existente no cambia sola). Con el modo activado se ocultan los módulos avanzados sin borrar nada: sus datos, servicios, tablas y pruebas quedan intactos, y desactivar la casilla lo restaura todo. Ver `docs/fases/phase-13-modo-simple.md`.

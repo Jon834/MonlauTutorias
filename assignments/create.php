@@ -89,8 +89,7 @@ if ($form->is_cancelled()) {
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 
 $cohortcreateaction = [];
-if (has_capability('local/monlaututoria:managecohortassignments', $context)
-    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
+if (has_capability('local/monlaututoria:managecohortassignments', $context)) {
     $cohortcreateaction[] = [
         'url' => new moodle_url('/local/monlaututoria/assignments/cohort_create.php'),
         'label' => get_string('cohort_assignment_create', 'local_monlaututoria'),

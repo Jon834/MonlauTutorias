@@ -28,9 +28,14 @@ require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
 
-$viewcaps = ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents'];
+// Fase 13 — in simple mode the assignments listing is coordination-only
+// (viewallassignments). A plain tutor (viewownstudents) works from the panel
+// and the student ficha, and never touches assignment records.
+$viewcaps = \local_monlaututoria\feature::simple_mode()
+    ? ['local/monlaututoria:viewallassignments']
+    : ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents'];
 if (!has_any_capability($viewcaps, $context)) {
-    throw new required_capability_exception($context, 'local/monlaututoria:viewownstudents', 'nopermissions', '');
+    throw new required_capability_exception($context, 'local/monlaututoria:viewallassignments', 'nopermissions', '');
 }
 
 $canviewall = has_capability('local/monlaututoria:viewallassignments', $context);
@@ -231,8 +236,7 @@ if ($canassignstudents) {
         'title' => get_string('assignments_create_tip', 'local_monlaututoria'),
     ];
 }
-if (has_capability('local/monlaututoria:managecohortassignments', $context)
-    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
+if (has_capability('local/monlaututoria:managecohortassignments', $context)) {
     $headeractions[] = [
         'url' => new moodle_url('/local/monlaututoria/assignments/cohort_create.php'),
         'label' => get_string('cohort_assignment_create', 'local_monlaututoria'),

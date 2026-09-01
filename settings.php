@@ -72,11 +72,14 @@ if ($hassiteconfig
         ['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments']
     ));
 
+    // Fase 13 — simple mode: assignments listing is coordination-only.
     $ADMIN->add('local_monlaututoria', new admin_externalpage(
         'local_monlaututoria_assignments',
         get_string('assignments', 'local_monlaututoria'),
         new moodle_url('/local/monlaututoria/assignments/index.php'),
-        ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents']
+        \local_monlaututoria\feature::simple_mode()
+            ? ['local/monlaututoria:viewallassignments']
+            : ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents']
     ));
 
     if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
