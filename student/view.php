@@ -48,20 +48,29 @@ $context = context_system::instance();
 
 $studentid = required_param('id', PARAM_INT);
 
+$scopeservice = new \local_monlaututoria\service\scope_service();
+
 $isself = ((int) $USER->id === $studentid);
 $canviewownfile = $isself && has_capability('local/monlaututoria:viewownfile', $context);
-// Fase 13 — in simple mode a tutor-by-assignment opens the ficha without the
-// viewstudent capability; scope_service::require_user_can_access_student()
-// below still gates access to this specific student.
-$istutorbyassignment = \local_monlaututoria\feature::simple_mode()
-    && (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id);
-if (!$canviewownfile && !$istutorbyassignment) {
+// Fase 13 — the viewstudent capability is no longer the only way in: a
+// tutor-by-assignment (simple mode) or a former tutor of this student also
+// reach the ficha. can_user_access_student() (no year) is the coarse gate;
+// the per-year scope check further down still applies.
+$canopenficha = $canviewownfile
+    || $scopeservice->can_user_access_student((int) $USER->id, $studentid);
+if (!$canopenficha) {
     require_capability('local/monlaututoria:viewstudent', $context);
 }
+
+// A former tutor of this student (relationship ended) gets a narrowed view:
+// only the "Tutorías" tab, and only the tutorías they recorded themselves
+// (enforced in entry_service).
+$historicalonly = !$isself && $scopeservice->access_is_historical_only((int) $USER->id, $studentid);
+
 // A student viewing their own file always gets the limited view, regardless
 // of whatever other capability they might also happen to hold — this is
 // about whose file is open, not about which capability let them in.
-$islimitedview = $isself;
+$islimitedview = $isself || $historicalonly;
 
 // Fase 13 — a tutor-by-assignment (simple mode) has no capability to open
 // assignments/view.php, so the links to it are suppressed for them, without
@@ -72,12 +81,18 @@ $hideassignmentlinks = $islimitedview
 
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
 $tab = optional_param('tab', 'resumen', PARAM_ALPHA);
-$allowedtabs = ['resumen', 'historial', 'tutorias'];
-if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS)) {
-    $allowedtabs[] = 'acuerdos';
-}
-if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS)) {
-    $allowedtabs[] = 'seguimientos';
+if ($historicalonly) {
+    // A former tutor only sees "Tutorías" (their own).
+    $allowedtabs = ['tutorias'];
+    $tab = 'tutorias';
+} else {
+    $allowedtabs = ['resumen', 'historial', 'tutorias'];
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS)) {
+        $allowedtabs[] = 'acuerdos';
+    }
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS)) {
+        $allowedtabs[] = 'seguimientos';
+    }
 }
 if (!in_array($tab, $allowedtabs, true)) {
     $tab = 'resumen';
@@ -104,12 +119,15 @@ if ($requestedacademicyearid > 0) {
 
 // Scope is checked against the specific academic year being displayed, same
 // as assignments/view.php — never widened to "any year" just because this
-// page can show more than one.
-$scope = new \local_monlaututoria\service\scope_service();
-$scope->require_user_can_access_student(
+// page can show more than one. Exception: a former tutor (historical-only)
+// may have recorded tutorías across several years; the year-by-year check
+// would 403 them on any year they were not formally assigned, so they get
+// the "any year" check here and entry_service still restricts the listing to
+// their own entries.
+$scopeservice->require_user_can_access_student(
     (int) $USER->id,
     $studentid,
-    $academicyear !== null ? (int) $academicyear->id : null
+    ($historicalonly || $academicyear === null) ? null : (int) $academicyear->id
 );
 
 $PAGE->set_context($context);
@@ -173,7 +191,12 @@ echo html_writer::div(
     'd-flex flex-wrap align-items-center gap-3 mb-4'
 );
 
-echo $renderer->student_tabs($tab, $studentid, $academicyear !== null ? (int) $academicyear->id : null);
+echo $renderer->student_tabs(
+    $tab,
+    $studentid,
+    $academicyear !== null ? (int) $academicyear->id : null,
+    $historicalonly ? ['tutorias'] : null
+);
 
 if ($academicyear === null) {
     echo $renderer->noactiveacademicyear_warning();
@@ -212,10 +235,12 @@ if ($academicyear === null) {
 
     echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 } else if ($tab === 'tutorias') {
-    // Fase 13 — in simple mode a tutor-by-assignment can register without the
-    // createentry capability (entries/create.php re-checks scope).
+    // Fase 13 — in simple mode a current tutor-by-assignment can register
+    // without the createentry capability (entries/create.php re-checks scope).
+    // A former tutor ($islimitedview) never registers here.
     $cancreateentry = has_capability('local/monlaututoria:createentry', $context)
-        || (\local_monlaututoria\feature::simple_mode() && $istutorbyassignment);
+        || (\local_monlaututoria\feature::simple_mode()
+            && $scopeservice->user_is_current_tutor((int) $USER->id));
     if (!$islimitedview && $cancreateentry) {
         $entryurlparams = ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id];
         // mb-4 (not the smaller mb-2 gap-only spacing used before): this row

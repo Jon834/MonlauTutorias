@@ -41,9 +41,10 @@ require_login();
 $context = context_system::instance();
 // Fase 13 — in simple mode a tutor-by-assignment can register without the
 // createentry capability; the per-student scope check below still applies.
+$scopeservice = new \local_monlaututoria\service\scope_service();
 $cancreate = has_capability('local/monlaututoria:createentry', $context)
     || (\local_monlaututoria\feature::simple_mode()
-        && (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id));
+        && $scopeservice->user_is_current_tutor((int) $USER->id));
 if (!$cancreate) {
     require_capability('local/monlaututoria:createentry', $context);
 }
@@ -111,8 +112,12 @@ if ($studentid <= 0) {
     exit;
 }
 
-$scope = new \local_monlaututoria\service\scope_service();
-$scope->require_user_can_access_student((int) $USER->id, $studentid, (int) $academicyear->id);
+$scopeservice->require_user_can_access_student((int) $USER->id, $studentid, (int) $academicyear->id);
+// A former tutor can reach the ficha (read-only) but must not record new
+// tutorías for a student they no longer have assigned.
+if ($scopeservice->access_is_historical_only((int) $USER->id, $studentid)) {
+    throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
+}
 
 $student = core_user::get_user($studentid);
 if (!$student || !empty($student->deleted)) {

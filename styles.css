@@ -246,6 +246,14 @@
     font-weight: 600;
 }
 
+.local-monlaututoria-roster__card.is-former {
+    opacity: .78;
+}
+
+.local-monlaututoria-roster__card.is-former .local-monlaututoria-roster__meta {
+    font-style: italic;
+}
+
 .local-monlaututoria-roster__last {
     font-size: .78rem;
     color: #6a7b8a;

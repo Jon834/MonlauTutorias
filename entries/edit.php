@@ -38,12 +38,16 @@ $id = required_param('id', PARAM_INT);
 $repository = new \local_monlaututoria\repository\entry_repository();
 $existing = $repository->get($id);
 
+$scope = new \local_monlaututoria\service\scope_service();
+
 $isowner = ((int) $existing->createdby === (int) $USER->id);
 $caneditany = has_capability('local/monlaututoria:editanyentry', $context);
-// Fase 13 — in simple mode the entry's own author can edit it without the
-// editownentry capability (scope_service still gates the student below).
+// Fase 13 — in simple mode a CURRENT tutor may edit their own entry without
+// the editownentry capability. A former tutor (historical-only access) is
+// read-only: they never reach here.
 $caneditown = has_capability('local/monlaututoria:editownentry', $context)
-    || \local_monlaututoria\feature::simple_mode();
+    || (\local_monlaututoria\feature::simple_mode()
+        && !$scope->access_is_historical_only((int) $USER->id, (int) $existing->studentid));
 if (!$caneditany && !($isowner && $caneditown)) {
     throw new \moodle_exception('nopermissions', 'error', '', get_string('entry_edit_title', 'local_monlaututoria'));
 }
@@ -54,7 +58,6 @@ if ($existing->status !== \local_monlaututoria\domain\entry_status::ACTIVE) {
 
 // Defense in depth: editing a specific student's entry also goes through
 // scope_service, on top of the edit capability above.
-$scope = new \local_monlaututoria\service\scope_service();
 $scope->require_user_can_access_student((int) $USER->id, (int) $existing->studentid, (int) $existing->academicyearid);
 
 $editwindow = (int) get_config('local_monlaututoria', 'entryeditwindow');

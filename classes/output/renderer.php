@@ -702,6 +702,44 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * "Alumnos que tutoricé antes" (fase 13): a lighter card grid of students
+     * this tutor no longer has assigned, so they can still open the tutorías
+     * they recorded (entry_service narrows the ficha to their own entries).
+     *
+     * @param array<int, \stdClass> $students user records with user_picture fields
+     * @return string empty string when there are none
+     */
+    public function dashboard_former_students_roster(array $students): string {
+        if (empty($students)) {
+            return '';
+        }
+
+        $cards = '';
+        foreach ($students as $user) {
+            $url = new \moodle_url('/local/monlaututoria/student/view.php', [
+                'id' => (int) $user->id,
+                'tab' => 'tutorias',
+            ]);
+            $cards .= \html_writer::link(
+                $url,
+                \html_writer::div(
+                    $this->output->user_picture($user, ['size' => 72, 'link' => false, 'alttext' => false]),
+                    'local-monlaututoria-roster__photo'
+                )
+                    . \html_writer::div(s(fullname($user)), 'local-monlaututoria-roster__name')
+                    . \html_writer::div(
+                        get_string('dashboard_roster_formertutor', 'local_monlaututoria'),
+                        'local-monlaututoria-roster__meta'
+                    ),
+                ['class' => 'local-monlaututoria-roster__card is-former']
+            );
+        }
+
+        return $this->heading(get_string('dashboard_section_formerstudents', 'local_monlaututoria'), 3)
+            . \html_writer::div($cards, 'local-monlaututoria-roster');
+    }
+
+    /**
      * A clickable column header that toggles sort direction — click once for
      * ascending, again for descending; clicking a different column always
      * starts ascending. Shared by every sortable table in this plugin
@@ -1134,9 +1172,11 @@ final class renderer extends \plugin_renderer_base {
      * @param int $studentid
      * @param int|null $academicyearid carried over into every tab's URL so
      *                                 switching tabs keeps the selected year
+     * @param string[]|null $onlytabs restrict the bar to these tab keys (fase
+     *                                13: a former tutor only sees 'tutorias')
      * @return string
      */
-    public function student_tabs(string $active, int $studentid, ?int $academicyearid): string {
+    public function student_tabs(string $active, int $studentid, ?int $academicyearid, ?array $onlytabs = null): string {
         $tabs = [
             'resumen'      => get_string('studenttab_summary', 'local_monlaututoria'),
             'historial'    => get_string('studenttab_history', 'local_monlaututoria'),
@@ -1148,6 +1188,9 @@ final class renderer extends \plugin_renderer_base {
         }
         if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS)) {
             $tabs['seguimientos'] = get_string('studenttab_followups', 'local_monlaututoria');
+        }
+        if ($onlytabs !== null) {
+            $tabs = array_intersect_key($tabs, array_flip($onlytabs));
         }
         $tooltips = [
             'resumen' => get_string('studenttab_summary_tip', 'local_monlaututoria'),

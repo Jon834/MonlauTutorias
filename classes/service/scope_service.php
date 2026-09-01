@@ -103,12 +103,42 @@ final class scope_service {
             return true;
         }
 
-        if (has_capability('local/monlaututoria:viewhistoricalassignments', $context, $userid)
+        // A PAST primary tutor or co-tutor of this student — the relationship
+        // has ended. They keep a narrow access: only the tutorías they
+        // recorded themselves (enforced by entry_service, which restricts the
+        // listing to their own entries for a historical-only viewer). In full
+        // mode this still needs viewhistoricalassignments; in simple mode a
+        // past assignment is enough.
+        if (($simplemode || has_capability('local/monlaututoria:viewhistoricalassignments', $context, $userid))
             && $this->repository->has_historical_relationship($userid, $studentid, $academicyearid)) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Whether $userid can see $studentid ONLY because of a past (ended)
+     * tutoring relationship — not as an admin, not as the current tutor. Such
+     * a viewer gets a narrowed view: only the tutorías they recorded
+     * themselves (entry_service forces a tutorid filter), and only the
+     * "Tutorías" tab of the ficha.
+     *
+     * @param int $userid
+     * @param int $studentid
+     * @return bool
+     */
+    public function access_is_historical_only(int $userid, int $studentid): bool {
+        $context = \context_system::instance();
+
+        if (has_capability('local/monlaututoria:viewallassignments', $context, $userid)) {
+            return false;
+        }
+        if ($this->repository->is_current_tutor_of_student($userid, $studentid, null)) {
+            return false;
+        }
+
+        return $this->repository->has_historical_relationship($userid, $studentid);
     }
 
     /**
@@ -123,6 +153,35 @@ final class scope_service {
      * @return bool
      */
     public function user_is_tutor(int $userid): bool {
+        $context = \context_system::instance();
+
+        if (has_any_capability(
+            ['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments'],
+            $context,
+            $userid
+        )) {
+            return true;
+        }
+
+        // In simple mode, currently OR formerly having students assigned is
+        // enough: a former tutor still needs to reach the tutorías they
+        // recorded (their "alumnos que tutoricé antes"). can_user_access_
+        // student() keeps the per-student access as narrow as ever.
+        return \local_monlaututoria\feature::simple_mode()
+            && $this->repository->has_any_tutoring_ever($userid);
+    }
+
+    /**
+     * Whether $userid may CREATE tutorías — a stricter check than
+     * user_is_tutor(): a former tutor (no current assignments) can read what
+     * they recorded but must not write new entries. True for the read
+     * capabilities' holders, or — in simple mode — a current tutor of at
+     * least one student.
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public function user_is_current_tutor(int $userid): bool {
         $context = \context_system::instance();
 
         if (has_any_capability(

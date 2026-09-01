@@ -383,6 +383,85 @@ class assignment_repository {
     }
 
     /**
+     * Whether $tutorid has EVER been the primary tutor or co-tutor of any
+     * student (any status, any time) — fase 13, lets a former tutor reach the
+     * panel in simple mode even after all their assignments ended.
+     *
+     * @param int $tutorid
+     * @return bool
+     */
+    public function has_any_tutoring_ever(int $tutorid): bool {
+        global $DB;
+
+        [$typesql, $typeparams] = $DB->get_in_or_equal(
+            [assignment_type::PRIMARY, assignment_type::CO_TUTOR],
+            SQL_PARAMS_NAMED,
+            'type'
+        );
+
+        return $DB->record_exists_select(
+            self::TABLE,
+            "tutorid = :tutorid AND assignmenttype $typesql",
+            array_merge(['tutorid' => $tutorid], $typeparams)
+        );
+    }
+
+    /**
+     * Student ids $tutorid was EVER the primary tutor or co-tutor of, but is
+     * NOT currently — fase 13, "alumnos que tutoricé antes" section of the
+     * panel, so a former tutor can still reach the tutorías they recorded.
+     *
+     * @param int $tutorid
+     * @param int|null $now injectable for tests
+     * @return int[] distinct student ids
+     */
+    public function find_historical_student_ids_by_tutor(int $tutorid, ?int $now = null): array {
+        global $DB;
+
+        $now = $now ?? time();
+        [$typesql, $typeparams] = $DB->get_in_or_equal(
+            [assignment_type::PRIMARY, assignment_type::CO_TUTOR],
+            SQL_PARAMS_NAMED,
+            'type'
+        );
+
+        // Every student this tutor ever had...
+        $everparams = array_merge(['tutorid' => $tutorid], $typeparams);
+        $ever = $DB->get_fieldset_select(
+            self::TABLE,
+            'DISTINCT studentid',
+            "tutorid = :tutorid AND assignmenttype $typesql",
+            $everparams
+        );
+        if (empty($ever)) {
+            return [];
+        }
+
+        // ...minus the ones they still currently have.
+        [$typesql2, $typeparams2] = $DB->get_in_or_equal(
+            [assignment_type::PRIMARY, assignment_type::CO_TUTOR],
+            SQL_PARAMS_NAMED,
+            'ctype'
+        );
+        $currentparams = array_merge(
+            ['tutorid' => $tutorid, 'status' => assignment_status::ACTIVE, 'now1' => $now, 'now2' => $now],
+            $typeparams2
+        );
+        $current = $DB->get_fieldset_select(
+            self::TABLE,
+            'DISTINCT studentid',
+            "tutorid = :tutorid AND status = :status AND assignmenttype $typesql2 "
+                . 'AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)',
+            $currentparams
+        );
+
+        return array_values(array_diff(
+            array_map('intval', $ever),
+            array_map('intval', $current)
+        ));
+    }
+
+    /**
      * Whether $tutorid has EVER been the primary tutor or co-tutor of
      * $studentid (any status, any time window) — the check behind
      * local/monlaututoria:viewhistoricalassignments.

@@ -1,5 +1,18 @@
 # Changelog — local_monlaututoria
 
+## 0.13.8 — 2026-09-01
+
+**Un tutor anterior puede consultar las tutorías que él hizo.**
+
+- `scope_service`: un **tutor anterior** (asignación cerrada) tiene acceso — en modo simple sin capacidad, en modo completo con `viewhistoricalassignments` — pero **limitado a las tutorías que registró él mismo**. Nuevo `access_is_historical_only()`.
+- `entry_service`: para un tutor anterior, el listado y el detalle de tutorías se restringen a `tutorid = él`; cualquier otra tutoría del alumno devuelve "acceso denegado".
+- Ficha del alumno para un tutor anterior: solo la pestaña **Tutorías** (sus propias), vista limitada, sin botón de registrar, sin selector de curso que le bloquee entre años.
+- Panel del tutor: nueva sección **"Alumnos que tutoricé antes"** (tarjetas atenuadas, "Tutoría finalizada") para poder llegar a esas fichas. Un tutor **solo** anterior también entra al panel en modo simple.
+- **No** puede crear ni editar tutorías de un alumno que ya no tiene asignado (`user_is_current_tutor()` para eso).
+- `assignment_repository`: `has_any_tutoring_ever()`, `has_any_current_tutoring()`, `find_historical_student_ids_by_tutor()`. Pruebas nuevas en `scope_service_test.php`. `version.php` → `2026091708` / `0.13.8`.
+
+---
+
 ## 0.13.7 — 2026-09-01
 
 **El tutor vigente de un alumno ve su ficha completa entre cursos.**

@@ -387,6 +387,12 @@ final class entry_service {
             (int) $record->academicyearid
         );
 
+        // A former tutor only ever sees the tutorías they recorded themselves.
+        if ((int) $record->tutorid !== $viewerid
+            && $this->scopeservice->access_is_historical_only($viewerid, (int) $record->studentid)) {
+            throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
+        }
+
         return entry::from_record($this->mask_content($record, $viewerid));
     }
 
@@ -428,6 +434,10 @@ final class entry_service {
 
         $filters['studentid'] = $studentid;
         $filters['academicyearid'] = $academicyearid;
+        // A former tutor only sees the tutorías they recorded themselves.
+        if ($this->scopeservice->access_is_historical_only($viewerid, $studentid)) {
+            $filters['tutorid'] = $viewerid;
+        }
         $records = $this->repository->search($filters, $limitfrom, $limitnum, $sort, $direction);
 
         return array_map(
@@ -448,6 +458,9 @@ final class entry_service {
 
         $filters['studentid'] = $studentid;
         $filters['academicyearid'] = $academicyearid;
+        if ($this->scopeservice->access_is_historical_only($viewerid, $studentid)) {
+            $filters['tutorid'] = $viewerid;
+        }
 
         return $this->repository->count_search($filters);
     }

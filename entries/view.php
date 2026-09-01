@@ -38,10 +38,13 @@ $entryrepository = new \local_monlaututoria\repository\entry_repository();
 $rawentry = $entryrepository->get($id);
 $isself = ((int) $USER->id === (int) $rawentry->studentid);
 $canviewownfile = $isself && has_capability('local/monlaututoria:viewownfile', $context);
-// Fase 13 — in simple mode a tutor-by-assignment reaches the entry without
-// the viewstudent capability; get_for_viewer() below re-checks scope anyway.
-$istutor = (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id);
-if (!$canviewownfile && !(\local_monlaututoria\feature::simple_mode() && $istutor)) {
+// Fase 13 — the viewstudent capability is not the only way in: a
+// tutor-by-assignment (simple mode) or a former tutor of this student reach
+// the entry too. get_for_viewer() below re-checks scope AND, for a former
+// tutor, refuses any entry they did not record themselves.
+$scopeservice = new \local_monlaututoria\service\scope_service();
+if (!$canviewownfile
+    && !$scopeservice->can_user_access_student((int) $USER->id, (int) $rawentry->studentid)) {
     require_capability('local/monlaututoria:viewstudent', $context);
 }
 
@@ -104,9 +107,13 @@ $statusoptions = \local_monlaututoria\domain\entry_status::get_options();
 // which are only about content, not about the entry's own lifecycle.
 $isactive = $rawentry->status === \local_monlaututoria\domain\entry_status::ACTIVE;
 $isowner = ((int) $rawentry->createdby === (int) $USER->id);
+// Fase 13 — mirror entries/edit.php: in simple mode a current tutor may edit
+// their own entry without the editownentry capability (a former tutor can't).
+$caneditownsimple = \local_monlaututoria\feature::simple_mode()
+    && !$scopeservice->access_is_historical_only((int) $USER->id, (int) $rawentry->studentid);
 $canedit = $isactive
     && (has_capability('local/monlaututoria:editanyentry', $context)
-        || ($isowner && has_capability('local/monlaututoria:editownentry', $context)));
+        || ($isowner && (has_capability('local/monlaututoria:editownentry', $context) || $caneditownsimple)));
 $canannul = $isactive && has_capability('local/monlaututoria:annulentry', $context);
 
 $data = (object) [

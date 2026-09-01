@@ -322,4 +322,32 @@ final class scope_service_test extends \advanced_testcase {
 
         $this->assertFalse($scope->user_is_tutor($user->id));
     }
+
+    /**
+     * Fase 13 — a former tutor (assignment closed) keeps a narrow access in
+     * simple mode: they can see the student, marked "historical only", but
+     * they are not a current tutor and cannot create.
+     */
+    public function test_former_tutor_has_historical_only_access_in_simple_mode(): void {
+        $this->resetAfterTest();
+        set_config('simplemode', '1', 'local_monlaututoria');
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $assignmentrepo = new assignment_repository();
+        $id = $assignmentrepo->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+        ]);
+        $assignmentrepo->close($id, get_admin()->id, time(), 'end_of_year');
+
+        $scope = new scope_service($assignmentrepo);
+
+        $this->assertTrue($scope->can_user_access_student($tutor->id, $student->id));
+        $this->assertTrue($scope->access_is_historical_only($tutor->id, $student->id));
+        $this->assertTrue($scope->user_is_tutor($tutor->id));            // reaches the panel
+        $this->assertFalse($scope->user_is_current_tutor($tutor->id));   // but cannot create
+    }
 }
