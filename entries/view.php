@@ -38,7 +38,10 @@ $entryrepository = new \local_monlaututoria\repository\entry_repository();
 $rawentry = $entryrepository->get($id);
 $isself = ((int) $USER->id === (int) $rawentry->studentid);
 $canviewownfile = $isself && has_capability('local/monlaututoria:viewownfile', $context);
-if (!$canviewownfile) {
+// Fase 13 — in simple mode a tutor-by-assignment reaches the entry without
+// the viewstudent capability; get_for_viewer() below re-checks scope anyway.
+$istutor = (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id);
+if (!$canviewownfile && !(\local_monlaututoria\feature::simple_mode() && $istutor)) {
     require_capability('local/monlaututoria:viewstudent', $context);
 }
 
@@ -117,7 +120,9 @@ $data = (object) [
     'hasreasons'           => !empty($reasonnames),
     'reasonnames'          => implode(', ', $reasonnames),
     'contentvisible'       => $entry->contentvisible !== null ? $entry->contentvisible : '—',
-    'shownoteinternal'     => !$isself && has_capability('local/monlaututoria:viewinternalnotes', $context),
+    'shownoteinternal'     => !$isself
+        && (\local_monlaututoria\feature::simple_mode()
+            || has_capability('local/monlaututoria:viewinternalnotes', $context)),
     'noteinternal'         => $entry->noteinternal !== null ? $entry->noteinternal : '—',
     'shownoterestricted'   => !$isself && has_capability('local/monlaututoria:viewrestrictednotes', $context)
         && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::RESTRICTEDNOTES),

@@ -50,13 +50,25 @@ $studentid = required_param('id', PARAM_INT);
 
 $isself = ((int) $USER->id === $studentid);
 $canviewownfile = $isself && has_capability('local/monlaututoria:viewownfile', $context);
-if (!$canviewownfile) {
+// Fase 13 — in simple mode a tutor-by-assignment opens the ficha without the
+// viewstudent capability; scope_service::require_user_can_access_student()
+// below still gates access to this specific student.
+$istutorbyassignment = \local_monlaututoria\feature::simple_mode()
+    && (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id);
+if (!$canviewownfile && !$istutorbyassignment) {
     require_capability('local/monlaututoria:viewstudent', $context);
 }
 // A student viewing their own file always gets the limited view, regardless
 // of whatever other capability they might also happen to hold — this is
 // about whose file is open, not about which capability let them in.
 $islimitedview = $isself;
+
+// Fase 13 — a tutor-by-assignment (simple mode) has no capability to open
+// assignments/view.php, so the links to it are suppressed for them, without
+// otherwise limiting their view (they still see tutoría motivos etc.).
+$hideassignmentlinks = $islimitedview
+    || (!has_capability('local/monlaututoria:viewstudent', $context)
+        && !has_capability('local/monlaututoria:viewallassignments', $context));
 
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
 $tab = optional_param('tab', 'resumen', PARAM_ALPHA);
@@ -169,7 +181,7 @@ if ($academicyear === null) {
     $summaryservice = new \local_monlaututoria\service\student_summary_service();
     $summary = $summaryservice->get_summary($studentid, (int) $academicyear->id);
 
-    echo $renderer->student_summary($summary, $academicyear, $student, $islimitedview);
+    echo $renderer->student_summary($summary, $academicyear, $student, $hideassignmentlinks);
 } else if ($tab === 'historial') {
     $statusfilter = optional_param('status', '', PARAM_ALPHA);
     $filters = [];
@@ -196,11 +208,15 @@ if ($academicyear === null) {
     ]));
     echo $OUTPUT->single_select($statusurl, 'status', $statusoptions, $statusfilter, [], 'statusselector');
 
-    echo $renderer->student_history_table($records, $tutors, $academicyears, $islimitedview);
+    echo $renderer->student_history_table($records, $tutors, $academicyears, $islimitedview, $hideassignmentlinks);
 
     echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 } else if ($tab === 'tutorias') {
-    if (!$islimitedview && has_capability('local/monlaututoria:createentry', $context)) {
+    // Fase 13 — in simple mode a tutor-by-assignment can register without the
+    // createentry capability (entries/create.php re-checks scope).
+    $cancreateentry = has_capability('local/monlaututoria:createentry', $context)
+        || (\local_monlaututoria\feature::simple_mode() && $istutorbyassignment);
+    if (!$islimitedview && $cancreateentry) {
         $entryurlparams = ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id];
         // mb-4 (not the smaller mb-2 gap-only spacing used before): this row
         // sits directly above the filter toolbar below, and the two were

@@ -466,10 +466,18 @@ final class entry_service {
         $context = \context_system::instance();
         $isstudent = $viewerid === (int) $record->studentid;
 
-        if (!$isstudent && !has_capability('local/monlaututoria:viewstudentvisiblecontent', $context, $viewerid)) {
+        // Fase 13 — in simple mode, anyone who got past scope_service to reach
+        // this entry is either its student (masked below) or tutoring staff
+        // (tutor of this student, or coordination): staff always see the
+        // shared content and the internal note, no separate read capability.
+        $simplemode = \local_monlaututoria\feature::simple_mode();
+
+        if (!$isstudent && !$simplemode
+            && !has_capability('local/monlaututoria:viewstudentvisiblecontent', $context, $viewerid)) {
             $record->contentvisible = null;
         }
-        if ($isstudent || !has_capability('local/monlaututoria:viewinternalnotes', $context, $viewerid)) {
+        if ($isstudent
+            || (!$simplemode && !has_capability('local/monlaututoria:viewinternalnotes', $context, $viewerid))) {
             $record->noteinternal = null;
         }
         if ($isstudent || !has_capability('local/monlaututoria:viewrestrictednotes', $context, $viewerid)) {

@@ -84,6 +84,17 @@ final class scope_service {
             return true;
         }
 
+        // Fase 13 — in simple mode, being the student's current tutor is
+        // sufficient on its own: coordination assigns students, and that
+        // assignment IS the authorisation (no viewownstudents role needed).
+        // The check is still narrow — this exact student, an active/vigente
+        // primary or co-tutor row — so it never widens access.
+        if (\local_monlaututoria\feature::simple_mode()) {
+            return $this->repository->is_current_tutor_of_student($userid, $studentid, $academicyearid)
+                || (has_capability('local/monlaututoria:viewhistoricalassignments', $context, $userid)
+                    && $this->repository->has_historical_relationship($userid, $studentid, $academicyearid));
+        }
+
         if (!has_capability('local/monlaututoria:viewownstudents', $context, $userid)) {
             return false;
         }
@@ -98,6 +109,32 @@ final class scope_service {
         }
 
         return false;
+    }
+
+    /**
+     * Whether $userid should get the tutor UI at all (the panel, the block's
+     * tutor section, the "Asignaciones"-free tutor navigation). True when they
+     * hold local/monlaututoria:viewownstudents or viewallassignments, OR —
+     * in simple mode only — when they are currently the tutor of at least one
+     * student (fase 13: an assignment makes you a tutor, no role needed).
+     * Per-student access is still decided by can_user_access_student().
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public function user_is_tutor(int $userid): bool {
+        $context = \context_system::instance();
+
+        if (has_any_capability(
+            ['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments'],
+            $context,
+            $userid
+        )) {
+            return true;
+        }
+
+        return \local_monlaututoria\feature::simple_mode()
+            && $this->repository->has_any_current_tutoring($userid);
     }
 
     /**

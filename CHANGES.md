@@ -1,5 +1,20 @@
 # Changelog — local_monlaututoria
 
+## 0.13.6 — 2026-09-01
+
+**En modo simple, asignar alumnos a un profesor lo convierte en tutor — sin configurar roles.**
+
+Feedback de uso real: se asignaron alumnos de tutoría a un profesor pero no le aparecía nada, porque una asignación no concede ninguna capacidad (eso viene de un rol). En **modo simple** esto ya no hace falta:
+
+- Nuevo `scope_service::user_is_tutor()` + `assignment_repository::has_any_current_tutoring()`: en modo simple, ser tutor vigente de al menos un alumno equivale a la capacidad `viewownstudents`.
+- `scope_service::can_user_access_student()`: en modo simple, ser tutor vigente de **ese** alumno da acceso, sin `viewownstudents`. El control sigue siendo estrecho — ese alumno concreto, asignación activa.
+- El panel del tutor, el bloque, la navegación, "Mis tutorías", registrar y editar tutorías, y la ficha del alumno reconocen al tutor-por-asignación en modo simple.
+- `entry_service::mask_content()`: en modo simple, quien pasa el control de ámbito (tutor de ese alumno o coordinación) ve el comentario compartido y la nota interna sin capacidad de lectura aparte. El alumno sigue sin ver nunca la nota interna.
+- El alumno (sin asignaciones de tutor) sigue viendo solo "Mis tutorías". En **modo completo** nada cambia: todo sigue dependiendo de las capacidades.
+- Pruebas nuevas en `scope_service_test.php`. `version.php` → `2026091706` / `0.13.6`.
+
+---
+
 ## 0.13.5 — 2026-09-01
 
 - Se oculta la tarjeta **"Contactos con familias"** del panel del tutor en modo simple: el dato viene de los participantes de una tutoría, que solo se registran en el formulario completo (oculto en modo simple), así que siempre valdría 0.

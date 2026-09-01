@@ -26,7 +26,9 @@ require(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
-if (!has_any_capability(['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments'], $context)) {
+// Fase 13 — in simple mode a teacher with students assigned is a tutor even
+// without the viewownstudents capability (see scope_service::user_is_tutor()).
+if (!(new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id)) {
     require_capability('local/monlaututoria:viewownstudents', $context);
 }
 
@@ -168,7 +170,11 @@ if (!in_array($referralsort, ['studentname', 'destination', 'priority', 'status'
 }
 $referraldir = strtoupper(optional_param('referraldir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
 
-$cancreateentry = has_capability('local/monlaututoria:createentry', $context);
+// Fase 13 — in simple mode a tutor-by-assignment can register tutorías
+// without the createentry capability (entries/create.php re-checks scope).
+$cancreateentry = has_capability('local/monlaututoria:createentry', $context)
+    || (\local_monlaututoria\feature::simple_mode()
+        && (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id));
 $cancreatefollowup = has_capability('local/monlaututoria:createfollowup', $context)
     && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
 $canmanageagreements = has_capability('local/monlaututoria:manageagreements', $context)

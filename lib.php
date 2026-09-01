@@ -129,11 +129,10 @@ function local_monlaututoria_extend_navigation(global_navigation $navigation): v
     if (!has_capability('local/monlaututoria:viewownfile', $context)) {
         return;
     }
-    if (has_any_capability([
-        'local/monlaututoria:viewownstudents',
-        'local/monlaututoria:viewallassignments',
-        'local/monlaututoria:viewconfiguration',
-    ], $context)) {
+    // Tutoring staff (by capability, or — in simple mode — by having students
+    // assigned) reach students through the panel, not this "my file" link.
+    if (has_capability('local/monlaututoria:viewconfiguration', $context)
+        || (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id)) {
         return;
     }
 

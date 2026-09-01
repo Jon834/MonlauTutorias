@@ -40,7 +40,11 @@ $existing = $repository->get($id);
 
 $isowner = ((int) $existing->createdby === (int) $USER->id);
 $caneditany = has_capability('local/monlaututoria:editanyentry', $context);
-if (!$caneditany && !($isowner && has_capability('local/monlaututoria:editownentry', $context))) {
+// Fase 13 — in simple mode the entry's own author can edit it without the
+// editownentry capability (scope_service still gates the student below).
+$caneditown = has_capability('local/monlaututoria:editownentry', $context)
+    || \local_monlaututoria\feature::simple_mode();
+if (!$caneditany && !($isowner && $caneditown)) {
     throw new \moodle_exception('nopermissions', 'error', '', get_string('entry_edit_title', 'local_monlaututoria'));
 }
 

@@ -346,6 +346,43 @@ class assignment_repository {
     }
 
     /**
+     * Whether $tutorid is currently ("vigente") the primary tutor or co-tutor
+     * of ANY student — fase 13, used in simple mode to treat "has students
+     * assigned" as equivalent to the viewownstudents capability, so a teacher
+     * becomes a working tutor the moment coordination assigns students to
+     * them, with no role setup.
+     *
+     * @param int $tutorid
+     * @param int|null $academicyearid restrict to one academic year, or null for any
+     * @param int|null $now injectable for tests
+     * @return bool
+     */
+    public function has_any_current_tutoring(int $tutorid, ?int $academicyearid = null, ?int $now = null): bool {
+        global $DB;
+
+        $now = $now ?? time();
+        [$typesql, $typeparams] = $DB->get_in_or_equal(
+            [assignment_type::PRIMARY, assignment_type::CO_TUTOR],
+            SQL_PARAMS_NAMED,
+            'type'
+        );
+
+        $params = array_merge(
+            ['tutorid' => $tutorid, 'status' => assignment_status::ACTIVE, 'now1' => $now, 'now2' => $now],
+            $typeparams
+        );
+        $sql = 'tutorid = :tutorid AND status = :status '
+            . "AND assignmenttype $typesql AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)";
+
+        if ($academicyearid !== null) {
+            $sql .= ' AND academicyearid = :academicyearid';
+            $params['academicyearid'] = $academicyearid;
+        }
+
+        return $DB->record_exists_select(self::TABLE, $sql, $params);
+    }
+
+    /**
      * Whether $tutorid has EVER been the primary tutor or co-tutor of
      * $studentid (any status, any time window) — the check behind
      * local/monlaututoria:viewhistoricalassignments.

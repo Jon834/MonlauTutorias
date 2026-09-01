@@ -70,10 +70,15 @@ final class renderer extends \plugin_renderer_base {
      * @return string
      */
     public function plugin_navigation(string $active, array $contextdata = []): string {
+        global $USER;
         $systemcontext = \context_system::instance();
         $items = [];
 
-        if (has_any_capability(['local/monlaututoria:viewownstudents', 'local/monlaututoria:viewallassignments'], $systemcontext)) {
+        // Fase 13 — in simple mode a teacher with students assigned is a tutor
+        // (no viewownstudents role needed); see scope_service::user_is_tutor().
+        $istutor = (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id);
+
+        if ($istutor) {
             $items[] = [
                 'key' => 'dashboard',
                 'label' => get_string('nav_dashboard', 'local_monlaututoria'),
@@ -1196,7 +1201,13 @@ final class renderer extends \plugin_renderer_base {
      *                            (which they have no capability to open)
      * @return string
      */
-    public function student_history_table(array $rows, array $tutors, array $academicyears, bool $islimitedview = false): string {
+    public function student_history_table(
+        array $rows,
+        array $tutors,
+        array $academicyears,
+        bool $islimitedview = false,
+        bool $hidedetaillink = false
+    ): string {
         if (empty($rows)) {
             return $this->output->notification(
                 get_string('student_summary_no_assignments', 'local_monlaututoria'),
@@ -1222,7 +1233,9 @@ final class renderer extends \plugin_renderer_base {
         if (!$islimitedview) {
             $table->head[] = get_string('assignment_col_source', 'local_monlaututoria');
             $table->head[] = get_string('student_history_col_reason', 'local_monlaututoria');
-            $table->head[] = '';
+            if (!$hidedetaillink) {
+                $table->head[] = '';
+            }
         }
 
         foreach ($rows as $row) {
@@ -1255,10 +1268,12 @@ final class renderer extends \plugin_renderer_base {
 
                 $cells[] = $sourceoptions[$row->source] ?? $row->source;
                 $cells[] = $reason;
-                $cells[] = \html_writer::link(
-                    new \moodle_url('/local/monlaututoria/assignments/view.php', ['id' => $row->id]),
-                    get_string('assignment_viewdetail', 'local_monlaututoria')
-                );
+                if (!$hidedetaillink) {
+                    $cells[] = \html_writer::link(
+                        new \moodle_url('/local/monlaututoria/assignments/view.php', ['id' => $row->id]),
+                        get_string('assignment_viewdetail', 'local_monlaututoria')
+                    );
+                }
             }
 
             $table->data[] = $cells;

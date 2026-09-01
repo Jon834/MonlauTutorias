@@ -39,7 +39,14 @@ require(__DIR__ . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
-require_capability('local/monlaututoria:createentry', $context);
+// Fase 13 — in simple mode a tutor-by-assignment can register without the
+// createentry capability; the per-student scope check below still applies.
+$cancreate = has_capability('local/monlaututoria:createentry', $context)
+    || (\local_monlaututoria\feature::simple_mode()
+        && (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id));
+if (!$cancreate) {
+    require_capability('local/monlaututoria:createentry', $context);
+}
 
 $studentid = optional_param('studentid', 0, PARAM_INT);
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);

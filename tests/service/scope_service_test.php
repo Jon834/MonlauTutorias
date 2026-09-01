@@ -252,4 +252,47 @@ final class scope_service_test extends \advanced_testcase {
         $scope = new scope_service();
         $this->assertFalse($scope->can_user_access_student($student->id, $student->id));
     }
+
+    /**
+     * Fase 13 — in simple mode, an assignment alone (no viewownstudents role)
+     * makes the assigned teacher a tutor of that student.
+     */
+    public function test_simple_mode_assignment_grants_tutor_access_without_capability(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $teacher = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $assignmentrepo = new assignment_repository();
+        $assignmentrepo->create((object) [
+            'studentid' => $student->id, 'tutorid' => $teacher->id,
+            'academicyearid' => $academicyearid, 'createdby' => get_admin()->id,
+        ]);
+        $scope = new scope_service($assignmentrepo);
+
+        // Full mode: no capability, no access, not a tutor.
+        set_config('simplemode', '0', 'local_monlaututoria');
+        $this->assertFalse($scope->can_user_access_student($teacher->id, $student->id));
+        $this->assertFalse($scope->user_is_tutor($teacher->id));
+
+        // Simple mode: the assignment is enough.
+        set_config('simplemode', '1', 'local_monlaututoria');
+        $this->assertTrue($scope->can_user_access_student($teacher->id, $student->id));
+        $this->assertTrue($scope->user_is_tutor($teacher->id));
+
+        // Still narrow: no access to a student they are NOT assigned to.
+        $other = $this->getDataGenerator()->create_user();
+        $this->assertFalse($scope->can_user_access_student($teacher->id, $other->id));
+    }
+
+    public function test_simple_mode_does_not_make_a_plain_user_a_tutor(): void {
+        $this->resetAfterTest();
+        set_config('simplemode', '1', 'local_monlaututoria');
+
+        $user = $this->getDataGenerator()->create_user();
+        $scope = new scope_service();
+
+        $this->assertFalse($scope->user_is_tutor($user->id));
+    }
 }
