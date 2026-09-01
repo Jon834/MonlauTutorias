@@ -84,22 +84,22 @@ final class scope_service {
             return true;
         }
 
-        // Fase 13 — in simple mode, being the student's current tutor is
-        // sufficient on its own: coordination assigns students, and that
-        // assignment IS the authorisation (no viewownstudents role needed).
-        // The check is still narrow — this exact student, an active/vigente
-        // primary or co-tutor row — so it never widens access.
-        if (\local_monlaututoria\feature::simple_mode()) {
-            return $this->repository->is_current_tutor_of_student($userid, $studentid, $academicyearid)
-                || (has_capability('local/monlaututoria:viewhistoricalassignments', $context, $userid)
-                    && $this->repository->has_historical_relationship($userid, $studentid, $academicyearid));
-        }
-
-        if (!has_capability('local/monlaututoria:viewownstudents', $context, $userid)) {
+        // Fase 13 — in simple mode an assignment is the whole authorisation
+        // (no viewownstudents role needed); in full mode the capability is
+        // still required.
+        $simplemode = \local_monlaututoria\feature::simple_mode();
+        if (!$simplemode && !has_capability('local/monlaututoria:viewownstudents', $context, $userid)) {
             return false;
         }
 
-        if ($this->repository->is_current_tutor_of_student($userid, $studentid, $academicyearid)) {
+        // The current primary tutor or co-tutor of this student can see the
+        // student's WHOLE longitudinal file — earlier academic years and
+        // tutorías recorded by previous tutors included. The file belongs to
+        // the student, not to a course or a year (docs/requisitos-
+        // funcionales.md). The null (not $academicyearid) is the point: "is
+        // $userid currently this student's tutor at all", not "…in the year
+        // being viewed".
+        if ($this->repository->is_current_tutor_of_student($userid, $studentid, null)) {
             return true;
         }
 

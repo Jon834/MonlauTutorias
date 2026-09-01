@@ -286,6 +286,33 @@ final class scope_service_test extends \advanced_testcase {
         $this->assertFalse($scope->can_user_access_student($teacher->id, $other->id));
     }
 
+    /**
+     * A current tutor sees the student's whole file, including a past academic
+     * year and tutorías by a previous tutor.
+     */
+    public function test_current_tutor_can_access_a_past_academic_year(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $tutor = $this->getDataGenerator()->create_user();
+        $this->grant_capability_to_user('local/monlaututoria:viewownstudents', $tutor->id);
+
+        $pastyear = $this->create_academic_year();
+        $currentyear = $this->create_academic_year();
+
+        // The tutor is assigned only for the current year.
+        $assignmentrepo = new assignment_repository();
+        $assignmentrepo->create((object) [
+            'studentid' => $student->id, 'tutorid' => $tutor->id,
+            'academicyearid' => $currentyear, 'createdby' => get_admin()->id,
+        ]);
+
+        $scope = new scope_service($assignmentrepo);
+        // Access to a year they were never assigned to is still granted,
+        // because they ARE currently this student's tutor.
+        $this->assertTrue($scope->can_user_access_student($tutor->id, $student->id, $pastyear));
+    }
+
     public function test_simple_mode_does_not_make_a_plain_user_a_tutor(): void {
         $this->resetAfterTest();
         set_config('simplemode', '1', 'local_monlaututoria');

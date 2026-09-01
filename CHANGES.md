@@ -1,5 +1,15 @@
 # Changelog — local_monlaututoria
 
+## 0.13.7 — 2026-09-01
+
+**El tutor vigente de un alumno ve su ficha completa entre cursos.**
+
+- `scope_service::can_user_access_student()`: ser el **tutor principal o cotutor vigente** de un alumno (en cualquier curso académico) da acceso a **toda** su ficha longitudinal — cursos anteriores y tutorías hechas por tutores anteriores incluidas. "El historial pertenece al alumno, no al curso" (`docs/requisitos-funcionales.md`).
+- Antes, un tutor con asignación para el curso X solo veía el curso X salvo que tuviera `viewhistoricalassignments`. Un **tutor anterior** (asignación cerrada) sigue **sin** acceso salvo con esa capacidad — no cambia.
+- Prueba nueva en `scope_service_test.php`. `version.php` → `2026091707` / `0.13.7`.
+
+---
+
 ## 0.13.6 — 2026-09-01
 
 **En modo simple, asignar alumnos a un profesor lo convierte en tutor — sin configurar roles.**
