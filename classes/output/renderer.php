@@ -88,7 +88,8 @@ final class renderer extends \plugin_renderer_base {
             ];
         }
 
-        if (has_capability('local/monlaututoria:managereferrals', $systemcontext)) {
+        if (has_capability('local/monlaututoria:managereferrals', $systemcontext)
+            && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::REFERRALS)) {
             $items[] = [
                 'key' => 'referrals',
                 'label' => get_string('nav_referrals', 'local_monlaututoria'),
@@ -97,7 +98,8 @@ final class renderer extends \plugin_renderer_base {
             ];
         }
 
-        if (has_any_capability(['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments'], $systemcontext)) {
+        if (has_any_capability(['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments'], $systemcontext)
+            && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::COORDINATION)) {
             $items[] = [
                 'key' => 'coordination',
                 'label' => get_string('nav_coordination', 'local_monlaututoria'),
@@ -106,7 +108,8 @@ final class renderer extends \plugin_renderer_base {
             ];
         }
 
-        if (has_capability('local/monlaututoria:managecoordinationscopes', $systemcontext)) {
+        if (has_capability('local/monlaututoria:managecoordinationscopes', $systemcontext)
+            && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::COORDINATION)) {
             $items[] = [
                 'key' => 'coordinators',
                 'label' => get_string('nav_coordinators', 'local_monlaututoria'),
@@ -116,12 +119,14 @@ final class renderer extends \plugin_renderer_base {
         }
 
         if (isloggedin() && !isguestuser()) {
-            $items[] = [
-                'key' => 'notifications',
-                'label' => get_string('nav_notifications', 'local_monlaututoria'),
-                'url' => new \moodle_url('/local/monlaututoria/notifications.php'),
-                'title' => get_string('nav_notifications_tip', 'local_monlaututoria'),
-            ];
+            if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::NOTIFICATIONS)) {
+                $items[] = [
+                    'key' => 'notifications',
+                    'label' => get_string('nav_notifications', 'local_monlaututoria'),
+                    'url' => new \moodle_url('/local/monlaututoria/notifications.php'),
+                    'title' => get_string('nav_notifications_tip', 'local_monlaututoria'),
+                ];
+            }
             // No capability check beyond being logged in: purely explanatory
             // content (what a tutoring entry/agreement/follow-up/referral
             // is), nothing here exposes any student's data.
@@ -426,20 +431,33 @@ final class renderer extends \plugin_renderer_base {
         bool $showreferrals = true,
         bool $showpriority = true
     ): string {
+        // Fase 13 — the follow-ups/agreements/family-contact cards only make
+        // sense when those modules are on. The counts are still computed by
+        // dashboard_service; this just omits the tiles in simple mode.
+        $showfollowups = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
+        $showagreements = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS);
+
         $cards = [
             ['label' => get_string('dashboard_summary_assigned', 'local_monlaututoria'), 'value' => $summary->assignedcount],
             ['label' => get_string('dashboard_summary_attended', 'local_monlaututoria'), 'value' => $summary->attendedcount],
             ['label' => get_string('dashboard_summary_pendinginitial', 'local_monlaututoria'), 'value' => $summary->pendinginitialcount],
             ['label' => get_string('dashboard_summary_coverage', 'local_monlaututoria'), 'value' => format_float($summary->coveragepercent, 2) . ' %'],
-            ['label' => get_string('dashboard_summary_followupsoverdue', 'local_monlaututoria'), 'value' => $summary->overduefollowupcount],
-            ['label' => get_string('dashboard_summary_agreementspending', 'local_monlaututoria'), 'value' => $summary->pendingagreementcount + $summary->overdueagreementcount],
         ];
+        if ($showfollowups) {
+            $cards[] = ['label' => get_string('dashboard_summary_followupsoverdue', 'local_monlaututoria'), 'value' => $summary->overduefollowupcount];
+        }
+        if ($showagreements) {
+            $cards[] = ['label' => get_string('dashboard_summary_agreementspending', 'local_monlaututoria'), 'value' => $summary->pendingagreementcount + $summary->overdueagreementcount];
+        }
         if ($showreferrals) {
             $cards[] = ['label' => get_string('dashboard_summary_referrals', 'local_monlaututoria'), 'value' => $summary->openreferralcount];
         }
         if ($showpriority) {
             $cards[] = ['label' => get_string('dashboard_summary_priority', 'local_monlaututoria'), 'value' => $summary->prioritystudentcount];
         }
+        // Family-contact count stays in both modes: it just counts tutoring
+        // entries that involved a family, useful to a tutor regardless of
+        // whether families have their own login.
         $cards[] = ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount];
 
         $html = '';
@@ -567,6 +585,83 @@ final class renderer extends \plugin_renderer_base {
         }
 
         return \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
+     * "Mis alumnos" roster (fase 13): a card grid with each current primary
+     * student's photo and name, linking straight to their tutoring file
+     * (student/view.php, "Tutorías" tab). Its point is face recognition — the
+     * operational tables (coverage, pending work) live in the "Pendientes"
+     * view of the same dashboard. Not sortable: it deliberately keeps the
+     * caller's order (dashboard.php already sorts $students by name by
+     * default). "Sin tutoría aún" vs "N tutorías" is spelled out in text, not
+     * only signalled by colour (WCAG 2.2, same rule as the rest of this UI).
+     *
+     * @param \local_monlaututoria\domain\tutor_dashboard_student[] $students
+     * @param array<int, \stdClass> $studentusers keyed by student id, each with
+     *                              the fields user_picture() needs (see
+     *                              \core_user\fields::for_userpic())
+     * @param int $academicyearid carried into every card's URL
+     * @return string
+     */
+    public function dashboard_student_roster(array $students, array $studentusers, int $academicyearid): string {
+        if (empty($students)) {
+            return $this->output->notification(
+                get_string('dashboard_students_empty', 'local_monlaututoria'),
+                \core\output\notification::NOTIFY_INFO
+            );
+        }
+
+        $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $cards = '';
+
+        foreach ($students as $student) {
+            $user = $studentusers[$student->studentid] ?? null;
+            $name = $user ? fullname($user) : '#' . $student->studentid;
+
+            $url = new \moodle_url('/local/monlaututoria/student/view.php', [
+                'id' => $student->studentid,
+                'academicyearid' => $academicyearid,
+                'tab' => 'tutorias',
+            ]);
+
+            $picture = $user
+                ? $this->output->user_picture($user, ['size' => 72, 'link' => false, 'alttext' => false])
+                : '';
+
+            if ((int) $student->activeentrycount > 0) {
+                $meta = \html_writer::span(
+                    get_string('dashboard_roster_entrycount', 'local_monlaututoria', (int) $student->activeentrycount),
+                    'local-monlaututoria-roster__meta'
+                );
+                if ($student->latestactiveentry !== null) {
+                    $meta .= \html_writer::span(
+                        get_string(
+                            'dashboard_roster_lastentry',
+                            'local_monlaututoria',
+                            userdate((int) $student->latestactiveentry->entrydate, $dateformat)
+                        ),
+                        'local-monlaututoria-roster__last'
+                    );
+                }
+            } else {
+                $meta = \html_writer::span(
+                    $this->output->pix_icon('i/warning', '') . ' '
+                        . get_string('dashboard_roster_noentry', 'local_monlaututoria'),
+                    'local-monlaututoria-roster__meta is-pending'
+                );
+            }
+
+            $cards .= \html_writer::link(
+                $url,
+                \html_writer::div($picture, 'local-monlaututoria-roster__photo')
+                    . \html_writer::div(s($name), 'local-monlaututoria-roster__name')
+                    . \html_writer::div($meta, 'local-monlaututoria-roster__metawrap'),
+                ['class' => 'local-monlaututoria-roster__card']
+            );
+        }
+
+        return \html_writer::div($cards, 'local-monlaututoria-roster');
     }
 
     /**
@@ -1009,9 +1104,14 @@ final class renderer extends \plugin_renderer_base {
             'resumen'      => get_string('studenttab_summary', 'local_monlaututoria'),
             'historial'    => get_string('studenttab_history', 'local_monlaututoria'),
             'tutorias'     => get_string('studenttab_tutoring', 'local_monlaututoria'),
-            'acuerdos'     => get_string('studenttab_agreements', 'local_monlaututoria'),
-            'seguimientos' => get_string('studenttab_followups', 'local_monlaututoria'),
         ];
+        // Fase 13 — "Acuerdos" / "Seguimientos" only when those modules are on.
+        if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS)) {
+            $tabs['acuerdos'] = get_string('studenttab_agreements', 'local_monlaututoria');
+        }
+        if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS)) {
+            $tabs['seguimientos'] = get_string('studenttab_followups', 'local_monlaututoria');
+        }
         $tooltips = [
             'resumen' => get_string('studenttab_summary_tip', 'local_monlaututoria'),
             'historial' => get_string('studenttab_history_tip', 'local_monlaututoria'),

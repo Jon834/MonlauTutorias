@@ -1,5 +1,52 @@
 # Changelog — local_monlaututoria
 
+## 0.13.0 — 2026-09-01
+
+**Fase 13 (S1–S5) — "modo simple", roster del tutor y manuales.** Nuevo ajuste de sitio `local_monlaututoria/simplemode` (checkbox, **desactivado por defecto** — una instalación existente no cambia sola). Con el modo activado se ocultan los módulos avanzados sin borrar nada: sus datos, servicios, tablas y pruebas quedan intactos, y desactivar la casilla lo restaura todo. Ver `docs/fases/phase-13-modo-simple.md`.
+
+### S2 — Roster del tutor + ficha del alumno a lo esencial
+
+- **Nueva vista "Mis alumnos"** en el panel del tutor (`dashboard.php`): rejilla de tarjetas con **foto** (`user_picture`), nombre e indicador *"N tutorías" / "Sin tutoría aún"* (texto, no solo color; icono `i/warning` en el estado pendiente). Toda la tarjeta enlaza a la ficha del alumno, pestaña "Tutorías". Nuevo `renderer::dashboard_student_roster()` + estilos `.local-monlaututoria-roster*`. El fetch de usuarios del panel ahora trae los campos de `user_picture` (`\core_user\fields::for_userpic()`).
+- Conmutador de vista **Mis alumnos / Pendientes** (enlaces tipo pestaña, preferencia de usuario `local_monlaututoria_dashboard_view`). En modo simple la vista por defecto es el roster.
+- En modo simple, el panel "Pendientes" oculta las secciones de seguimientos, acuerdos, derivaciones y prioridad (todo lo que depende de módulos ocultos); quedan las tarjetas de resumen, la tabla de alumnos y "Registrar tutoría".
+- `renderer::student_tabs()` y `student/view.php`: las pestañas "Acuerdos" y "Seguimientos" de la ficha del alumno solo aparecen si esos módulos están activos; `tab=acuerdos|seguimientos` manipulado en la URL cae a "Resumen".
+- Botón "Registrar (completo)" de la ficha oculto en modo simple (solo el rápido); sin campo de adjuntos en el formulario rápido.
+- Enlaces a páginas ocultas (crear acuerdo/seguimiento/derivación y adjuntos en el detalle de tutoría; reasignar tutor y asignación por cohortes en asignaciones) ocultos cuando su módulo lo está.
+
+### S5 — Documentación, navegación del alumno y Behat
+
+- **Manuales paso a paso** en `docs/manuales/`: tutor, alumno, coordinación, admin técnico, + índice.
+- `lib.php` → `local_monlaututoria_extend_navigation()`: añade **"Mis tutorías"** a la navegación plana para el alumno (su ficha limitada ya era accesible por capacidad `viewownfile` pero no había ningún enlace). No se muestra a usuarios con capacidades de tutor/coordinación.
+- Behat: `simple_mode.feature` y `dashboard_roster.feature` (nuevos). Los `.feature` de módulos ocultos (`agreement_management`, `followup_management`, `referral_management`, `cohort_assignment`, `csv_import_preview`, `entry_attachments`, `entry_full_registration`) llevan el tag `@local_monlaututoria_advanced` para excluirlos del run por defecto en modo simple.
+
+### S3 — Formulario de registro corto
+
+- `entry_quick_form`: sin campo "próximo seguimiento" ni adjuntos en modo simple. `entries/create.php` fuerza `canupload=false`.
+- `reason_form`: la visibilidad `RESTRICTED` no se ofrece en modo simple.
+- `student/view.php` / `entries/view.php`: filtro y bloque de "nota restringida" condicionados a `RESTRICTEDNOTES`.
+
+### S4 — Asignaciones simplificadas + tareas
+
+- `assignment_form`: tipo fijo "principal" y cohorte oculta en modo simple. `assignment_filter_form`: sin filtros de tipo/origen/cohorte en modo simple.
+- Acciones "Reasignar tutor" y "Asignación por cohortes" del listado/creación de asignaciones ocultas según `COTUTORS` / `IMPORTS`.
+- Tareas `send_notification_reminders_task` / `retry_failed_notifications_task` / `dispatch_notification_task`: `execute()` no-op si `NOTIFICATIONS` está oculto (siguen registradas; reactivar el módulo no requiere upgrade). `cleanup_notification_logs_task` se deja activa.
+- `dashboard_summary_cards`: omite las tarjetas de seguimientos/acuerdos cuando esos módulos están ocultos.
+
+### S1 — Infraestructura + ocultar módulos de gestión avanzada
+
+- Nuevo `classes/feature.php` (`\local_monlaututoria\feature`): interruptor único. `simple_mode()`, `enabled($feature)`, `require_enabled($feature)`. Funciones ocultas: acuerdos, seguimientos, derivaciones, coordinación (panel + ámbitos), notificaciones, importaciones (CSV + cohortes), cotutores/reasignación, adjuntos, registro completo y nota restringida.
+- **Defensa en profundidad**: cada consumidor comprueba `feature::enabled()` para ocultar la interfaz, y además cada página oculta llama a `feature::require_enabled()` justo tras `require_login()` — manipular la URL devuelve `error_featuredisabled`, no la página.
+- Guard añadido en 23 páginas: `referrals/*` (6), `coordination.php`, `coordination_export.php`, `coordination_scopes.php`, `notifications.php`, `cohort_visibility.php`, `assignments/import.php`, `assignments/import_report.php`, `assignments/cohort_create.php`, `assignments/reassign.php`, `agreements/*` (3), `followups/*` (3), `entries/attachments.php`, `entries/create_full.php`.
+- `settings.php`: las `admin_externalpage` de derivaciones, coordinación, ámbitos, notificaciones e importación solo se registran si su función está activa; nuevo checkbox maestro.
+- `renderer::plugin_navigation()`: oculta los enlaces de derivaciones, coordinación, coordinadores y notificaciones.
+- `index.php` (hub de configuración): oculta visibilidad por cohorte y coordinadores.
+- `block_monlaututoria`: oculta la sección de coordinación y el enlace de derivaciones.
+- `observer\notification_observer`: no encola ninguna notificación si `NOTIFICATIONS` está oculto (las tareas de cron siguen registradas pero no encuentran trabajo — desactivarlas se difiere a S4).
+- Sin cambio de esquema. `version.php` → `2026090800` / `0.13.0`.
+- Prueba nueva: `tests/feature_test.php` (lógica del interruptor). ⚠️ **No ejecutada** — no hay entorno Moodle en esta máquina; solo `php -l` (0 errores en los 330 archivos PHP del plugin + bloque). Pendientes (S5): Behat de la navegación/redirección en modo simple, del roster (`dashboard_roster.feature`), la agrupación `@advanced` de los `.feature` de módulos ocultos, y los manuales paso a paso (tutor, alumno, coordinación, admin técnico).
+
+---
+
 ## 0.12.5 — 2026-07-30
 
 **Encabezados de columna ordenables en todas las tablas principales.** Petición de uso real ("en todas las tablas estaria bien poder filtrar por el encabezado"), aclarada a "ordenar al hacer clic" aplicado de una vez a las tablas principales — no filtros por columna. Solo comportamiento de listado, sin cambio de esquema.

@@ -56,12 +56,14 @@ if ($hassiteconfig
         ['local/monlaututoria:viewconfiguration', 'local/monlaututoria:managecatalogues']
     ));
 
-    $ADMIN->add('local_monlaututoria', new admin_externalpage(
-        'local_monlaututoria_cohort_visibility',
-        get_string('cohort_visibility_title', 'local_monlaututoria'),
-        new moodle_url('/local/monlaututoria/cohort_visibility.php'),
-        ['local/monlaututoria:managecatalogues']
-    ));
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
+        $ADMIN->add('local_monlaututoria', new admin_externalpage(
+            'local_monlaututoria_cohort_visibility',
+            get_string('cohort_visibility_title', 'local_monlaututoria'),
+            new moodle_url('/local/monlaututoria/cohort_visibility.php'),
+            ['local/monlaututoria:managecatalogues']
+        ));
+    }
 
     $ADMIN->add('local_monlaututoria', new admin_externalpage(
         'local_monlaututoria_dashboard',
@@ -77,48 +79,56 @@ if ($hassiteconfig
         ['local/monlaututoria:viewallassignments', 'local/monlaututoria:viewownstudents']
     ));
 
-    $ADMIN->add('local_monlaututoria', new admin_externalpage(
-        'local_monlaututoria_import',
-        get_string('csv_import_title', 'local_monlaututoria'),
-        new moodle_url('/local/monlaututoria/assignments/import.php'),
-        ['local/monlaututoria:importassignments']
-    ));
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
+        $ADMIN->add('local_monlaututoria', new admin_externalpage(
+            'local_monlaututoria_import',
+            get_string('csv_import_title', 'local_monlaututoria'),
+            new moodle_url('/local/monlaututoria/assignments/import.php'),
+            ['local/monlaututoria:importassignments']
+        ));
+    }
 
     // Phase 6.4: referrals have no ficha tab (see referral_service's class
     // docblock) — coordination/orientation/management reach their queue from
     // here instead, same as the assignments listing above.
-    $ADMIN->add('local_monlaututoria', new admin_externalpage(
-        'local_monlaututoria_referrals',
-        get_string('referrals_title', 'local_monlaututoria'),
-        new moodle_url('/local/monlaututoria/referrals/index.php'),
-        ['local/monlaututoria:managereferrals']
-    ));
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::REFERRALS)) {
+        $ADMIN->add('local_monlaututoria', new admin_externalpage(
+            'local_monlaututoria_referrals',
+            get_string('referrals_title', 'local_monlaututoria'),
+            new moodle_url('/local/monlaututoria/referrals/index.php'),
+            ['local/monlaututoria:managereferrals']
+        ));
+    }
 
-    $ADMIN->add('local_monlaututoria', new admin_externalpage(
-        'local_monlaututoria_coordination',
-        get_string('coordination_title', 'local_monlaututoria'),
-        new moodle_url('/local/monlaututoria/coordination.php'),
-        ['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments']
-    ));
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::COORDINATION)) {
+        $ADMIN->add('local_monlaututoria', new admin_externalpage(
+            'local_monlaututoria_coordination',
+            get_string('coordination_title', 'local_monlaututoria'),
+            new moodle_url('/local/monlaututoria/coordination.php'),
+            ['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments']
+        ));
 
-    $ADMIN->add('local_monlaututoria', new admin_externalpage(
-        'local_monlaututoria_coordination_scopes',
-        get_string('coordination_scopes_title', 'local_monlaututoria'),
-        new moodle_url('/local/monlaututoria/coordination_scopes.php'),
-        ['local/monlaututoria:managecoordinationscopes']
-    ));
+        $ADMIN->add('local_monlaututoria', new admin_externalpage(
+            'local_monlaututoria_coordination_scopes',
+            get_string('coordination_scopes_title', 'local_monlaututoria'),
+            new moodle_url('/local/monlaututoria/coordination_scopes.php'),
+            ['local/monlaututoria:managecoordinationscopes']
+        ));
+    }
 
-    $ADMIN->add('local_monlaututoria', new admin_externalpage(
-        'local_monlaututoria_notifications',
-        get_string('notification_preferences_title', 'local_monlaututoria'),
-        new moodle_url('/local/monlaututoria/notifications.php'),
-        [
-            'local/monlaututoria:viewownstudents',
-            'local/monlaututoria:viewallassignments',
-            'local/monlaututoria:viewcoordinationdashboard',
-            'local/monlaututoria:managereferrals'
-        ]
-    ));
+    if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::NOTIFICATIONS)) {
+        $ADMIN->add('local_monlaututoria', new admin_externalpage(
+            'local_monlaututoria_notifications',
+            get_string('notification_preferences_title', 'local_monlaututoria'),
+            new moodle_url('/local/monlaututoria/notifications.php'),
+            [
+                'local/monlaututoria:viewownstudents',
+                'local/monlaututoria:viewallassignments',
+                'local/monlaututoria:viewcoordinationdashboard',
+                'local/monlaututoria:managereferrals'
+            ]
+        ));
+    }
 
     // Phase 5.5: first real setting this plugin has ever needed — every page
     // above is an admin_externalpage instead. "Ventana de edición
@@ -131,6 +141,20 @@ if ($hassiteconfig
         get_string('settings_entryeditwindow_title', 'local_monlaututoria'),
         'local/monlaututoria:managecatalogues'
     );
+    // Fase 13 — "modo simple". A single switch that hides the advanced modules
+    // (agreements, follow-ups, referrals, coordination, notifications, imports,
+    // co-tutors, attachments) from the navigation and refuses to load their
+    // pages. Nothing is deleted: their services, tables and tests are
+    // untouched, and turning this back off restores everything. Off by default,
+    // so an existing installation is unchanged after upgrading. See
+    // \local_monlaututoria\feature and docs/fases/phase-13-modo-simple.md.
+    $settings->add(new admin_setting_configcheckbox(
+        'local_monlaututoria/simplemode',
+        get_string('setting_simplemode', 'local_monlaututoria'),
+        get_string('setting_simplemode_desc', 'local_monlaututoria'),
+        0
+    ));
+
     $settings->add(new admin_setting_configduration(
         'local_monlaututoria/entryeditwindow',
         get_string('setting_entryeditwindow', 'local_monlaututoria'),

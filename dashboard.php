@@ -51,8 +51,25 @@ if ($requestedacademicyearid > 0) {
 // setting has never been written yet (e.g. right after upgrade, before
 // anyone has opened the settings page) — casting that to bool would default
 // a brand-new install to "hidden", the opposite of the intended default.
-$showreferrals = get_config('local_monlaututoria', 'dashboard_showreferrals') !== '0';
-$showpriority = get_config('local_monlaututoria', 'dashboard_showpriority') !== '0';
+$showreferrals = get_config('local_monlaututoria', 'dashboard_showreferrals') !== '0'
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::REFERRALS);
+$showpriority = get_config('local_monlaututoria', 'dashboard_showpriority') !== '0'
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
+
+// Fase 13 — two views of the same dashboard: "roster" (Mis alumnos, a photo
+// grid to recognise students at a glance) and "pending" (the operational
+// tables). Roster is the default in simple mode, where the pending tables lose
+// most of their content anyway (follow-ups/agreements/referrals hidden).
+$defaultview = \local_monlaututoria\feature::simple_mode() ? 'roster' : 'pending';
+$view = optional_param(
+    'view',
+    get_user_preferences('local_monlaututoria_dashboard_view', $defaultview),
+    PARAM_ALPHA
+);
+if (!in_array($view, ['roster', 'pending'], true)) {
+    $view = $defaultview;
+}
+set_user_preference('local_monlaututoria_dashboard_view', $view);
 
 $validstudentfilters = ['all', 'pendinginitial', 'withpending'];
 if ($showpriority) {
@@ -139,10 +156,18 @@ if (!in_array($referralsort, ['studentname', 'destination', 'priority', 'status'
 $referraldir = strtoupper(optional_param('referraldir', 'ASC', PARAM_ALPHA)) === 'DESC' ? 'DESC' : 'ASC';
 
 $cancreateentry = has_capability('local/monlaututoria:createentry', $context);
-$cancreatefollowup = has_capability('local/monlaututoria:createfollowup', $context);
-$canmanageagreements = has_capability('local/monlaututoria:manageagreements', $context);
-$canmanagefollowups = has_capability('local/monlaututoria:managefollowups', $context);
-$canmanagereferrals = has_capability('local/monlaututoria:managereferrals', $context);
+$cancreatefollowup = has_capability('local/monlaututoria:createfollowup', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
+$canmanageagreements = has_capability('local/monlaututoria:manageagreements', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS);
+$canmanagefollowups = has_capability('local/monlaututoria:managefollowups', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
+$canmanagereferrals = has_capability('local/monlaututoria:managereferrals', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::REFERRALS);
+
+// Fase 13 — whole dashboard sections hidden in simple mode.
+$showfollowupssection = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
+$showagreementssection = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS);
 
 echo $OUTPUT->header();
 echo $renderer->plugin_navigation('dashboard');
@@ -201,6 +226,27 @@ $dashboardfilters .= $OUTPUT->single_select(
 );
 echo html_writer::div($dashboardfilters, 'local-monlaututoria-toolbar');
 
+// Fase 13 — "Mis alumnos" (roster) / "Pendientes" (tablas) view switch.
+$viewlinks = '';
+foreach (['roster' => 'dashboard_view_roster', 'pending' => 'dashboard_view_pending'] as $viewkey => $viewstr) {
+    $classes = 'nav-link' . ($viewkey === $view ? ' active' : '');
+    $attributes = ['class' => $classes];
+    if ($viewkey === $view) {
+        $attributes['aria-current'] = 'page';
+    }
+    $viewlinks .= html_writer::link(
+        new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'view' => $viewkey,
+            'academicyearid' => $requestedacademicyearid ?: null,
+            'studentfilter' => $studentfilter,
+            'pendingfilter' => $pendingfilter,
+        ])),
+        get_string($viewstr, 'local_monlaututoria'),
+        $attributes
+    );
+}
+echo html_writer::div($viewlinks, 'nav nav-tabs mb-3 local-monlaututoria-subnav');
+
 if ($academicyear === null) {
     echo $renderer->noactiveacademicyear_warning();
     echo $OUTPUT->footer();
@@ -236,8 +282,12 @@ if ($pendingfilter === 'open') {
 }
 
 $studentids = array_values(array_unique(array_map(static fn ($row): int => $row->studentid, $dashboard->students)));
+// user_picture() (used by the "Mis alumnos" roster, fase 13) needs the picture
+// fields, not just the name — so this fetch pulls the full user_picture field
+// set instead of the old "id, firstname, lastname, email".
+$studentuserfields = implode(',', \core_user\fields::for_userpic()->get_required_fields());
 $studentusers = !empty($studentids)
-    ? $DB->get_records_list('user', 'id', $studentids, '', 'id, firstname, lastname, email')
+    ? $DB->get_records_list('user', 'id', $studentids, '', $studentuserfields)
     : [];
 $responsibleuserids = [];
 foreach (array_merge($dashboard->pendingagreements, $dashboard->overdueagreements) as $agreement) {
@@ -326,6 +376,15 @@ $sortbaseurl = new moodle_url('/local/monlaututoria/dashboard.php', array_filter
     'referraldir'     => $referralsort !== '' ? $referraldir : null,
 ], static fn ($value) => $value !== null));
 
+// Fase 13 — "Mis alumnos": just the photo roster, then stop. The operational
+// tables below are the "Pendientes" view.
+if ($view === 'roster') {
+    echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
+    echo $renderer->dashboard_student_roster($filteredstudents, $studentusers, (int) $academicyear->id);
+    echo $OUTPUT->footer();
+    exit;
+}
+
 echo $renderer->dashboard_summary_cards($dashboard->summary, $showreferrals, $showpriority);
 echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
 echo $renderer->dashboard_students_table(
@@ -340,42 +399,48 @@ echo $renderer->dashboard_students_table(
     $sortbaseurl
 );
 
-echo $renderer->heading(get_string('dashboard_section_followups', 'local_monlaututoria'), 3);
-if (empty($overduefollowups) && empty($upcomingfollowups)) {
-    // One combined empty note, not two — showing "no overdue follow-ups"
-    // directly above a table that DOES have upcoming ones (or vice versa)
-    // reads as contradictory, not informative.
-    echo $renderer->dashboard_followups_table([], $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl);
-} else {
-    if (!empty($overduefollowups)) {
-        echo $renderer->dashboard_followups_table(
-            $overduefollowups, $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl
-        );
-    }
-    if (!empty($upcomingfollowups)) {
-        echo $renderer->dashboard_followups_table(
-            $upcomingfollowups, $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl
-        );
+// Fase 13 — the follow-ups section is hidden entirely in simple mode.
+if ($showfollowupssection) {
+    echo $renderer->heading(get_string('dashboard_section_followups', 'local_monlaututoria'), 3);
+    if (empty($overduefollowups) && empty($upcomingfollowups)) {
+        // One combined empty note, not two — showing "no overdue follow-ups"
+        // directly above a table that DOES have upcoming ones (or vice versa)
+        // reads as contradictory, not informative.
+        echo $renderer->dashboard_followups_table([], $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl);
+    } else {
+        if (!empty($overduefollowups)) {
+            echo $renderer->dashboard_followups_table(
+                $overduefollowups, $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl
+            );
+        }
+        if (!empty($upcomingfollowups)) {
+            echo $renderer->dashboard_followups_table(
+                $upcomingfollowups, $studentusers, $canmanagefollowups, $followupsort, $followupdir, $sortbaseurl
+            );
+        }
     }
 }
 
-echo $renderer->heading(get_string('dashboard_section_agreements', 'local_monlaututoria'), 3);
-if (empty($overdueagreements) && empty($pendingagreements)) {
-    echo $renderer->dashboard_agreements_table(
-        [], $studentusers, $responsibleusers, $canmanageagreements, $agreementsort, $agreementdir, $sortbaseurl
-    );
-} else {
-    if (!empty($overdueagreements)) {
+// Fase 13 — likewise for the agreements section.
+if ($showagreementssection) {
+    echo $renderer->heading(get_string('dashboard_section_agreements', 'local_monlaututoria'), 3);
+    if (empty($overdueagreements) && empty($pendingagreements)) {
         echo $renderer->dashboard_agreements_table(
-            $overdueagreements, $studentusers, $responsibleusers, $canmanageagreements,
-            $agreementsort, $agreementdir, $sortbaseurl
+            [], $studentusers, $responsibleusers, $canmanageagreements, $agreementsort, $agreementdir, $sortbaseurl
         );
-    }
-    if (!empty($pendingagreements)) {
-        echo $renderer->dashboard_agreements_table(
-            $pendingagreements, $studentusers, $responsibleusers, $canmanageagreements,
-            $agreementsort, $agreementdir, $sortbaseurl
-        );
+    } else {
+        if (!empty($overdueagreements)) {
+            echo $renderer->dashboard_agreements_table(
+                $overdueagreements, $studentusers, $responsibleusers, $canmanageagreements,
+                $agreementsort, $agreementdir, $sortbaseurl
+            );
+        }
+        if (!empty($pendingagreements)) {
+            echo $renderer->dashboard_agreements_table(
+                $pendingagreements, $studentusers, $responsibleusers, $canmanageagreements,
+                $agreementsort, $agreementdir, $sortbaseurl
+            );
+        }
     }
 }
 

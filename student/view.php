@@ -60,7 +60,14 @@ $islimitedview = $isself;
 
 $requestedacademicyearid = optional_param('academicyearid', 0, PARAM_INT);
 $tab = optional_param('tab', 'resumen', PARAM_ALPHA);
-if (!in_array($tab, ['resumen', 'historial', 'tutorias', 'acuerdos', 'seguimientos'], true)) {
+$allowedtabs = ['resumen', 'historial', 'tutorias'];
+if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS)) {
+    $allowedtabs[] = 'acuerdos';
+}
+if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS)) {
+    $allowedtabs[] = 'seguimientos';
+}
+if (!in_array($tab, $allowedtabs, true)) {
     $tab = 'resumen';
 }
 
@@ -199,17 +206,18 @@ if ($academicyear === null) {
         // sits directly above the filter toolbar below, and the two were
         // reported as visually running into each other with no clear
         // separation.
-        echo html_writer::div(
-            $OUTPUT->single_button(
-                new moodle_url('/local/monlaututoria/entries/create.php', $entryurlparams),
-                get_string('entry_register', 'local_monlaututoria')
-            ) .
-            $OUTPUT->single_button(
+        $registerbuttons = $OUTPUT->single_button(
+            new moodle_url('/local/monlaututoria/entries/create.php', $entryurlparams),
+            get_string('entry_register', 'local_monlaututoria')
+        );
+        // Fase 13 — the "full" registration form is hidden in simple mode.
+        if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FULLENTRY)) {
+            $registerbuttons .= $OUTPUT->single_button(
                 new moodle_url('/local/monlaututoria/entries/create_full.php', $entryurlparams),
                 get_string('entry_full_register', 'local_monlaututoria')
-            ),
-            'd-flex flex-wrap gap-2 mb-4'
-        );
+            );
+        }
+        echo html_writer::div($registerbuttons, 'd-flex flex-wrap gap-2 mb-4');
     }
 
     // Phase 5.4: real listing, replacing the placeholder. Filters: estado,
@@ -313,13 +321,18 @@ if ($academicyear === null) {
         );
         $entryreasonselect->set_label(get_string('entry_field_reason', 'local_monlaututoria'));
 
+        $visibilitytieroptions = [
+            'contentvisible'  => get_string('entry_field_contentvisible', 'local_monlaututoria'),
+            'noteinternal'    => get_string('entry_field_noteinternal', 'local_monlaututoria'),
+        ];
+        // Fase 13 — no "restricted" tier in simple mode.
+        if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::RESTRICTEDNOTES)) {
+            $visibilitytieroptions['noterestricted'] =
+                get_string('entry_field_noterestricted', 'local_monlaututoria');
+        }
         $entryvisibilityselect = new single_select(
             $statusfilterurl, 'visibilitytier',
-            ['' => get_string('choosedots')] + [
-                'contentvisible'  => get_string('entry_field_contentvisible', 'local_monlaututoria'),
-                'noteinternal'    => get_string('entry_field_noteinternal', 'local_monlaututoria'),
-                'noterestricted'  => get_string('entry_field_noterestricted', 'local_monlaututoria'),
-            ],
+            ['' => get_string('choosedots')] + $visibilitytieroptions,
             $visibilityfilter, [], 'entryvisibilityselector'
         );
         $entryvisibilityselect->set_label(get_string('entry_field_visibilitytier', 'local_monlaututoria'));

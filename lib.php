@@ -105,6 +105,51 @@ function local_monlaututoria_pluginfile($course, $cm, $context, $filearea, $args
 }
 
 /**
+ * Adds a "Mis tutorías" entry to the flat navigation for a plain student.
+ *
+ * Fase 13: the student's own longitudinal file (student/view.php, limited
+ * view) has always been reachable by capability (viewownfile, granted to every
+ * authenticated user), but there was no link to it anywhere — a student could
+ * only get there with a hand-made URL. This adds one, and only for users who
+ * are NOT tutoring staff (staff reach students through the tutor panel /
+ * assignments listing instead, and their own "student file" would just be
+ * empty).
+ *
+ * @param global_navigation $navigation
+ * @return void
+ */
+function local_monlaututoria_extend_navigation(global_navigation $navigation): void {
+    global $USER;
+
+    if (!isloggedin() || isguestuser()) {
+        return;
+    }
+
+    $context = context_system::instance();
+    if (!has_capability('local/monlaututoria:viewownfile', $context)) {
+        return;
+    }
+    if (has_any_capability([
+        'local/monlaututoria:viewownstudents',
+        'local/monlaututoria:viewallassignments',
+        'local/monlaututoria:viewconfiguration',
+    ], $context)) {
+        return;
+    }
+
+    $node = navigation_node::create(
+        get_string('nav_myfile', 'local_monlaututoria'),
+        new moodle_url('/local/monlaututoria/student/view.php', ['id' => (int) $USER->id, 'tab' => 'tutorias']),
+        navigation_node::TYPE_CUSTOM,
+        null,
+        'local_monlaututoria_myfile',
+        new pix_icon('i/users', '')
+    );
+    $node->showinflatnavigation = true;
+    $navigation->add_node($node);
+}
+
+/**
  * Loads shared styles for the Monlau Tutoria UI.
  *
  * @param moodle_page $page

@@ -815,6 +815,11 @@ $string['dashboard_pendingfilter_all'] = 'Tots els pendents';
 $string['dashboard_pendingfilter_open'] = 'Nom?s oberts';
 $string['dashboard_pendingfilter_overdue'] = 'Nom?s ven?uts';
 $string['dashboard_section_students'] = 'Els meus alumnes';
+$string['dashboard_view_roster'] = 'Els meus alumnes';
+$string['dashboard_view_pending'] = 'Pendents';
+$string['dashboard_roster_entrycount'] = '{$a} tutories';
+$string['dashboard_roster_lastentry'] = 'Última: {$a}';
+$string['dashboard_roster_noentry'] = 'Encara sense tutoria';
 $string['dashboard_section_followups'] = 'Seguiments';
 $string['dashboard_section_agreements'] = 'Acords';
 $string['dashboard_section_referrals'] = 'Casos derivats';
@@ -929,6 +934,7 @@ $string['privacy:metadata:notification:lasterror'] = 'Ultim error de lliurament 
 $string['privacy:metadata:notification:timesent'] = 'Moment d\'enviament.';
 
 $string['nav_dashboard'] = 'Tauler';
+$string['nav_myfile'] = 'Les meves tutories';
 $string['nav_dashboard_tip'] = 'Resum ràpid d alumnes, pendents i prioritats del tutor.';
 $string['nav_assignments'] = 'Assignacions';
 $string['nav_assignments_tip'] = 'Consulta el repartiment d alumnes i obre el detall de cada assignació.';
@@ -1020,3 +1026,8 @@ $string['coordination_filter_help'] = 'Primer acota per cohort i després, si ca
 $string['error_coordination_scope_invalid_user'] = 'Només pots assignar àmbits a usuaris amb accés al tauler de coordinació.';
 $string['coordination_scope_intro'] = 'Selecciona un coordinador i assigna-li les cohorts que podrà supervisar. Dins del panell després podrà filtrar per tutor.';
 $string['coordination_scope_help_steps'] = 'Per habilitar un coordinador: 1) assigna a l\'usuari un rol amb la capacitat local/monlaututoria:viewcoordinationdashboard en context de sistema, 2) selecciona\'l en aquesta pantalla i 3) marca les cohorts que podrà supervisar.';
+
+// Fase 13 — mode simple.
+$string['setting_simplemode'] = 'Mode simple';
+$string['setting_simplemode_desc'] = 'Redueix el connector a l\'essencial del dia a dia: el tutor registra tutories i l\'alumne consulta les seves i qui és el seu tutor. Amaga acords, seguiments, derivacions, panell de coordinació, notificacions, importacions (CSV i de cohorts), cotutors i adjunts — de la navegació i de les seves pàgines. No esborra res: les dades, els serveis i les proves segueixen intactes, i desactivar aquesta casella ho restaura tot. Desactivat per defecte.';
+$string['error_featuredisabled'] = 'Aquesta funció no està disponible: el lloc funciona en mode simple de Monlau Tutoria.';

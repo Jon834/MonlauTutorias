@@ -190,6 +190,67 @@
     color: #7b8d9d;
 }
 
+/* Fase 13 — roster "Mis alumnos" del panel del tutor. */
+.local-monlaututoria-roster {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.local-monlaututoria-roster__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    padding: 1rem .75rem;
+    border: 1px solid #d7dee7;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbfe 100%);
+    box-shadow: 0 10px 24px rgba(19, 50, 75, 0.06);
+    text-align: center;
+    text-decoration: none;
+    color: #13324b;
+}
+
+.local-monlaututoria-roster__card:hover,
+.local-monlaututoria-roster__card:focus {
+    border-color: #245b7d;
+    box-shadow: 0 12px 28px rgba(19, 50, 75, 0.14);
+    text-decoration: none;
+}
+
+.local-monlaututoria-roster__card:focus-visible {
+    outline: 3px solid #245b7d;
+    outline-offset: 2px;
+}
+
+.local-monlaututoria-roster__card img {
+    border-radius: 50%;
+}
+
+.local-monlaututoria-roster__name {
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.local-monlaututoria-roster__meta {
+    font-size: .82rem;
+    color: #3c5468;
+}
+
+.local-monlaututoria-roster__meta.is-pending {
+    color: #8a5a00;
+    font-weight: 600;
+}
+
+.local-monlaututoria-roster__last {
+    font-size: .78rem;
+    color: #6a7b8a;
+}
+
 @media (max-width: 767px) {
     .local-monlaututoria-dashboard-summary {
         grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));

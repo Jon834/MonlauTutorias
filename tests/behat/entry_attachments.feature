@@ -7,7 +7,7 @@
 # gives for a denied pluginfile.php request (no "I should see" step is a
 # perfect fit for a raw file/binary response — this scenario is the least
 # verified of this feature, flagged deliberately rather than assumed to work).
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Tutoring entry attachments (phase 5.6)
   In order to keep supporting documents with the tutoring record they belong to
   As a tutor

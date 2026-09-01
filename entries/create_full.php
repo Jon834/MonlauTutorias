@@ -31,6 +31,7 @@ require(__DIR__ . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::FULLENTRY);
 require_capability('local/monlaututoria:createentry', $context);
 
 $studentid = required_param('studentid', PARAM_INT);

@@ -14,6 +14,10 @@ final class retry_failed_notifications_task extends \core\task\scheduled_task {
     }
 
     public function execute() {
+        // Fase 13 — no-op in simple mode (notifications hidden).
+        if (!\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::NOTIFICATIONS)) {
+            return;
+        }
         $repository = new notification_repository();
         foreach ($repository->find_retryable_failed(self::RETRY_DELAY_SECONDS, self::MAX_ATTEMPTS) as $record) {
             $task = new dispatch_notification_task();

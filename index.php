@@ -63,11 +63,13 @@ $links = [
     ['url' => '/local/monlaututoria/modalities.php', 'string' => 'modalities'],
 ];
 
-if (has_capability('local/monlaututoria:managecatalogues', $context)) {
+if (has_capability('local/monlaututoria:managecatalogues', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
     $links[] = ['url' => '/local/monlaututoria/cohort_visibility.php', 'string' => 'cohort_visibility_title'];
 }
 
-if (has_capability('local/monlaututoria:managecoordinationscopes', $context)) {
+if (has_capability('local/monlaututoria:managecoordinationscopes', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::COORDINATION)) {
     $links[] = ['url' => '/local/monlaututoria/coordination_scopes.php', 'string' => 'coordination_scopes_title'];
 }
 

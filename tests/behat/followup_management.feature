@@ -1,7 +1,7 @@
 # Written against current Moodle Behat step conventions but not executed in this
 # environment (no Behat instance available here). Same disclosed caveats as
 # tests/behat/agreement_management.feature (entry id 1 assumed).
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Follow-ups (phase 6.2/6.3)
   In order to track a "próximo seguimiento" as a real, closeable action
   As a tutor

@@ -5,7 +5,7 @@
 # resolution (tests/fixtures/sample_import.csv) are the least certain part of
 # this feature — verify against the real Moodle 5.1 instance, and adjust the
 # "I upload ... file to ... filepicker" step wording if it does not match.
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Preview a CSV assignment import
   In order to bulk-import tutor-student assignments
   As an administrator

@@ -9,6 +9,7 @@ if (isguestuser()) {
 }
 
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::NOTIFICATIONS);
 $url = new moodle_url('/local/monlaututoria/notifications.php');
 $service = new \local_monlaututoria\service\notification_preference_service();
 

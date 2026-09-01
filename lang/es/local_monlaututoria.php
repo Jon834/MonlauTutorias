@@ -815,6 +815,11 @@ $string['dashboard_pendingfilter_all'] = 'Todos los pendientes';
 $string['dashboard_pendingfilter_open'] = 'Solo abiertos';
 $string['dashboard_pendingfilter_overdue'] = 'Solo vencidos';
 $string['dashboard_section_students'] = 'Mis alumnos';
+$string['dashboard_view_roster'] = 'Mis alumnos';
+$string['dashboard_view_pending'] = 'Pendientes';
+$string['dashboard_roster_entrycount'] = '{$a} tutorías';
+$string['dashboard_roster_lastentry'] = 'Última: {$a}';
+$string['dashboard_roster_noentry'] = 'Sin tutoría aún';
 $string['dashboard_section_followups'] = 'Seguimientos';
 $string['dashboard_section_agreements'] = 'Acuerdos';
 $string['dashboard_section_referrals'] = 'Casos derivados';
@@ -928,6 +933,7 @@ $string['privacy:metadata:notification:lasterror'] = 'Ultimo error de entrega re
 $string['privacy:metadata:notification:timesent'] = 'Momento de envio.';
 
 $string['nav_dashboard'] = 'Panel';
+$string['nav_myfile'] = 'Mis tutorías';
 $string['nav_dashboard_tip'] = 'Resumen rápido de alumnos, pendientes y prioridades del tutor.';
 $string['nav_assignments'] = 'Asignaciones';
 $string['nav_assignments_tip'] = 'Consulta el reparto de alumnos y abre el detalle de cada asignación.';
@@ -1020,3 +1026,8 @@ $string['coordination_filter_help'] = 'Primero acota por cohorte y después, si 
 $string['error_coordination_scope_invalid_user'] = 'Solo puedes asignar ámbitos a usuarios con acceso al panel de coordinación.';
 $string['coordination_scope_intro'] = 'Selecciona un coordinador y asígnale las cohortes que podrá supervisar. Dentro del panel, después podrá filtrar por tutor.';
 $string['coordination_scope_help_steps'] = 'Para habilitar un coordinador: 1) asigna al usuario un rol con la capacidad local/monlaututoria:viewcoordinationdashboard en contexto sistema, 2) selecciónalo en esta pantalla y 3) marca las cohortes que podrá supervisar.';
+
+// Fase 13 — modo simple.
+$string['setting_simplemode'] = 'Modo simple';
+$string['setting_simplemode_desc'] = 'Reduce el plugin a lo esencial para el día a día: el tutor registra tutorías y el alumno consulta las suyas y quién es su tutor. Oculta acuerdos, seguimientos, derivaciones, panel de coordinación, notificaciones, importaciones (CSV y cohortes), cotutores y adjuntos — de la navegación y de sus páginas. No borra nada: los datos, los servicios y las pruebas siguen intactos, y desactivar esta casilla lo restaura todo. Desactivado por defecto.';
+$string['error_featuredisabled'] = 'Esta función no está disponible: el sitio está en modo simple de Monlau Tutoría.';

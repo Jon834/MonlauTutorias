@@ -9,6 +9,11 @@ final class dispatch_notification_task extends \core\task\adhoc_task {
     }
 
     public function execute() {
+        // Fase 13 — a message queued before simple mode was turned on is
+        // dropped rather than delivered.
+        if (!\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::NOTIFICATIONS)) {
+            return;
+        }
         $data = (array) $this->get_custom_data();
         if (empty($data['notificationid'])) {
             return;

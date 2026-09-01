@@ -4,12 +4,16 @@
 namespace local_monlaututoria\observer;
 
 use local_monlaututoria\domain\referral_status;
+use local_monlaututoria\feature;
 use local_monlaututoria\repository\assignment_repository;
 use local_monlaututoria\repository\referral_repository;
 use local_monlaututoria\service\notification_dispatch_service;
 
 final class notification_observer {
     public static function assignment_created(\local_monlaututoria\event\assignment_created $event): void {
+        if (!feature::enabled(feature::NOTIFICATIONS)) {
+            return;
+        }
         $assignment = (new assignment_repository())->get((int) $event->objectid);
         if ((int) $assignment->isprimary !== 1) {
             return;
@@ -18,6 +22,9 @@ final class notification_observer {
     }
 
     public static function student_reassigned(\local_monlaututoria\event\student_reassigned $event): void {
+        if (!feature::enabled(feature::NOTIFICATIONS)) {
+            return;
+        }
         $assignment = (new assignment_repository())->get((int) $event->objectid);
         if ((int) $assignment->isprimary !== 1) {
             return;
@@ -26,6 +33,9 @@ final class notification_observer {
     }
 
     public static function referral_updated(\local_monlaututoria\event\referral_updated $event): void {
+        if (!feature::enabled(feature::NOTIFICATIONS)) {
+            return;
+        }
         $referral = (new referral_repository())->get((int) $event->objectid);
         $dispatch = new notification_dispatch_service();
         $assignedto = $event->other['assignedto'] ?? null;

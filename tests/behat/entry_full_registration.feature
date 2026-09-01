@@ -3,7 +3,7 @@
 # particular the "roles"/"permission overrides"/"role assigns" generator steps,
 # the repeat_elements() field names for the participant rows, and the exact
 # success text — against the real Moodle 5.1 instance.
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Full tutoring entry registration (phase 5.3)
   In order to record a tutoring actuation with its full detail
   As a tutor

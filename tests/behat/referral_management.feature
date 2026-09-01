@@ -1,7 +1,7 @@
 # Written against current Moodle Behat step conventions but not executed in this
 # environment (no Behat instance available here). Same disclosed caveats as
 # tests/behat/agreement_management.feature (entry id 1 assumed).
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Referrals (phase 6.4)
   In order to route a tutoring case to coordination, orientation or management
   As a tutor

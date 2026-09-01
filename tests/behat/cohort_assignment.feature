@@ -2,7 +2,7 @@
 # environment (no Behat instance available here). Verify step wording — in
 # particular the "cohorts"/"cohort members" generator steps and the exact
 # success text — against the real Moodle 5.1 instance.
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Cohort-based bulk assignment (the "confirm" step of phase 3C)
   In order to assign a tutor to a whole group of students at once
   As a coordinator

@@ -3,7 +3,7 @@
 # particular the assumed entry id (1, the first tutoring entry created in the
 # Background) — against the real Moodle 5.1 instance, same disclosed caveat
 # already applied to assignment ids elsewhere in this project.
-@local @local_monlaututoria
+@local @local_monlaututoria @local_monlaututoria_advanced
 Feature: Agreements (phase 6.1/6.3)
   In order to turn a tutoring entry into a concrete, trackable action
   As a tutor

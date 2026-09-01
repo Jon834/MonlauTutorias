@@ -815,6 +815,11 @@ $string['dashboard_pendingfilter_all'] = 'All pending items';
 $string['dashboard_pendingfilter_open'] = 'Only open items';
 $string['dashboard_pendingfilter_overdue'] = 'Only overdue items';
 $string['dashboard_section_students'] = 'My students';
+$string['dashboard_view_roster'] = 'My students';
+$string['dashboard_view_pending'] = 'Pending work';
+$string['dashboard_roster_entrycount'] = '{$a} tutoring entries';
+$string['dashboard_roster_lastentry'] = 'Latest: {$a}';
+$string['dashboard_roster_noentry'] = 'No tutoring entry yet';
 $string['dashboard_section_followups'] = 'Follow-ups';
 $string['dashboard_section_agreements'] = 'Agreements';
 $string['dashboard_section_referrals'] = 'Referral cases';
@@ -930,6 +935,7 @@ $string['privacy:metadata:notification:timesent'] = 'Time when the notification 
 
 
 $string['nav_dashboard'] = 'Dashboard';
+$string['nav_myfile'] = 'My tutoring';
 $string['nav_dashboard_tip'] = 'Quick overview of tutor students, pending items and priorities.';
 $string['nav_assignments'] = 'Assignments';
 $string['nav_assignments_tip'] = 'Review student allocation and open each assignment detail.';
@@ -1021,3 +1027,8 @@ $string['coordination_filter_help'] = 'First narrow by cohort and then, if neede
 $string['error_coordination_scope_invalid_user'] = 'You can only assign scopes to users with access to the coordination dashboard.';
 $string['coordination_scope_intro'] = 'Select a coordinator and assign the cohorts they can supervise. Inside the dashboard they can then filter by tutor.';
 $string['coordination_scope_help_steps'] = 'To enable a coordinator: 1) assign the user a role with the capability local/monlaututoria:viewcoordinationdashboard at system level, 2) select that user on this screen, and 3) assign the cohorts they can supervise.';
+
+// Phase 13 — simple mode.
+$string['setting_simplemode'] = 'Simple mode';
+$string['setting_simplemode_desc'] = 'Reduces the plugin to the day-to-day essentials: the tutor records tutoring entries and the student consults their own entries and who their tutor is. Hides agreements, follow-ups, referrals, the coordination dashboard, notifications, imports (CSV and from cohorts), co-tutors and attachments — from the navigation and from their pages. Nothing is deleted: data, services and tests stay intact, and clearing this checkbox restores everything. Off by default.';
+$string['error_featuredisabled'] = 'This feature is not available: the site is running Monlau Tutoria in simple mode.';

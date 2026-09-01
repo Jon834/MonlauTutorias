@@ -31,6 +31,7 @@ require(__DIR__ . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::REFERRALS);
 require_capability('local/monlaututoria:createreferral', $context);
 
 $entryid = required_param('entryid', PARAM_INT);

@@ -132,8 +132,10 @@ foreach ((new \local_monlaututoria\repository\reason_repository())->get_all(true
 // existing entry (editanyentry, or editownentry limited to entries this
 // user authored) — "isowner" is trivially true here since the entry does
 // not exist yet and this user is about to become its createdby.
-$canupload = has_capability('local/monlaututoria:editanyentry', $context)
-    || has_capability('local/monlaututoria:editownentry', $context);
+$canupload = (has_capability('local/monlaututoria:editanyentry', $context)
+    || has_capability('local/monlaututoria:editownentry', $context))
+    // Fase 13 — no attachment field on the quick form in simple mode.
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::ATTACHMENTS);
 
 $form = new \local_monlaututoria\form\entry_quick_form(null, [
     'modalities' => $modalityoptions,

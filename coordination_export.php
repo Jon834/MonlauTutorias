@@ -3,6 +3,7 @@ require_once(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::COORDINATION);
 require_capability('local/monlaututoria:exportcoordinationreports', $context);
 if (!has_any_capability(['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments'], $context)) {
     throw new required_capability_exception($context, 'local/monlaututoria:viewcoordinationdashboard', 'nopermissions', '');

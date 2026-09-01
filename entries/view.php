@@ -119,7 +119,8 @@ $data = (object) [
     'contentvisible'       => $entry->contentvisible !== null ? $entry->contentvisible : '—',
     'shownoteinternal'     => !$isself && has_capability('local/monlaututoria:viewinternalnotes', $context),
     'noteinternal'         => $entry->noteinternal !== null ? $entry->noteinternal : '—',
-    'shownoterestricted'   => !$isself && has_capability('local/monlaututoria:viewrestrictednotes', $context),
+    'shownoterestricted'   => !$isself && has_capability('local/monlaututoria:viewrestrictednotes', $context)
+        && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::RESTRICTEDNOTES),
     'noterestricted'       => $entry->noterestricted !== null ? $entry->noterestricted : '—',
     'hasnextfollowup'      => $entry->nextfollowupdate !== null,
     'nextfollowupformatted' => $entry->nextfollowupdate !== null ? userdate($entry->nextfollowupdate, $dateformat) : '',
@@ -131,17 +132,23 @@ $data = (object) [
     'annulurl'             => (new moodle_url('/local/monlaututoria/entries/annul.php', ['id' => $id]))->out(false),
     // Staff-only, same hard floor as entry_attachment_service — see its
     // class docblock for why there is no student-visible attachment tier.
-    'canseeattachments'    => !$isself && has_capability('local/monlaututoria:viewinternalnotes', $context),
+    // Fase 13: the "!feature::enabled(...)" clauses hide these actions in
+    // simple mode (their target pages refuse to load there anyway).
+    'canseeattachments'    => !$isself && has_capability('local/monlaututoria:viewinternalnotes', $context)
+        && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::ATTACHMENTS),
     'attachmentsurl'       => (new moodle_url('/local/monlaututoria/entries/attachments.php', ['id' => $id]))->out(false),
     // Phase 6.1: staff-only, same reasoning as attachments — an agreement is
     // created by tutoring staff, never by the student themselves.
-    'cancreateagreement'   => !$isself && has_capability('local/monlaututoria:createagreement', $context),
+    'cancreateagreement'   => !$isself && has_capability('local/monlaututoria:createagreement', $context)
+        && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS),
     'createagreementurl'   => (new moodle_url('/local/monlaututoria/agreements/create.php', ['entryid' => $id]))->out(false),
     // Phase 6.2: same reasoning as agreements.
-    'cancreatefollowup'    => !$isself && has_capability('local/monlaututoria:createfollowup', $context),
+    'cancreatefollowup'    => !$isself && has_capability('local/monlaututoria:createfollowup', $context)
+        && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS),
     'createfollowupurl'    => (new moodle_url('/local/monlaututoria/followups/create.php', ['entryid' => $id]))->out(false),
     // Phase 6.4: same reasoning as agreements/follow-ups.
-    'cancreatereferral'    => !$isself && has_capability('local/monlaututoria:createreferral', $context),
+    'cancreatereferral'    => !$isself && has_capability('local/monlaututoria:createreferral', $context)
+        && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::REFERRALS),
     'createreferralurl'    => (new moodle_url('/local/monlaututoria/referrals/create.php', ['entryid' => $id]))->out(false),
 ];
 

@@ -67,16 +67,31 @@ final class assignment_form extends \moodleform {
         $mform->setType('academicyearid', PARAM_INT);
         $mform->addRule('academicyearid', get_string('required'), 'required', null, 'client');
 
-        $cohortoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + $customdata['cohorts'];
-        $mform->addElement('select', 'cohortid', get_string('assignment_col_cohort', 'local_monlaututoria'), $cohortoptions);
-        $mform->setType('cohortid', PARAM_INT);
+        // Fase 13 — in simple mode there is only the primary tutor, and
+        // cohorts (an import concept) are not surfaced. The service still
+        // accepts cohortid=0 and assignmenttype=primary exactly as before.
+        $simplemode = \local_monlaututoria\feature::simple_mode();
 
+        if ($simplemode) {
+            $mform->addElement('hidden', 'cohortid', 0);
+            $mform->setType('cohortid', PARAM_INT);
+        } else {
+            $cohortoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + $customdata['cohorts'];
+            $mform->addElement('select', 'cohortid', get_string('assignment_col_cohort', 'local_monlaututoria'), $cohortoptions);
+            $mform->setType('cohortid', PARAM_INT);
+        }
+
+        $typeoptions = assignment_type::get_options();
+        if ($simplemode) {
+            $typeoptions = [assignment_type::PRIMARY => $typeoptions[assignment_type::PRIMARY]];
+        }
         $mform->addElement(
             'select',
             'assignmenttype',
             get_string('assignment_col_type', 'local_monlaututoria'),
-            assignment_type::get_options()
+            $typeoptions
         );
+        $mform->setDefault('assignmenttype', assignment_type::PRIMARY);
 
         // No separate "isprimary" field here on purpose: assignments/create.php
         // derives it directly from "Tipo" (isprimary = assignmenttype===primary)

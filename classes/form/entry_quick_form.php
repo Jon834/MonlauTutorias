@@ -90,12 +90,17 @@ final class entry_quick_form extends \moodleform {
         // that rule visible to whoever is filling in the form.
         $mform->addHelpButton('noteinternal', 'entry_field_noteinternal', 'local_monlaututoria');
 
-        $mform->addElement(
-            'date_selector',
-            'nextfollowupdate',
-            get_string('entry_field_nextfollowupdate', 'local_monlaututoria'),
-            ['optional' => true]
-        );
+        // Fase 13 — "próximo seguimiento" is a follow-up concept: no field for
+        // it in simple mode. entry_service still accepts a null value, and the
+        // validation() below already guards on !empty().
+        if (\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS)) {
+            $mform->addElement(
+                'date_selector',
+                'nextfollowupdate',
+                get_string('entry_field_nextfollowupdate', 'local_monlaututoria'),
+                ['optional' => true]
+            );
+        }
 
         // Optional, only when the page decided the current user is entitled
         // to attach files at all (same editanyentry/editownentry rule

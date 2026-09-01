@@ -167,7 +167,8 @@ $dateformat = get_string('strftimedatefullshort', 'langconfig');
 $canmanageassignments = has_capability('local/monlaututoria:manageassignments', $context);
 $canmanageclosed = has_capability('local/monlaututoria:manageclosedassignments', $context);
 $canassignstudents = has_capability('local/monlaututoria:assignstudents', $context);
-$canreassignstudents = has_any_capability(['local/monlaututoria:reassignstudents', 'local/monlaututoria:manageassignments'], $context);
+$canreassignstudents = has_any_capability(['local/monlaututoria:reassignstudents', 'local/monlaututoria:manageassignments'], $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::COTUTORS);
 
 $rows = [];
 foreach ($records as $record) {
@@ -230,7 +231,8 @@ if ($canassignstudents) {
         'title' => get_string('assignments_create_tip', 'local_monlaututoria'),
     ];
 }
-if (has_capability('local/monlaututoria:managecohortassignments', $context)) {
+if (has_capability('local/monlaututoria:managecohortassignments', $context)
+    && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::IMPORTS)) {
     $headeractions[] = [
         'url' => new moodle_url('/local/monlaututoria/assignments/cohort_create.php'),
         'label' => get_string('cohort_assignment_create', 'local_monlaututoria'),

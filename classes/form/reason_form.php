@@ -49,11 +49,16 @@ final class reason_form extends \moodleform {
 
         $mform->addElement('advcheckbox', 'requiresfollowup', get_string('reason_requiresfollowup', 'local_monlaututoria'));
 
+        // Fase 13 — the "restricted" tier is not offered in simple mode.
+        $visibilityoptions = visibility_level::get_options();
+        if (!\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::RESTRICTEDNOTES)) {
+            unset($visibilityoptions[visibility_level::RESTRICTED]);
+        }
         $mform->addElement(
             'select',
             'defaultvisibility',
             get_string('reason_defaultvisibility', 'local_monlaututoria'),
-            visibility_level::get_options()
+            $visibilityoptions
         );
         $mform->setDefault('defaultvisibility', visibility_level::INTERNAL);
 

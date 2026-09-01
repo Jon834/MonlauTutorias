@@ -29,6 +29,7 @@ require(__DIR__ . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::AGREEMENTS);
 require_capability('local/monlaututoria:manageagreements', $context);
 
 $id = required_param('id', PARAM_INT);

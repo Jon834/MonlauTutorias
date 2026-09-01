@@ -45,18 +45,27 @@ final class assignment_filter_form extends \moodleform {
         $mform->addElement('select', 'academicyearid', get_string('filter_academicyear', 'local_monlaututoria'), $academicyearoptions);
         $mform->setType('academicyearid', PARAM_INT);
 
-        $typeoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + assignment_type::get_options();
-        $mform->addElement('select', 'assignmenttype', get_string('filter_assignmenttype', 'local_monlaututoria'), $typeoptions);
+        // Fase 13 — in simple mode there is only the primary tutor and no
+        // import sources/cohorts, so those three filters add only noise. The
+        // page still reads the params defensively if they arrive via the URL.
+        $simplemode = \local_monlaututoria\feature::simple_mode();
+
+        if (!$simplemode) {
+            $typeoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + assignment_type::get_options();
+            $mform->addElement('select', 'assignmenttype', get_string('filter_assignmenttype', 'local_monlaututoria'), $typeoptions);
+        }
 
         $statusoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + assignment_status::get_options();
         $mform->addElement('select', 'status', get_string('filter_status', 'local_monlaututoria'), $statusoptions);
 
-        $sourceoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + assignment_source::get_options();
-        $mform->addElement('select', 'source', get_string('filter_source', 'local_monlaututoria'), $sourceoptions);
+        if (!$simplemode) {
+            $sourceoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + assignment_source::get_options();
+            $mform->addElement('select', 'source', get_string('filter_source', 'local_monlaututoria'), $sourceoptions);
 
-        $cohortoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + $customdata['cohorts'];
-        $mform->addElement('select', 'cohortid', get_string('filter_cohort', 'local_monlaututoria'), $cohortoptions);
-        $mform->setType('cohortid', PARAM_INT);
+            $cohortoptions = [0 => get_string('filter_all', 'local_monlaututoria')] + $customdata['cohorts'];
+            $mform->addElement('select', 'cohortid', get_string('filter_cohort', 'local_monlaututoria'), $cohortoptions);
+            $mform->setType('cohortid', PARAM_INT);
+        }
 
         // NOTE: 'core_user/form_user_selector' is the AJAX transport this form
         // relies on for a search-as-you-type user picker instead of a full

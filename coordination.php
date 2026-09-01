@@ -4,6 +4,7 @@ require_once($CFG->libdir . '/adminlib.php');
 
 require_login();
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::COORDINATION);
 if (!has_any_capability(['local/monlaututoria:viewcoordinationdashboard', 'local/monlaututoria:viewallassignments'], $context)) {
     throw new required_capability_exception($context, 'local/monlaututoria:viewcoordinationdashboard', 'nopermissions', '');
 }

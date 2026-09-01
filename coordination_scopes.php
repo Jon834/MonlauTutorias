@@ -4,6 +4,7 @@ require_once($CFG->libdir . '/adminlib.php');
 
 require_login();
 $context = context_system::instance();
+\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::COORDINATION);
 require_capability('local/monlaututoria:managecoordinationscopes', $context);
 
 $selecteduserid = optional_param('userid', 0, PARAM_INT);

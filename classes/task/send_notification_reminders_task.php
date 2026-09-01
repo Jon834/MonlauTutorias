@@ -9,6 +9,11 @@ final class send_notification_reminders_task extends \core\task\scheduled_task {
     }
 
     public function execute() {
+        // Fase 13 — no-op while notifications are hidden (simple mode). The
+        // task stays registered so re-enabling the feature needs no upgrade.
+        if (!\local_monlaututoria\feature::enabled(\local_monlaututoria\feature::NOTIFICATIONS)) {
+            return;
+        }
         (new \local_monlaututoria\service\notification_reminder_service())->queue_reminders();
     }
 }
