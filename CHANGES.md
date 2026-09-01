@@ -1,5 +1,14 @@
 # Changelog — local_monlaututoria
 
+## 0.13.4 — 2026-09-01
+
+**Página "Ayuda" adaptada al modo simple.**
+
+- En modo simple solo muestra el concepto **Tutoría** (fuera Acuerdo / Seguimiento / Derivación) y **"¿Qué ve el alumno?"**, con textos que ya no mencionan las 3 partes de visibilidad ni los conceptos ocultos: la tutoría tiene 2 partes (comentario compartido + nota interna).
+- `version.php` → `2026091704` / `0.13.4`.
+
+---
+
 ## 0.13.3 — 2026-09-01
 
 **Tabla "Pendientes" del panel del tutor en modo simple (feedback de uso).**
