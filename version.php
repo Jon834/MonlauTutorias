@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026090800;
+$plugin->version   = 2026091700;
 // Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
 // este valor es compatible con esa instancia; sigue sin confirmarse el número
 // exacto del core (no bloqueante, solo pendiente de precisión).

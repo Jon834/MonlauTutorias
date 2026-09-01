@@ -42,7 +42,7 @@
 - `index.php` (hub de configuración): oculta visibilidad por cohorte y coordinadores.
 - `block_monlaututoria`: oculta la sección de coordinación y el enlace de derivaciones.
 - `observer\notification_observer`: no encola ninguna notificación si `NOTIFICATIONS` está oculto (las tareas de cron siguen registradas pero no encuentran trabajo — desactivarlas se difiere a S4).
-- Sin cambio de esquema. `version.php` → `2026090800` / `0.13.0`.
+- Sin cambio de esquema. `version.php` → `2026091700` / `0.13.0` (por encima de un `2026091601` que ya estaba instalado en el Moodle de pruebas sin estar en git — probablemente solo un bump manual de `version.php` al probar; no se ha encontrado código posterior a la v0.12.5 en el repositorio).
 - Prueba nueva: `tests/feature_test.php` (lógica del interruptor). ⚠️ **No ejecutada** — no hay entorno Moodle en esta máquina; solo `php -l` (0 errores en los 330 archivos PHP del plugin + bloque). Pendientes (S5): Behat de la navegación/redirección en modo simple, del roster (`dashboard_roster.feature`), la agrupación `@advanced` de los `.feature` de módulos ocultos, y los manuales paso a paso (tutor, alumno, coordinación, admin técnico).
 
 ---
