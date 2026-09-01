@@ -640,12 +640,12 @@ final class renderer extends \plugin_renderer_base {
                 : '';
 
             if ((int) $student->activeentrycount > 0) {
-                $meta = \html_writer::span(
+                $meta = \html_writer::div(
                     get_string('dashboard_roster_entrycount', 'local_monlaututoria', (int) $student->activeentrycount),
                     'local-monlaututoria-roster__meta'
                 );
                 if ($student->latestactiveentry !== null) {
-                    $meta .= \html_writer::span(
+                    $meta .= \html_writer::div(
                         get_string(
                             'dashboard_roster_lastentry',
                             'local_monlaututoria',
@@ -655,7 +655,7 @@ final class renderer extends \plugin_renderer_base {
                     );
                 }
             } else {
-                $meta = \html_writer::span(
+                $meta = \html_writer::div(
                     $this->output->pix_icon('i/warning', '') . ' '
                         . get_string('dashboard_roster_noentry', 'local_monlaututoria'),
                     'local-monlaututoria-roster__meta is-pending'

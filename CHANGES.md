@@ -1,5 +1,16 @@
 # Changelog — local_monlaututoria
 
+## 0.13.2 — 2026-09-01
+
+**Ajustes del panel del tutor en modo simple (feedback de uso).**
+
+- Filtro de alumnos: en modo simple pasa a **Todos / Con tutoría / Sin tutoría** (antes: "sin tutoría inicial" + "con pendientes", este último inútil sin seguimientos/acuerdos). Nueva opción `covered` que filtra por `activeentrycount > 0`.
+- Se **oculta el filtro "pendientes" (abiertos/vencidos)** en modo simple: solo afectaba a seguimientos y acuerdos.
+- Roster: el nº de tutorías y la fecha de la última ya no se pegan (cada dato en su línea).
+- `version.php` → `2026091702` / `0.13.2`.
+
+---
+
 ## 0.13.1 — 2026-09-01
 
 **Ajustes de la Fase 13 tras la primera prueba en Moodle real.**

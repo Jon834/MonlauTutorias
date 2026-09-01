@@ -71,9 +71,17 @@ if (!in_array($view, ['roster', 'pending'], true)) {
 }
 set_user_preference('local_monlaututoria_dashboard_view', $view);
 
-$validstudentfilters = ['all', 'pendinginitial', 'withpending'];
-if ($showpriority) {
-    $validstudentfilters[] = 'priority';
+// Fase 13 — "covered" (= con tutoría) is the natural counterpart to
+// "pendinginitial" (= sin tutoría) for the roster. In simple mode
+// "withpending"/"priority" are dropped: they count follow-ups/agreements/
+// referrals, none of which exist there.
+if (\local_monlaututoria\feature::simple_mode()) {
+    $validstudentfilters = ['all', 'covered', 'pendinginitial'];
+} else {
+    $validstudentfilters = ['all', 'covered', 'pendinginitial', 'withpending'];
+    if ($showpriority) {
+        $validstudentfilters[] = 'priority';
+    }
 }
 $validpendingfilters = ['all', 'open', 'overdue'];
 $studentfilter = optional_param(
@@ -114,13 +122,18 @@ $academicyearoptions = [];
 foreach ($academicyearrepository->get_all() as $year) {
     $academicyearoptions[(int) $year->id] = format_string($year->name);
 }
-$studentfilteroptions = [
-    'all' => get_string('dashboard_studentfilter_all', 'local_monlaututoria'),
-    'pendinginitial' => get_string('dashboard_studentfilter_pendinginitial', 'local_monlaututoria'),
-    'withpending' => get_string('dashboard_studentfilter_withpending', 'local_monlaututoria'),
-];
-if ($showpriority) {
-    $studentfilteroptions['priority'] = get_string('dashboard_studentfilter_priority', 'local_monlaututoria');
+$simplemode = \local_monlaututoria\feature::simple_mode();
+$studentfilteroptions = ['all' => get_string('dashboard_studentfilter_all', 'local_monlaututoria')];
+$studentfilteroptions['covered'] = get_string('dashboard_studentfilter_covered', 'local_monlaututoria');
+$studentfilteroptions['pendinginitial'] = get_string(
+    $simplemode ? 'dashboard_studentfilter_notutoring' : 'dashboard_studentfilter_pendinginitial',
+    'local_monlaututoria'
+);
+if (!$simplemode) {
+    $studentfilteroptions['withpending'] = get_string('dashboard_studentfilter_withpending', 'local_monlaututoria');
+    if ($showpriority) {
+        $studentfilteroptions['priority'] = get_string('dashboard_studentfilter_priority', 'local_monlaututoria');
+    }
 }
 $pendingfilteroptions = [
     'all' => get_string('dashboard_pendingfilter_all', 'local_monlaututoria'),
@@ -213,17 +226,21 @@ $dashboardfilters .= $OUTPUT->single_select(
     [],
     'dashboardstudentfilterselector'
 );
-$dashboardfilters .= $OUTPUT->single_select(
-    new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
-        'academicyearid' => $requestedacademicyearid ?: null,
-        'studentfilter' => $studentfilter,
-    ])),
-    'pendingfilter',
-    $pendingfilteroptions,
-    $pendingfilter,
-    [],
-    'dashboardpendingfilterselector'
-);
+// Fase 13 — the "pendientes" (open/overdue) filter only touches follow-ups
+// and agreements, so it is meaningless in simple mode.
+if (!$simplemode) {
+    $dashboardfilters .= $OUTPUT->single_select(
+        new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'academicyearid' => $requestedacademicyearid ?: null,
+            'studentfilter' => $studentfilter,
+        ])),
+        'pendingfilter',
+        $pendingfilteroptions,
+        $pendingfilter,
+        [],
+        'dashboardpendingfilterselector'
+    );
+}
 echo html_writer::div($dashboardfilters, 'local-monlaututoria-toolbar');
 
 // Fase 13 — "Mis alumnos" (roster) / "Pendientes" (tablas) view switch.
@@ -257,7 +274,9 @@ $dashboard = (new \local_monlaututoria\service\dashboard_service())
     ->get_tutor_dashboard((int) $USER->id, (int) $academicyear->id);
 
 $filteredstudents = $dashboard->students;
-if ($studentfilter === 'pendinginitial') {
+if ($studentfilter === 'covered') {
+    $filteredstudents = array_values(array_filter($filteredstudents, static fn ($student): bool => $student->covered));
+} else if ($studentfilter === 'pendinginitial') {
     $filteredstudents = array_values(array_filter($filteredstudents, static fn ($student): bool => $student->missinginitial));
 } else if ($studentfilter === 'withpending') {
     $filteredstudents = array_values(array_filter(
