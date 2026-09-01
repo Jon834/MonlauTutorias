@@ -447,11 +447,18 @@ final class renderer extends \plugin_renderer_base {
         $showfollowups = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
         $showagreements = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS);
 
+        // Fase 13 — "X / Y con tutoría" reads more directly than a percentage
+        // for the "do all my students have one yet?" question a tutor actually
+        // asks. Percentage kept in full mode.
+        $coveragevalue = \local_monlaututoria\feature::simple_mode()
+            ? $summary->attendedcount . ' / ' . $summary->assignedcount
+            : format_float($summary->coveragepercent, 2) . ' %';
+
         $cards = [
             ['label' => get_string('dashboard_summary_assigned', 'local_monlaututoria'), 'value' => $summary->assignedcount],
             ['label' => get_string('dashboard_summary_attended', 'local_monlaututoria'), 'value' => $summary->attendedcount],
             ['label' => get_string('dashboard_summary_pendinginitial', 'local_monlaututoria'), 'value' => $summary->pendinginitialcount],
-            ['label' => get_string('dashboard_summary_coverage', 'local_monlaututoria'), 'value' => format_float($summary->coveragepercent, 2) . ' %'],
+            ['label' => get_string('dashboard_summary_coverage', 'local_monlaututoria'), 'value' => $coveragevalue],
         ];
         if ($showfollowups) {
             $cards[] = ['label' => get_string('dashboard_summary_followupsoverdue', 'local_monlaututoria'), 'value' => $summary->overduefollowupcount];
@@ -517,6 +524,11 @@ final class renderer extends \plugin_renderer_base {
             );
         }
 
+        // Fase 13 — simple mode: "Sin tutoría inicial" is redundant with
+        // "Estado de cobertura" (same yes/no), and "Pendientes" (Seg./Acu./
+        // Der.) is always 0/0/0 because those modules are hidden. Drop both.
+        $simplemode = \local_monlaututoria\feature::simple_mode();
+
         $table = new \html_table();
         $table->head = [
             $this->sortable_header(
@@ -531,10 +543,14 @@ final class renderer extends \plugin_renderer_base {
                 get_string('dashboard_col_entrycount', 'local_monlaututoria'), 'entrycount',
                 $currentsort, $currentdir, $baseurl, 'studentsort', 'studentdir'
             ),
-            get_string('dashboard_col_missinginitial', 'local_monlaututoria'),
-            get_string('dashboard_col_coverage', 'local_monlaututoria'),
-            get_string('dashboard_col_pendingbundle', 'local_monlaututoria'),
         ];
+        if (!$simplemode) {
+            $table->head[] = get_string('dashboard_col_missinginitial', 'local_monlaututoria');
+        }
+        $table->head[] = get_string('dashboard_col_coverage', 'local_monlaututoria');
+        if (!$simplemode) {
+            $table->head[] = get_string('dashboard_col_pendingbundle', 'local_monlaututoria');
+        }
         if ($showpriority) {
             $table->head[] = get_string('dashboard_col_priority', 'local_monlaututoria');
         }
@@ -583,10 +599,14 @@ final class renderer extends \plugin_renderer_base {
                 \html_writer::link($studenturl, format_string($studentname)),
                 $lastentry,
                 $student->activeentrycount,
-                $missinginitial,
-                $coveragestring,
-                s($pendingbundle),
             ];
+            if (!$simplemode) {
+                $row[] = $missinginitial;
+            }
+            $row[] = $coveragestring;
+            if (!$simplemode) {
+                $row[] = s($pendingbundle);
+            }
             if ($showpriority) {
                 $row[] = $student->ispriority ? get_string('yes') : get_string('no');
             }

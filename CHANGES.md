@@ -1,5 +1,16 @@
 # Changelog — local_monlaututoria
 
+## 0.13.3 — 2026-09-01
+
+**Tabla "Pendientes" del panel del tutor en modo simple (feedback de uso).**
+
+- Se **quita la columna "Pendientes"** (Seg./Acu./Der.) — siempre 0/0/0 sin esos módulos.
+- Se quita también la columna **"Sin tutoría inicial"** — es la misma información que "Estado de cobertura" (Sí ↔ Pendiente de primera tutoría).
+- Tarjeta **"Cobertura"**: en modo simple muestra **"3 / 62"** (con tutoría / asignados) en vez de "4,84 %" — responde más directo a "¿ya tienen todos una tutoría?".
+- `version.php` → `2026091703` / `0.13.3`.
+
+---
+
 ## 0.13.2 — 2026-09-01
 
 **Ajustes del panel del tutor en modo simple (feedback de uso).**
