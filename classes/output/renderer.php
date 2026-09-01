@@ -472,10 +472,12 @@ final class renderer extends \plugin_renderer_base {
         if ($showpriority) {
             $cards[] = ['label' => get_string('dashboard_summary_priority', 'local_monlaututoria'), 'value' => $summary->prioritystudentcount];
         }
-        // Family-contact count stays in both modes: it just counts tutoring
-        // entries that involved a family, useful to a tutor regardless of
-        // whether families have their own login.
-        $cards[] = ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount];
+        // Family-contact count comes from entry participants, which are only
+        // recorded on the "full" registration form — hidden in simple mode,
+        // so this card would always read 0 there.
+        if (!\local_monlaututoria\feature::simple_mode()) {
+            $cards[] = ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount];
+        }
 
         $html = '';
         foreach ($cards as $card) {

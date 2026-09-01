@@ -1,5 +1,12 @@
 # Changelog — local_monlaututoria
 
+## 0.13.5 — 2026-09-01
+
+- Se oculta la tarjeta **"Contactos con familias"** del panel del tutor en modo simple: el dato viene de los participantes de una tutoría, que solo se registran en el formulario completo (oculto en modo simple), así que siempre valdría 0.
+- `version.php` → `2026091705` / `0.13.5`.
+
+---
+
 ## 0.13.4 — 2026-09-01
 
 **Página "Ayuda" adaptada al modo simple.**
