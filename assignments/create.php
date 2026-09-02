@@ -49,9 +49,22 @@ foreach ((new \local_monlaututoria\service\cohort_visibility_service())->get_vis
     $cohortoptions[(int) $cohort->id] = format_string($cohort->name);
 }
 
+// Fase 14 — members of the configured "Orientadores SOP" cohort, offered as a
+// dropdown when the type is "Orientador SOP".
+$soporientators = [];
+$sopcohortid = (int) get_config('local_monlaututoria', 'sopcohort');
+if (\local_monlaututoria\feature::simple_mode() && $sopcohortid > 0) {
+    foreach ((new \local_monlaututoria\repository\cohort_membership_repository())->get_members([$sopcohortid]) as $member) {
+        if (empty($member->deleted)) {
+            $soporientators[(int) $member->id] = fullname($member);
+        }
+    }
+}
+
 $form = new \local_monlaututoria\form\assignment_form(null, [
-    'academicyears' => $academicyearoptions,
-    'cohorts'       => $cohortoptions,
+    'academicyears'  => $academicyearoptions,
+    'cohorts'        => $cohortoptions,
+    'soporientators' => $soporientators,
 ]);
 
 $returnurl = new moodle_url('/local/monlaututoria/assignments/index.php');
@@ -59,10 +72,18 @@ $returnurl = new moodle_url('/local/monlaututoria/assignments/index.php');
 if ($form->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $form->get_data()) {
+    // Fase 14 — for "Orientador SOP" with the SOP cohort configured, the tutor
+    // comes from the soptutorid dropdown, not the free "Tutor" search.
+    $tutorid = (!empty($soporientators)
+        && $data->assignmenttype === \local_monlaututoria\domain\assignment_type::CO_TUTOR
+        && !empty($data->soptutorid))
+        ? (int) $data->soptutorid
+        : (int) $data->tutorid;
+
     $service = new \local_monlaututoria\service\assignment_service();
     $id = $service->create((object) [
         'studentid'      => (int) $data->studentid,
-        'tutorid'        => (int) $data->tutorid,
+        'tutorid'        => $tutorid,
         'academicyearid' => (int) $data->academicyearid,
         'cohortid'       => !empty($data->cohortid) ? (int) $data->cohortid : null,
         'assignmenttype' => $data->assignmenttype,

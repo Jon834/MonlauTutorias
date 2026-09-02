@@ -593,6 +593,9 @@ $string['entry_field_nextfollowupdate'] = 'Next follow-up';
 $string['entry_register'] = 'Register entry';
 // Fase 14 — SOP orientation tutor.
 $string['assignmenttype_sop'] = 'SOP orientation tutor';
+$string['assignment_field_soptutor'] = 'SOP orientation tutor';
+$string['setting_sopcohort'] = 'SOP orientation tutors cohort';
+$string['setting_sopcohort_desc'] = 'The Moodle cohort whose members are the SOP orientation tutors. When set, the manual assignment form offers a dropdown of these people for the "SOP orientation tutor" type instead of a free user search. Create the cohort under Site administration → Users → Cohorts and add the orientators.';
 $string['entry_field_sopobservations'] = 'SOP observations';
 $string['entry_field_recommendationsop'] = 'SOP recommendations';
 $string['entry_sop_register'] = 'Register SOP entry';

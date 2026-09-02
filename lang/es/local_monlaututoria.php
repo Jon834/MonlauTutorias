@@ -593,6 +593,9 @@ $string['entry_field_nextfollowupdate'] = 'Próximo seguimiento';
 $string['entry_register'] = 'Registrar tutoría';
 // Fase 14 — Orientador SOP.
 $string['assignmenttype_sop'] = 'Orientador SOP';
+$string['assignment_field_soptutor'] = 'Orientador SOP';
+$string['setting_sopcohort'] = 'Cohorte de orientadores SOP';
+$string['setting_sopcohort_desc'] = 'Cohorte de Moodle cuyos miembros son los orientadores del SOP. Cuando se define, el formulario de asignación manual ofrece un desplegable con estas personas al elegir el tipo "Orientador SOP", en vez de una búsqueda libre de usuarios. Crea la cohorte en Administración del sitio → Usuarios → Cohortes y añade a los orientadores.';
 $string['entry_field_sopobservations'] = 'Observaciones SOP';
 $string['entry_field_recommendationsop'] = 'Recomendaciones SOP';
 $string['entry_sop_register'] = 'Registrar tutoría SOP';

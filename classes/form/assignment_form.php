@@ -56,7 +56,16 @@ final class assignment_form extends \moodleform {
 
         $mform->addElement('autocomplete', 'tutorid', get_string('assignment_col_tutor', 'local_monlaututoria'), [], $userselectoroptions);
         $mform->setType('tutorid', PARAM_INT);
-        $mform->addRule('tutorid', get_string('required'), 'required', null, 'client');
+
+        // Fase 14 — when a "Orientadores SOP" cohort is configured (see the
+        // sopcohort setting), choosing "Orientador SOP" as the type swaps this
+        // free "Tutor" search for a dropdown of that cohort's members. The
+        // dropdown itself is added right after the "Tipo" element below.
+        $soporientators = $customdata['soporientators'] ?? [];
+        $hassopdropdown = \local_monlaututoria\feature::simple_mode() && !empty($soporientators);
+        if (!$hassopdropdown) {
+            $mform->addRule('tutorid', get_string('required'), 'required', null, 'client');
+        }
 
         $mform->addElement(
             'select',
@@ -90,6 +99,20 @@ final class assignment_form extends \moodleform {
             $typeoptions
         );
         $mform->setDefault('assignmenttype', assignment_type::PRIMARY);
+
+        // Fase 14 — SOP orientator dropdown (see above). hideIf keeps only the
+        // relevant tutor field visible for the chosen "Tipo".
+        if ($hassopdropdown) {
+            $mform->addElement(
+                'select',
+                'soptutorid',
+                get_string('assignment_field_soptutor', 'local_monlaututoria'),
+                ['' => get_string('choosedots')] + $soporientators
+            );
+            $mform->setType('soptutorid', PARAM_INT);
+            $mform->hideIf('soptutorid', 'assignmenttype', 'neq', assignment_type::CO_TUTOR);
+            $mform->hideIf('tutorid', 'assignmenttype', 'eq', assignment_type::CO_TUTOR);
+        }
 
         // No separate "isprimary" field here on purpose: assignments/create.php
         // derives it directly from "Tipo" (isprimary = assignmenttype===primary)
@@ -126,8 +149,24 @@ final class assignment_form extends \moodleform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-        if (!empty($data['studentid']) && !empty($data['tutorid']) && $data['studentid'] == $data['tutorid']) {
-            $errors['tutorid'] = get_string('error_assignment_self', 'local_monlaututoria');
+        // Fase 14 — with the SOP dropdown present, exactly one tutor field
+        // applies, depending on the type.
+        $sopselected = ($data['assignmenttype'] ?? '') === assignment_type::CO_TUTOR;
+        $hassopfield = $this->_form->elementExists('soptutorid');
+        if ($hassopfield && $sopselected) {
+            if (empty($data['soptutorid'])) {
+                $errors['soptutorid'] = get_string('required');
+            }
+        } else if (empty($data['tutorid'])) {
+            $errors['tutorid'] = get_string('required');
+        }
+
+        $effectivetutorid = ($hassopfield && $sopselected)
+            ? ($data['soptutorid'] ?? 0)
+            : ($data['tutorid'] ?? 0);
+        if (!empty($data['studentid']) && !empty($effectivetutorid) && $data['studentid'] == $effectivetutorid) {
+            $errors[($hassopfield && $sopselected) ? 'soptutorid' : 'tutorid']
+                = get_string('error_assignment_self', 'local_monlaututoria');
         }
 
         if (!empty($data['timeend']) && $data['timeend'] < $data['timestart']) {

@@ -1,5 +1,18 @@
 # Changelog — local_monlaututoria
 
+## 0.14.2 — 2026-09-02
+
+**Fase 14 — desplegable de orientadores SOP en el formulario de asignación.**
+
+- Nuevo ajuste **`local_monlaututoria/sopcohort`** (Administración → Plugins → Plugins locales → Monlau Tutoría → Ajustes): la **cohorte de Moodle** cuyos miembros son los orientadores del SOP.
+- Cuando está definida, el formulario de **asignación manual** en modo simple, al elegir el tipo **"Orientador SOP"**, muestra un **desplegable con los miembros de esa cohorte** en vez de la búsqueda libre de usuarios. Al elegir "Tutor principal" vuelve a mostrarse la búsqueda libre (`hideIf` sobre "Tipo").
+- Si no hay cohorte configurada, el comportamiento es el de antes (búsqueda libre para ambos tipos).
+- `version.php` → `2026091711` / `0.14.2`.
+
+**Cómo usarlo**: crea una cohorte en *Administración del sitio → Usuarios → Cohortes* (p. ej. "Orientadores SOP"), añade a los 3 orientadores, y selecciónala en el ajuste `sopcohort`.
+
+---
+
 ## 0.14.1 — 2026-09-02
 
 **Fase 14 (S2) — remates del Orientador SOP + indicador de adjuntos.**

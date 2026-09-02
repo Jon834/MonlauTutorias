@@ -158,6 +158,21 @@ if ($hassiteconfig
         0
     ));
 
+    // Fase 14 — the cohort whose members are the SOP orientation tutors. When
+    // set, the manual assignment form offers a dropdown of these people for
+    // the "Orientador SOP" type instead of a free user search.
+    $sopcohortoptions = [0 => get_string('none')];
+    foreach ((new \local_monlaututoria\repository\cohort_repository())->get_all() as $sopcohort) {
+        $sopcohortoptions[(int) $sopcohort->id] = format_string($sopcohort->name);
+    }
+    $settings->add(new admin_setting_configselect(
+        'local_monlaututoria/sopcohort',
+        get_string('setting_sopcohort', 'local_monlaututoria'),
+        get_string('setting_sopcohort_desc', 'local_monlaututoria'),
+        0,
+        $sopcohortoptions
+    ));
+
     $settings->add(new admin_setting_configduration(
         'local_monlaututoria/entryeditwindow',
         get_string('setting_entryeditwindow', 'local_monlaututoria'),
