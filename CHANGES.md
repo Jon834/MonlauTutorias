@@ -1,5 +1,13 @@
 # Changelog — local_monlaututoria
 
+## 0.14.4 — 2026-09-02
+
+- **Detalle de la tutoría**: los archivos adjuntos se listan ahora **en la propia pantalla**, con enlace de descarga y su categoría, no solo detrás del botón "Adjuntos de la tutoría" (que pasa a llamarse "Gestionar adjuntos" y sigue sirviendo para subir/quitar).
+- En una tutoría **SOP** el detalle ya no muestra las filas irrelevantes ("Comentario compartido con el alumno", "Próximo seguimiento", "Participantes").
+- `version.php` → `2026091713` / `0.14.4`.
+
+---
+
 ## 0.14.3 — 2026-09-02
 
 - El icono de adjunto en el listado de tutorías salía como imagen rota: `pix_icon('i/attachment')` no existe en todos los temas. Sustituido por el clip de Font Awesome (`fa-solid fa-paperclip`), mismo criterio que `templates/assignment_summary.mustache`.

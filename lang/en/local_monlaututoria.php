@@ -666,6 +666,7 @@ $string['entry_attachment_category'] = 'Document category';
 $string['entry_attachment_files'] = 'Files';
 $string['entry_attachment_upload'] = 'Upload files';
 $string['entry_attachments_title'] = 'Tutoring entry attachments';
+$string['entry_attachments_manage'] = 'Manage attachments';
 $string['entry_attachment_upload_success'] = '{$a} file(s) uploaded successfully.';
 $string['entry_attachments_empty'] = 'This tutoring entry has no attachments yet.';
 $string['error_entry_attachment_category_invalid'] = 'Invalid document category.';

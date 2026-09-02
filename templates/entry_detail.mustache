@@ -121,8 +121,10 @@
         {{^hasreasons}}—{{/hasreasons}}
     </dd>
 
+    {{^issop}}
     <dt class="col-sm-3">{{#str}} entry_field_contentvisible, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">{{contentvisible}}</dd>
+    {{/issop}}
 
     {{#shownoteinternal}}
     <dt class="col-sm-3">{{#issop}}{{#str}} entry_field_sopobservations, local_monlaututoria {{/str}}{{/issop}}{{^issop}}{{#str}} entry_field_noteinternal, local_monlaututoria {{/str}}{{/issop}}</dt>
@@ -139,6 +141,7 @@
     <dd class="col-sm-9">{{noterestricted}}</dd>
     {{/shownoterestricted}}
 
+    {{^issop}}
     <dt class="col-sm-3">{{#str}} entry_field_nextfollowupdate, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9">
         {{#hasnextfollowup}}{{nextfollowupformatted}}{{/hasnextfollowup}}
@@ -156,12 +159,27 @@
         {{/hasparticipants}}
         {{^hasparticipants}}—{{/hasparticipants}}
     </dd>
+    {{/issop}}
+
+    {{#canseeattachments}}
+    <dt class="col-sm-3">{{#str}} entry_attachments_title, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">
+        {{#hasattachmentlist}}
+            <ul class="mb-0">
+                {{#attachmentlist}}
+                <li><a href="{{url}}"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> {{name}}</a>{{#categorylabel}} <span class="text-muted">({{categorylabel}})</span>{{/categorylabel}}</li>
+                {{/attachmentlist}}
+            </ul>
+        {{/hasattachmentlist}}
+        {{^hasattachmentlist}}—{{/hasattachmentlist}}
+    </dd>
+    {{/canseeattachments}}
 </dl>
 {{#canedit}}
 <p><a class="btn btn-secondary" href="{{editurl}}">{{#str}} entry_edit_title, local_monlaututoria {{/str}}</a></p>
 {{/canedit}}
 {{#canseeattachments}}
-<p><a class="btn btn-secondary" href="{{attachmentsurl}}">{{#str}} entry_attachments_title, local_monlaututoria {{/str}}</a></p>
+<p><a class="btn btn-secondary" href="{{attachmentsurl}}">{{#str}} entry_attachments_manage, local_monlaututoria {{/str}}</a></p>
 {{/canseeattachments}}
 {{#cancreateagreement}}
 <p><a class="btn btn-secondary" href="{{createagreementurl}}">{{#str}} agreement_create, local_monlaututoria {{/str}}</a></p>

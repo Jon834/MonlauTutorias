@@ -666,6 +666,7 @@ $string['entry_attachment_category'] = 'Categoría documental';
 $string['entry_attachment_files'] = 'Archivos';
 $string['entry_attachment_upload'] = 'Subir archivos';
 $string['entry_attachments_title'] = 'Adjuntos de la tutoría';
+$string['entry_attachments_manage'] = 'Gestionar adjuntos';
 $string['entry_attachment_upload_success'] = 'Se han subido {$a} archivo(s) correctamente.';
 $string['entry_attachments_empty'] = 'Esta tutoría todavía no tiene ningún archivo adjunto.';
 $string['error_entry_attachment_category_invalid'] = 'Categoría documental no válida.';

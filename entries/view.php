@@ -173,6 +173,32 @@ $data = (object) [
     'createreferralurl'    => (new moodle_url('/local/monlaututoria/referrals/create.php', ['entryid' => $id]))->out(false),
 ];
 
+// Fase 14 — show the attachments inline here (with download links), not only
+// as a link to entries/attachments.php.
+if ($data->canseeattachments) {
+    $categorylabels = \local_monlaututoria\domain\entry_attachment_category::get_options()
+        + \local_monlaututoria\domain\entry_attachment_category::get_sop_options();
+    $attachmentlist = [];
+    $attachmentservice = new \local_monlaututoria\service\entry_attachment_service($entryrepository);
+    foreach ($attachmentservice->get_for_entry($id, (int) $USER->id) as [$file, $metadata]) {
+        $attachmentlist[] = [
+            'name'          => $file->get_filename(),
+            'url'           => moodle_url::make_pluginfile_url(
+                $context->id,
+                'local_monlaututoria',
+                \local_monlaututoria\service\entry_attachment_service::FILEAREA,
+                $id,
+                $file->get_filepath(),
+                $file->get_filename(),
+                true
+            )->out(false),
+            'categorylabel' => $metadata !== null ? ($categorylabels[$metadata->category] ?? $metadata->category) : '',
+        ];
+    }
+    $data->hasattachmentlist = !empty($attachmentlist);
+    $data->attachmentlist = $attachmentlist;
+}
+
 /** @var \local_monlaututoria\output\renderer $renderer */
 $renderer = $PAGE->get_renderer('local_monlaututoria');
 

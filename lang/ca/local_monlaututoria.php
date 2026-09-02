@@ -666,6 +666,7 @@ $string['entry_attachment_category'] = 'Categoria documental';
 $string['entry_attachment_files'] = 'Arxius';
 $string['entry_attachment_upload'] = 'Pujar arxius';
 $string['entry_attachments_title'] = 'Adjunts de la tutoria';
+$string['entry_attachments_manage'] = 'Gestionar adjunts';
 $string['entry_attachment_upload_success'] = 'S\'han pujat {$a} arxiu(s) correctament.';
 $string['entry_attachments_empty'] = 'Aquesta tutoria encara no té cap arxiu adjunt.';
 $string['error_entry_attachment_category_invalid'] = 'Categoria documental no vàlida.';
