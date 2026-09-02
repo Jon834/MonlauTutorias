@@ -1,5 +1,17 @@
 # Changelog — local_monlaututoria
 
+## 0.14.10 — 2026-09-02
+
+**Coordinación puede ver el panel de cualquier tutor u orientador SOP.**
+
+- En el **panel del tutor**, quien tiene `viewallassignments` ve un selector **"Ver el panel de"** con todos los tutores y orientadores SOP vigentes (y "Mi panel"). `dashboard.php?tutorid=X`.
+- Es **solo lectura**: al ver el panel de otra persona no aparecen los enlaces de acción (registrar tutoría, etc.), para no registrar una tutoría con coordinación como tutor.
+- En el listado de **Asignaciones**, nueva acción por fila **"Ver panel del tutor"**.
+- El enlace "Panel" de la navegación aparece también para coordinación.
+- `assignment_repository::find_current_tutor_ids()`. `version.php` → `2026091719` / `0.14.10`.
+
+---
+
 ## 0.14.9 — 2026-09-02
 
 - El panel del tutor muestra ahora "Mis alumnos SOP" tambien en la vista **"Listado"** (antes solo en "Mis alumnos"), como tabla con enlaces a la ficha y a "Registrar tutoria SOP". `version.php` -> `2026091718` / `0.14.9`.

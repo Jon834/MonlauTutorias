@@ -26,9 +26,29 @@ require(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
+
+// Fase 14 — coordination (viewallassignments) can open any tutor's or SOP
+// orientador's panel with ?tutorid=X, read-only. Everyone else only ever
+// sees their own.
+$isadminview = has_capability('local/monlaututoria:viewallassignments', $context);
+$requestedtutorid = optional_param('tutorid', 0, PARAM_INT);
+$panelownerid = ($isadminview && $requestedtutorid > 0) ? $requestedtutorid : (int) $USER->id;
+$isownpanel = $panelownerid === (int) $USER->id;
+
+$panelowner = $isownpanel ? null : \core_user::get_user($panelownerid);
+if ($panelowner && !empty($panelowner->deleted)) {
+    $panelowner = null;
+}
+if (!$isownpanel && $panelowner === null) {
+    // Bogus ?tutorid — fall back to the coordinator's own (empty) panel.
+    $panelownerid = (int) $USER->id;
+    $isownpanel = true;
+}
+
 // Fase 13 — in simple mode a teacher with students assigned is a tutor even
 // without the viewownstudents capability (see scope_service::user_is_tutor()).
-if (!(new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id)) {
+if (!$isadminview
+    && !(new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id)) {
     require_capability('local/monlaututoria:viewownstudents', $context);
 }
 
@@ -107,6 +127,9 @@ if (!in_array($pendingfilter, $validpendingfilters, true)) {
 set_user_preference('local_monlaututoria_dashboard_pendingfilter', $pendingfilter);
 
 $urlparams = ['studentfilter' => $studentfilter, 'pendingfilter' => $pendingfilter];
+if (!$isownpanel) {
+    $urlparams['tutorid'] = $panelownerid;
+}
 if ($requestedacademicyearid > 0) {
     $urlparams['academicyearid'] = $requestedacademicyearid;
 }
@@ -172,26 +195,33 @@ $referraldir = strtoupper(optional_param('referraldir', 'ASC', PARAM_ALPHA)) ===
 
 // Fase 13 — in simple mode a tutor-by-assignment can register tutorías
 // without the createentry capability (entries/create.php re-checks scope).
-$cancreateentry = has_capability('local/monlaututoria:createentry', $context)
+// Fase 14 — when coordination is viewing someone ELSE's panel it is
+// read-only: no action links (an entry would otherwise be recorded with the
+// coordinator as tutor, not the panel's owner).
+$cancreateentry = $isownpanel && (has_capability('local/monlaututoria:createentry', $context)
     || (\local_monlaututoria\feature::simple_mode()
-        && (new \local_monlaututoria\service\scope_service())->user_is_current_tutor((int) $USER->id));
-$cancreatefollowup = has_capability('local/monlaututoria:createfollowup', $context)
+        && (new \local_monlaututoria\service\scope_service())->user_is_current_tutor((int) $USER->id)));
+$cancreatefollowup = $isownpanel && has_capability('local/monlaututoria:createfollowup', $context)
     && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
-$canmanageagreements = has_capability('local/monlaututoria:manageagreements', $context)
+$canmanageagreements = $isownpanel && has_capability('local/monlaututoria:manageagreements', $context)
     && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS);
-$canmanagefollowups = has_capability('local/monlaututoria:managefollowups', $context)
+$canmanagefollowups = $isownpanel && has_capability('local/monlaututoria:managefollowups', $context)
     && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
-$canmanagereferrals = has_capability('local/monlaututoria:managereferrals', $context)
+$canmanagereferrals = $isownpanel && has_capability('local/monlaututoria:managereferrals', $context)
     && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::REFERRALS);
 
 // Fase 13 — whole dashboard sections hidden in simple mode.
 $showfollowupssection = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::FOLLOWUPS);
 $showagreementssection = \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::AGREEMENTS);
 
+$paneltitle = $panelowner
+    ? get_string('dashboard_title_of', 'local_monlaututoria', fullname($panelowner))
+    : get_string('dashboard_title', 'local_monlaututoria');
+
 echo $OUTPUT->header();
 echo $renderer->plugin_navigation('dashboard');
 echo $renderer->page_header_card(
-    get_string('dashboard_title', 'local_monlaututoria'),
+    $paneltitle,
     get_string('dashboard_intro', 'local_monlaututoria'),
     null,
     null,
@@ -203,6 +233,32 @@ echo $renderer->contextual_help(
     get_string('help_dashboard_body', 'local_monlaututoria')
 );
 
+// Fase 14 — coordination can switch to any current tutor's / SOP orientador's
+// panel. Read-only (see $isownpanel handling of the action links above).
+if ($isadminview) {
+    $tutorids = (new \local_monlaututoria\repository\assignment_repository())
+        ->find_current_tutor_ids((int) ($academicyear->id ?? 0));
+    $tutoroptions = [(int) $USER->id => get_string('dashboard_mypanel', 'local_monlaututoria')];
+    if (!empty($tutorids)) {
+        foreach ($DB->get_records_list('user', 'id', $tutorids, 'lastname, firstname', 'id, firstname, lastname') as $t) {
+            $tutoroptions[(int) $t->id] = fullname($t);
+        }
+    }
+    $tutorselect = new single_select(
+        new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'tutorid' => $isownpanel ? null : $panelownerid,
+            'academicyearid' => $requestedacademicyearid ?: null,
+        ])),
+        'tutorid',
+        $tutoroptions,
+        $panelownerid,
+        null,
+        'dashboardtutorselector'
+    );
+    $tutorselect->set_label(get_string('dashboard_viewtutorpanel', 'local_monlaututoria'));
+    echo html_writer::div($OUTPUT->render($tutorselect), 'local-monlaututoria-toolbar');
+}
+
 // Wrapped together (previously echoed bare, one after another, running
 // straight into the summary cards below with no separation) — same
 // .local-monlaututoria-toolbar treatment already applied to the ficha del
@@ -210,10 +266,11 @@ echo $renderer->contextual_help(
 $dashboardfilters = '';
 if (!empty($academicyearoptions)) {
     $dashboardfilters .= $OUTPUT->single_select(
-        new moodle_url('/local/monlaututoria/dashboard.php', [
+        new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'tutorid' => $isownpanel ? null : $panelownerid,
             'studentfilter' => $studentfilter,
             'pendingfilter' => $pendingfilter,
-        ]),
+        ])),
         'academicyearid',
         $academicyearoptions,
         $academicyear !== null ? (int) $academicyear->id : '',
@@ -223,6 +280,7 @@ if (!empty($academicyearoptions)) {
 }
 $dashboardfilters .= $OUTPUT->single_select(
     new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'tutorid' => $isownpanel ? null : $panelownerid,
         'academicyearid' => $requestedacademicyearid ?: null,
         'pendingfilter' => $pendingfilter,
     ])),
@@ -237,6 +295,7 @@ $dashboardfilters .= $OUTPUT->single_select(
 if (!$simplemode) {
     $dashboardfilters .= $OUTPUT->single_select(
         new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'tutorid' => $isownpanel ? null : $panelownerid,
             'academicyearid' => $requestedacademicyearid ?: null,
             'studentfilter' => $studentfilter,
         ])),
@@ -262,6 +321,7 @@ foreach (['roster' => 'dashboard_view_roster', 'pending' => $pendinglabelkey] as
     }
     $viewlinks .= html_writer::link(
         new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'tutorid' => $isownpanel ? null : $panelownerid,
             'view' => $viewkey,
             'academicyearid' => $requestedacademicyearid ?: null,
             'studentfilter' => $studentfilter,
@@ -280,7 +340,7 @@ if ($academicyear === null) {
 }
 
 $dashboard = (new \local_monlaututoria\service\dashboard_service())
-    ->get_tutor_dashboard((int) $USER->id, (int) $academicyear->id);
+    ->get_tutor_dashboard($panelownerid, (int) $academicyear->id);
 
 $filteredstudents = $dashboard->students;
 if ($studentfilter === 'covered') {
@@ -334,7 +394,7 @@ if (!empty($studentids) && \local_monlaututoria\feature::simple_mode()) {
 $mysopusers = [];
 if (\local_monlaututoria\feature::simple_mode()) {
     $mysopids = (new \local_monlaututoria\repository\assignment_repository())
-        ->find_current_cotutor_student_ids((int) $USER->id, (int) $academicyear->id);
+        ->find_current_cotutor_student_ids($panelownerid, (int) $academicyear->id);
     if (!empty($mysopids)) {
         $mysopusers = $DB->get_records_list('user', 'id', $mysopids, 'lastname, firstname', $studentuserfields);
     }
@@ -414,6 +474,7 @@ if ($showreferrals && $referralsort !== '') {
 // table never resets any of the others — every table's current sort state
 // travels along on every link, not just the one being clicked.
 $sortbaseurl = new moodle_url('/local/monlaututoria/dashboard.php', array_filter([
+            'tutorid' => $isownpanel ? null : $panelownerid,
     'academicyearid'  => $requestedacademicyearid ?: null,
     'studentfilter'   => $studentfilter,
     'pendingfilter'   => $pendingfilter,
@@ -445,7 +506,7 @@ if ($view === 'roster') {
 
         // Fase 13 — students this tutor used to have: they can still open the
         // tutorías they recorded (narrowed to their own by entry_service).
-        $formerids = $assignmentrepo->find_historical_student_ids_by_tutor((int) $USER->id);
+        $formerids = $assignmentrepo->find_historical_student_ids_by_tutor($panelownerid);
         if (!empty($formerids)) {
             $formerusers = $DB->get_records_list('user', 'id', $formerids, 'lastname, firstname', $studentuserfields);
             echo $renderer->dashboard_former_students_roster($formerusers);

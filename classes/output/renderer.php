@@ -76,7 +76,10 @@ final class renderer extends \plugin_renderer_base {
 
         // Fase 13 — in simple mode a teacher with students assigned is a tutor
         // (no viewownstudents role needed); see scope_service::user_is_tutor().
-        $istutor = (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id);
+        // Fase 14 — coordination (viewallassignments) also gets the panel link,
+        // to open any tutor's panel from there.
+        $istutor = (new \local_monlaututoria\service\scope_service())->user_is_tutor((int) $USER->id)
+            || has_capability('local/monlaututoria:viewallassignments', $systemcontext);
 
         if ($istutor) {
             $items[] = [

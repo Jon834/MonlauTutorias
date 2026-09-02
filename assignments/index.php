@@ -207,6 +207,12 @@ foreach ($records as $record) {
         'viewdetaillabel'    => get_string('assignment_viewdetail', 'local_monlaututoria'),
         'studentfichaurl'    => (new moodle_url('/local/monlaututoria/student/view.php', ['id' => $record->studentid]))->out(false),
         'studentfichalabel'  => get_string('student_viewficha', 'local_monlaututoria'),
+        // Fase 14 — coordination can jump to this tutor's own panel.
+        'cantutorpanel'      => $canviewall,
+        'tutorpanelurl'      => $canviewall
+            ? (new moodle_url('/local/monlaututoria/dashboard.php', ['tutorid' => $record->tutorid]))->out(false)
+            : '',
+        'tutorpanellabel'    => get_string('dashboard_viewtutorpanel_action', 'local_monlaututoria'),
         'canedit'            => $canedit,
         'editurl'            => $canedit
             ? (new moodle_url('/local/monlaututoria/assignments/edit.php', ['id' => $record->id]))->out(false)

@@ -383,6 +383,36 @@ class assignment_repository {
     }
 
     /**
+     * Fase 14 — every user who is currently a primary tutor or SOP orientador
+     * (co_tutor) of at least one student in the academic year. For the
+     * coordination "ver el panel de este tutor" selector.
+     *
+     * @param int $academicyearid
+     * @param int|null $now
+     * @return int[] distinct tutor user ids
+     */
+    public function find_current_tutor_ids(int $academicyearid, ?int $now = null): array {
+        global $DB;
+
+        $now = $now ?? time();
+        [$typesql, $typeparams] = $DB->get_in_or_equal(
+            [assignment_type::PRIMARY, assignment_type::CO_TUTOR], SQL_PARAMS_NAMED, 'type'
+        );
+        $params = array_merge(
+            ['academicyearid' => $academicyearid, 'status' => assignment_status::ACTIVE, 'now1' => $now, 'now2' => $now],
+            $typeparams
+        );
+
+        return array_values(array_map('intval', $DB->get_fieldset_select(
+            self::TABLE,
+            'DISTINCT tutorid',
+            "academicyearid = :academicyearid AND status = :status AND assignmenttype $typesql "
+                . 'AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)',
+            $params
+        )));
+    }
+
+    /**
      * Fase 14 — of the given students, which currently have a SOP orientation
      * tutor (an active co_tutor) in the academic year. For the panel's "N
      * alumnos con orientador SOP" card and the per-row badge.
