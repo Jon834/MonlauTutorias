@@ -25,10 +25,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026091717;
+$plugin->version   = 2026091718;
 // Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
 // este valor es compatible con esa instancia; sigue sin confirmarse el número
 // exacto del core (no bloqueante, solo pendiente de precisión).
 $plugin->requires  = 2025100600;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.14.8';
+$plugin->release   = '0.14.9';

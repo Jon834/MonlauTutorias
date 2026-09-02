@@ -1,5 +1,11 @@
 # Changelog — local_monlaututoria
 
+## 0.14.9 — 2026-09-02
+
+- El panel del tutor muestra ahora "Mis alumnos SOP" tambien en la vista **"Listado"** (antes solo en "Mis alumnos"), como tabla con enlaces a la ficha y a "Registrar tutoria SOP". `version.php` -> `2026091718` / `0.14.9`.
+
+---
+
 ## 0.14.8 — 2026-09-02
 
 - En modo simple, el conmutador del panel del tutor llama a la segunda vista **"Listado"** en vez de "Pendientes" (ahi solo queda la tabla de alumnos). `version.php` -> `2026091717` / `0.14.8`.

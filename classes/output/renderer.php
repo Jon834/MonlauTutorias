@@ -801,6 +801,45 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * "Mis alumnos SOP" as a table (fase 14) — the "Listado" counterpart of
+     * dashboard_sop_students_roster(). Name + actions (ver ficha / registrar
+     * tutoría SOP).
+     *
+     * @param array<int, \stdClass> $students user records
+     * @param int $academicyearid
+     * @return string
+     */
+    public function dashboard_sop_students_table(array $students, int $academicyearid): string {
+        if (empty($students)) {
+            return '';
+        }
+
+        $table = new \html_table();
+        $table->head = [
+            get_string('assignment_col_student', 'local_monlaututoria'),
+            get_string('assignment_col_actions', 'local_monlaututoria'),
+        ];
+
+        foreach ($students as $user) {
+            $fichaurl = new \moodle_url('/local/monlaututoria/student/view.php', [
+                'id' => (int) $user->id, 'academicyearid' => $academicyearid, 'tab' => 'tutorias',
+            ]);
+            $registerurl = new \moodle_url('/local/monlaututoria/entries/create_sop.php', [
+                'studentid' => (int) $user->id, 'academicyearid' => $academicyearid,
+            ]);
+            $table->data[] = [
+                \html_writer::link($fichaurl, s(fullname($user))),
+                \html_writer::link($fichaurl, get_string('dashboard_action_viewstudent', 'local_monlaututoria'))
+                    . ' | '
+                    . \html_writer::link($registerurl, get_string('entry_sop_register', 'local_monlaututoria')),
+            ];
+        }
+
+        return $this->heading(get_string('dashboard_section_sopstudents', 'local_monlaututoria'), 3)
+            . \html_writer::div(\html_writer::table($table), 'table-responsive');
+    }
+
+    /**
      * A clickable column header that toggles sort direction — click once for
      * ascending, again for descending; clicking a different column always
      * starts ascending. Shared by every sortable table in this plugin

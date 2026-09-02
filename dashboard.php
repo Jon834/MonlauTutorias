@@ -329,6 +329,17 @@ if (!empty($studentids) && \local_monlaututoria\feature::simple_mode()) {
         ->student_ids_with_sop_entries($studentids, (int) $academicyear->id);
 }
 
+// Fase 14 — the students THIS user is the SOP orientador of (a co_tutor).
+// Shown in both dashboard views ("Mis alumnos SOP").
+$mysopusers = [];
+if (\local_monlaututoria\feature::simple_mode()) {
+    $mysopids = (new \local_monlaututoria\repository\assignment_repository())
+        ->find_current_cotutor_student_ids((int) $USER->id, (int) $academicyear->id);
+    if (!empty($mysopids)) {
+        $mysopusers = $DB->get_records_list('user', 'id', $mysopids, 'lastname, firstname', $studentuserfields);
+    }
+}
+
 $responsibleuserids = [];
 foreach (array_merge($dashboard->pendingagreements, $dashboard->overdueagreements) as $agreement) {
     if ($agreement->responsibleuserid !== null) {
@@ -428,12 +439,8 @@ if ($view === 'roster') {
         $assignmentrepo = new \local_monlaututoria\repository\assignment_repository();
 
         // Fase 14 — students this user is the SOP orientation tutor of.
-        if (\local_monlaututoria\feature::simple_mode()) {
-            $sopids = $assignmentrepo->find_current_cotutor_student_ids((int) $USER->id, (int) $academicyear->id);
-            if (!empty($sopids)) {
-                $sopusers = $DB->get_records_list('user', 'id', $sopids, 'lastname, firstname', $studentuserfields);
-                echo $renderer->dashboard_sop_students_roster($sopusers, (int) $academicyear->id);
-            }
+        if (!empty($mysopusers)) {
+            echo $renderer->dashboard_sop_students_roster($mysopusers, (int) $academicyear->id);
         }
 
         // Fase 13 — students this tutor used to have: they can still open the
@@ -466,6 +473,12 @@ echo $renderer->dashboard_students_table(
     $sortbaseurl,
     $sopentrystudentids
 );
+
+// Fase 14 — the students this user is the SOP orientador of, also in the
+// "Listado" view (not only in the roster).
+if (!empty($mysopusers)) {
+    echo $renderer->dashboard_sop_students_table($mysopusers, (int) $academicyear->id);
+}
 
 // Fase 13 — the follow-ups section is hidden entirely in simple mode.
 if ($showfollowupssection) {
