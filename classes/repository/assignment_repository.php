@@ -725,7 +725,24 @@ class assignment_repository {
     }
 
     /** @var string[] columns callers may sort search() results by */
-    private const SORTABLE_COLUMNS = ['timestart', 'timeend', 'status', 'assignmenttype', 'source'];
+    private const SORTABLE_COLUMNS = [
+        'timestart', 'timeend', 'status', 'assignmenttype', 'source',
+        // Fase 14 — sort the listing by the joined names too.
+        'studentname', 'tutorname', 'cohortname', 'academicyear',
+    ];
+
+    /** @var array<string, string> sort key => ORDER BY expression (joined-query aliases) */
+    private const SORT_EXPRESSIONS = [
+        'timestart'      => 'a.timestart',
+        'timeend'        => 'a.timeend',
+        'status'         => 'a.status',
+        'assignmenttype' => 'a.assignmenttype',
+        'source'         => 'a.source',
+        'studentname'    => 'su.lastname, su.firstname',
+        'tutorname'      => 'tu.lastname, tu.firstname',
+        'cohortname'     => 'c.name',
+        'academicyear'   => 'ay.startdate',
+    ];
 
     /**
      * Exposes the same whitelist search() itself validates against, so a
@@ -764,14 +781,29 @@ class assignment_repository {
     ): array {
         global $DB;
 
-        [$sql, $params] = $this->build_search_where($filters);
+        [$where, $params] = $this->build_search_where($filters, 'a');
 
-        if (!in_array($sort, self::SORTABLE_COLUMNS, true)) {
+        if (!isset(self::SORT_EXPRESSIONS[$sort])) {
             $sort = 'timestart';
         }
         $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
+        $orderby = implode(', ', array_map(
+            static fn (string $col): string => trim($col) . ' ' . $direction,
+            explode(',', self::SORT_EXPRESSIONS[$sort])
+        )) . ', a.id DESC';
 
-        return $DB->get_records_select(self::TABLE, $sql, $params, "$sort $direction, id DESC", '*', $limitfrom, $limitnum);
+        // Fase 14 — LEFT JOINs only to make "order by student/tutor/cohort/
+        // year name" possible; SELECT stays a.* so no profile data is loaded.
+        $sql = "SELECT a.*
+                  FROM {" . self::TABLE . "} a
+             LEFT JOIN {user} su ON su.id = a.studentid
+             LEFT JOIN {user} tu ON tu.id = a.tutorid
+             LEFT JOIN {cohort} c ON c.id = a.cohortid
+             LEFT JOIN {local_tut_academicyear} ay ON ay.id = a.academicyearid
+                 WHERE $where
+              ORDER BY $orderby";
+
+        return $DB->get_records_sql($sql, $params, $limitfrom, $limitnum);
     }
 
     /**
@@ -851,32 +883,33 @@ class assignment_repository {
      * @param array $filters see search()
      * @return array{0: string, 1: array}
      */
-    private function build_search_where(array $filters): array {
+    private function build_search_where(array $filters, string $alias = ''): array {
+        $p = $alias !== '' ? $alias . '.' : '';
         $conditions = ['1 = 1'];
         $params = [];
 
         $equalityfilters = ['academicyearid', 'tutorid', 'studentid', 'cohortid', 'assignmenttype', 'status', 'source'];
         foreach ($equalityfilters as $key) {
             if (isset($filters[$key]) && $filters[$key] !== '') {
-                $conditions[] = "$key = :$key";
+                $conditions[] = "{$p}$key = :$key";
                 $params[$key] = $filters[$key];
             }
         }
 
         if (!empty($filters['timestartfrom'])) {
-            $conditions[] = 'timestart >= :timestartfrom';
+            $conditions[] = "{$p}timestart >= :timestartfrom";
             $params['timestartfrom'] = (int) $filters['timestartfrom'];
         }
         if (!empty($filters['timestartto'])) {
-            $conditions[] = 'timestart <= :timestartto';
+            $conditions[] = "{$p}timestart <= :timestartto";
             $params['timestartto'] = (int) $filters['timestartto'];
         }
         if (!empty($filters['timeendfrom'])) {
-            $conditions[] = 'timeend >= :timeendfrom';
+            $conditions[] = "{$p}timeend >= :timeendfrom";
             $params['timeendfrom'] = (int) $filters['timeendfrom'];
         }
         if (!empty($filters['timeendto'])) {
-            $conditions[] = 'timeend <= :timeendto';
+            $conditions[] = "{$p}timeend <= :timeendto";
             $params['timeendto'] = (int) $filters['timeendto'];
         }
 

@@ -1053,6 +1053,18 @@ final class renderer extends \plugin_renderer_base {
             'hasrows' => !empty($rows),
             'rows'    => array_values($rows),
             'message' => get_string('assignments_list_empty', 'local_monlaututoria'),
+            'header_student' => $this->sortable_header(
+                get_string('assignment_col_student', 'local_monlaututoria'), 'studentname', $currentsort, $currentdir, $baseurl
+            ),
+            'header_tutor' => $this->sortable_header(
+                get_string('assignment_col_tutor', 'local_monlaututoria'), 'tutorname', $currentsort, $currentdir, $baseurl
+            ),
+            'header_cohort' => $this->sortable_header(
+                get_string('assignment_col_cohort', 'local_monlaututoria'), 'cohortname', $currentsort, $currentdir, $baseurl
+            ),
+            'header_academicyear' => $this->sortable_header(
+                get_string('assignment_col_academicyear', 'local_monlaututoria'), 'academicyear', $currentsort, $currentdir, $baseurl
+            ),
             'header_timestart' => $this->sortable_header(
                 get_string('assignment_col_timestart', 'local_monlaututoria'), 'timestart', $currentsort, $currentdir, $baseurl
             ),

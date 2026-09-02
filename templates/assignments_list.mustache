@@ -28,6 +28,10 @@
     * hasrows bool
     * rows array - see local_monlaututoria/assignment_summary
     * message string - shown instead of the table when hasrows is false
+    * header_student string - pre-rendered sortable header link (HTML)
+    * header_tutor string - pre-rendered sortable header link (HTML)
+    * header_cohort string - pre-rendered sortable header link (HTML)
+    * header_academicyear string - pre-rendered sortable header link (HTML)
     * header_timestart string - pre-rendered sortable header link (HTML)
     * header_timeend string - pre-rendered sortable header link (HTML)
     * header_status string - pre-rendered sortable header link (HTML)
@@ -51,11 +55,11 @@
 <table class="table table-striped generaltable">
     <thead>
         <tr>
-            <th>{{#str}} assignment_col_student, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_tutor, local_monlaututoria {{/str}}</th>
+            <th>{{{header_student}}}</th>
+            <th>{{{header_tutor}}}</th>
             <th>{{#str}} assignment_col_cotutors, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_cohort, local_monlaututoria {{/str}}</th>
-            <th>{{#str}} assignment_col_academicyear, local_monlaututoria {{/str}}</th>
+            <th>{{{header_cohort}}}</th>
+            <th>{{{header_academicyear}}}</th>
             <th>{{{header_type}}}</th>
             <th>{{{header_timestart}}}</th>
             <th>{{{header_timeend}}}</th>

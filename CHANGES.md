@@ -1,5 +1,15 @@
 # Changelog — local_monlaututoria
 
+## 0.14.6 — 2026-09-02
+
+**Listado de asignaciones: ordenar por Alumno, Tutor, Cohorte y Curso académico.**
+
+- `assignment_repository::search()` pasa a una consulta con `LEFT JOIN` a `user`/`cohort`/`local_tut_academicyear` (solo para el `ORDER BY` — el `SELECT` sigue siendo `a.*`, no carga perfiles), añadiendo `studentname` / `tutorname` / `cohortname` / `academicyear` a las columnas ordenables.
+- Encabezados ordenables en la tabla de `assignments/index.php` para esas 4 columnas (ya lo eran Tipo, Fecha de inicio/fin, Estado, Origen). "Cotutores" no es ordenable (es un agregado).
+- `version.php` → `2026091715` / `0.14.6`.
+
+---
+
 ## 0.14.5 — 2026-09-02
 
 **Formulario de tutoría SOP con dos cajas de archivos separadas.**
