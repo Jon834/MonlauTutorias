@@ -60,6 +60,27 @@ final class entry_attachment_repository {
     }
 
     /**
+     * Entry ids (from the given set) that have at least one tracked
+     * attachment — fase 14, for the paperclip indicator in the tutorías list.
+     *
+     * @param int[] $entryids
+     * @return int[] the subset that has attachments
+     */
+    public function entry_ids_with_attachments(array $entryids): array {
+        global $DB;
+
+        if (empty($entryids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_map('intval', $entryids), SQL_PARAMS_NAMED);
+
+        return array_values(array_map('intval', $DB->get_fieldset_select(
+            self::TABLE, 'DISTINCT entryid', "entryid $insql", $params
+        )));
+    }
+
+    /**
      * @param int $entryid
      * @return \stdClass[] keyed by pathnamehash, for joining against File API results
      */

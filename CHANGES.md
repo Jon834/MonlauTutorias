@@ -1,5 +1,17 @@
 # Changelog — local_monlaututoria
 
+## 0.14.1 — 2026-09-02
+
+**Fase 14 (S2) — remates del Orientador SOP + indicador de adjuntos.**
+
+- **Icono de adjunto** (clip) en el listado de tutorías de la ficha: cualquier tutoría con archivos adjuntos lo muestra junto a la fecha. Nuevo `entry_attachment_repository::entry_ids_with_attachments()`.
+- **Badge "SOP"** también en el listado (antes solo en el detalle).
+- **Editar una tutoría SOP**: `entry_edit_form` con `sop` — sin "comentario compartido", "Observaciones SOP" + "Recomendaciones SOP", categorías de adjunto SOP. `entry_repository::update_editable_fields()` persiste `recommendationsop`.
+- Ficha del alumno (Resumen): en modo simple, **"Cotutores" → "Orientador SOP"**.
+- `version.php` → `2026091710` / `0.14.1`.
+
+---
+
 ## 0.14.0 — 2026-09-02
 
 **Fase 14 (S1) — Orientador SOP.** Solo en modo simple. Ver `docs/fases/phase-14-sop.md`.

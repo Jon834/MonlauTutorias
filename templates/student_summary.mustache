@@ -77,7 +77,7 @@
         {{^haveprimary}}{{#str}} student_summary_no_primary, local_monlaututoria {{/str}}{{/haveprimary}}
     </dd>
 
-    <dt class="col-sm-3">{{#str}} student_field_cotutors, local_monlaututoria {{/str}}</dt>
+    <dt class="col-sm-3">{{cotutorslabel}}</dt>
     <dd class="col-sm-9">
         {{#hascotutors}}
             <ul class="mb-0">
@@ -89,7 +89,7 @@
                 {{/cotutors}}
             </ul>
         {{/hascotutors}}
-        {{^hascotutors}}{{#str}} student_summary_no_cotutors, local_monlaututoria {{/str}}{{/hascotutors}}
+        {{^hascotutors}}{{nocotutorslabel}}{{/hascotutors}}
     </dd>
 
     <dt class="col-sm-3">{{#str}} student_field_lastassignment, local_monlaututoria {{/str}}</dt>

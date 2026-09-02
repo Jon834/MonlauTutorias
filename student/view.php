@@ -407,9 +407,14 @@ if ($academicyear === null) {
         'reasonid' => $reasonfilter ?: null,
         'visibilitytier' => $visibilityfilter ?: null,
     ], static fn ($value) => $value !== null));
+    // Fase 14 — paperclip marker: only staff ever see attachments, so only
+    // they need the lookup (the student's own view never shows them).
+    $entryidswithattachments = $islimitedview
+        ? []
+        : (new \local_monlaututoria\repository\entry_attachment_repository())->entry_ids_with_attachments($entryids);
     echo $renderer->entry_history_table(
         $entries, $entrytutors, $allmodalities, $reasonsbyentry, $allreasons, $islimitedview,
-        $entrysort, $entrydir, $entrysortbaseurl
+        $entrysort, $entrydir, $entrysortbaseurl, $entryidswithattachments
     );
 
     echo $OUTPUT->paging_bar($entrytotalcount, $entrypage, $entryperpage, $PAGE->url);

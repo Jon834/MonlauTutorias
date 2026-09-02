@@ -1188,6 +1188,15 @@ final class renderer extends \plugin_renderer_base {
             'primaryassignmenturl' => $primaryassignmenturl,
             'hascotutors'       => !empty($cotutors),
             'cotutors'          => $cotutors,
+            // Fase 14 — in simple mode the co-tutor is the "Orientador SOP".
+            'cotutorslabel'     => get_string(
+                \local_monlaututoria\feature::simple_mode() ? 'assignmenttype_sop' : 'student_field_cotutors',
+                'local_monlaututoria'
+            ),
+            'nocotutorslabel'   => get_string(
+                \local_monlaututoria\feature::simple_mode() ? 'student_summary_no_sop' : 'student_summary_no_cotutors',
+                'local_monlaututoria'
+            ),
             'haslast'           => $last !== null,
             'last'              => $last,
             'hasupcoming'       => !empty($upcoming),
@@ -1644,7 +1653,8 @@ final class renderer extends \plugin_renderer_base {
         bool $islimitedview,
         string $currentsort,
         string $currentdir,
-        \moodle_url $baseurl
+        \moodle_url $baseurl,
+        array $entryidswithattachments = []
     ): string {
         if (empty($entries)) {
             return $this->output->notification(
@@ -1655,6 +1665,7 @@ final class renderer extends \plugin_renderer_base {
 
         $dateformat = get_string('strftimedatefullshort', 'langconfig');
         $statusoptions = \local_monlaututoria\domain\entry_status::get_options();
+        $withattachments = array_flip(array_map('intval', $entryidswithattachments));
 
         $table = new \html_table();
         $table->head = [
@@ -1678,8 +1689,20 @@ final class renderer extends \plugin_renderer_base {
             $tutor = $tutors[$entry->tutorid] ?? null;
             $modality = $entry->modalityid !== null ? ($modalities[$entry->modalityid] ?? null) : null;
 
+            $markers = '';
+            if (($entry->entrykind ?? 'regular') === \local_monlaututoria\domain\entry_kind::SOP) {
+                $markers .= ' ' . \html_writer::span(
+                    get_string('entry_sop_badge', 'local_monlaututoria'), 'badge badge-info'
+                );
+            }
+            if (isset($withattachments[(int) $entry->id])) {
+                $markers .= ' ' . $this->output->pix_icon(
+                    'i/attachment', get_string('entry_has_attachments', 'local_monlaututoria')
+                );
+            }
+
             $cells = [
-                userdate($entry->entrydate, $dateformat),
+                userdate($entry->entrydate, $dateformat) . $markers,
                 // Same rationale as student_history_table(): html_writer::table()
                 // never auto-escapes, unlike Mustache, so a real user's name
                 // needs an explicit s() here.

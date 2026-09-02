@@ -74,25 +74,41 @@ final class entry_edit_form extends \moodleform {
             ['multiple' => true]
         );
 
-        $mform->addElement('textarea', 'contentvisible', get_string('entry_field_contentvisible', 'local_monlaututoria'));
-        $mform->setType('contentvisible', PARAM_TEXT);
-        $mform->addRule('contentvisible', get_string('required'), 'required', null, 'client');
+        // Fase 14 — a SOP entry has no "shared with the student" tier and adds
+        // "Recomendaciones SOP" instead.
+        $issop = !empty($customdata['sop']);
 
-        $mform->addElement('textarea', 'noteinternal', get_string('entry_field_noteinternal', 'local_monlaututoria'));
+        if (!$issop) {
+            $mform->addElement('textarea', 'contentvisible', get_string('entry_field_contentvisible', 'local_monlaututoria'));
+            $mform->setType('contentvisible', PARAM_TEXT);
+            $mform->addRule('contentvisible', get_string('required'), 'required', null, 'client');
+        }
+
+        $notelabel = $issop ? 'entry_field_sopobservations' : 'entry_field_noteinternal';
+        $mform->addElement('textarea', 'noteinternal', get_string($notelabel, 'local_monlaututoria'));
         $mform->setType('noteinternal', PARAM_TEXT);
-        $mform->addHelpButton('noteinternal', 'entry_field_noteinternal', 'local_monlaututoria');
+        if (!$issop) {
+            $mform->addHelpButton('noteinternal', 'entry_field_noteinternal', 'local_monlaututoria');
+        }
+
+        if ($issop) {
+            $mform->addElement('textarea', 'recommendationsop', get_string('entry_field_recommendationsop', 'local_monlaututoria'));
+            $mform->setType('recommendationsop', PARAM_TEXT);
+        }
 
         if (!empty($customdata['showrestricted'])) {
             $mform->addElement('textarea', 'noterestricted', get_string('entry_field_noterestricted', 'local_monlaututoria'));
             $mform->setType('noterestricted', PARAM_TEXT);
         }
 
-        $mform->addElement(
-            'date_selector',
-            'nextfollowupdate',
-            get_string('entry_field_nextfollowupdate', 'local_monlaututoria'),
-            ['optional' => true]
-        );
+        if (!$issop) {
+            $mform->addElement(
+                'date_selector',
+                'nextfollowupdate',
+                get_string('entry_field_nextfollowupdate', 'local_monlaututoria'),
+                ['optional' => true]
+            );
+        }
 
         if (!empty($customdata['requirereason'])) {
             $mform->addElement('textarea', 'reason', get_string('entry_field_editreason', 'local_monlaututoria'));
@@ -108,9 +124,9 @@ final class entry_edit_form extends \moodleform {
                 'select',
                 'attachmentcategory',
                 get_string('entry_attachment_category', 'local_monlaututoria'),
-                entry_attachment_category::get_options()
+                $issop ? entry_attachment_category::get_sop_options() : entry_attachment_category::get_options()
             );
-            $mform->setType('attachmentcategory', PARAM_ALPHA);
+            $mform->setType('attachmentcategory', PARAM_ALPHAEXT);
 
             $mform->addElement(
                 'filemanager',

@@ -183,6 +183,9 @@ final class entry_repository {
         if (property_exists($data, 'noterestricted')) {
             $record->noterestricted = $data->noterestricted !== '' ? $data->noterestricted : null;
         }
+        if (property_exists($data, 'recommendationsop')) {
+            $record->recommendationsop = $data->recommendationsop !== '' ? $data->recommendationsop : null;
+        }
         if (property_exists($data, 'nextfollowupdate')) {
             $record->nextfollowupdate = !empty($data->nextfollowupdate) ? (int) $data->nextfollowupdate : null;
         }

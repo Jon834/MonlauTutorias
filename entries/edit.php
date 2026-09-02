@@ -66,7 +66,8 @@ $showrestricted = has_capability('local/monlaututoria:viewrestrictednotes', $con
 // Same rule already enforced above to reach this page at all (editanyentry,
 // or isowner + editownentry) — restated here, same as entries/attachments.php,
 // so this stays correct even if the page-level check above is ever relaxed.
-$canupload = $caneditany || ($isowner && has_capability('local/monlaututoria:editownentry', $context));
+// Mirrors the page-level edit gate above (incl. the fase 13 simple-mode path).
+$canupload = $caneditany || ($isowner && $caneditown);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/monlaututoria/entries/edit.php', ['id' => $id]);
@@ -89,14 +90,17 @@ foreach ((new \local_monlaututoria\repository\reason_repository())->get_all(true
 $reasonlinkrepository = new \local_monlaututoria\repository\entry_reason_repository();
 $currentreasonids = $reasonlinkrepository->get_for_entry($id);
 
+$issop = ($existing->entrykind ?? 'regular') === \local_monlaututoria\domain\entry_kind::SOP;
+
 $form = new \local_monlaututoria\form\entry_edit_form(null, [
     'modalities'         => $modalityoptions,
     'reasons'            => $reasonoptions,
     'studentname'        => $student ? fullname($student) : ('#' . $existing->studentid),
     'entrydateformatted' => userdate((int) $existing->entrydate, get_string('strftimedatefullshort', 'langconfig')),
-    'showrestricted'     => $showrestricted,
+    'showrestricted'     => $showrestricted && !$issop,
     'requirereason'      => $requirereason,
     'canupload'          => $canupload,
+    'sop'                => $issop,
 ]);
 
 $attachmentdraftitemid = null;
@@ -106,14 +110,15 @@ if ($canupload) {
 }
 
 $form->set_data((object) array_filter([
-    'id'               => $id,
-    'modalityid'       => $existing->modalityid,
-    'reasonids'        => $currentreasonids,
-    'contentvisible'   => $existing->contentvisible ?? '',
-    'noteinternal'     => $existing->noteinternal ?? '',
-    'noterestricted'   => $showrestricted ? ($existing->noterestricted ?? '') : '',
-    'nextfollowupdate' => $existing->nextfollowupdate,
-    'attachments'      => $attachmentdraftitemid,
+    'id'                => $id,
+    'modalityid'        => $existing->modalityid,
+    'reasonids'         => $currentreasonids,
+    'contentvisible'    => $existing->contentvisible ?? '',
+    'noteinternal'      => $existing->noteinternal ?? '',
+    'recommendationsop' => $issop ? ($existing->recommendationsop ?? '') : null,
+    'noterestricted'    => ($showrestricted && !$issop) ? ($existing->noterestricted ?? '') : '',
+    'nextfollowupdate'  => $existing->nextfollowupdate,
+    'attachments'       => $attachmentdraftitemid,
 ], static fn ($value) => $value !== null));
 
 $returnurl = new moodle_url('/local/monlaututoria/entries/view.php', ['id' => $id]);
@@ -122,12 +127,16 @@ if ($form->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $form->get_data()) {
     $updatedata = (object) [
-        'modalityid'       => !empty($data->modalityid) ? (int) $data->modalityid : null,
-        'contentvisible'   => $data->contentvisible,
-        'noteinternal'     => $data->noteinternal,
-        'nextfollowupdate' => !empty($data->nextfollowupdate) ? (int) $data->nextfollowupdate : null,
+        'modalityid'  => !empty($data->modalityid) ? (int) $data->modalityid : null,
+        'noteinternal' => $data->noteinternal,
     ];
-    if ($showrestricted) {
+    if ($issop) {
+        $updatedata->recommendationsop = $data->recommendationsop ?? '';
+    } else {
+        $updatedata->contentvisible = $data->contentvisible;
+        $updatedata->nextfollowupdate = !empty($data->nextfollowupdate) ? (int) $data->nextfollowupdate : null;
+    }
+    if ($showrestricted && !$issop) {
         $updatedata->noterestricted = $data->noterestricted ?? '';
     }
 
