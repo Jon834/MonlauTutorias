@@ -85,7 +85,11 @@ if ($canupload) {
     if ($form->is_cancelled()) {
         redirect($returnurl);
     } else if ($data = $form->get_data()) {
-        $newcount = $attachmentservice->save_uploaded_files($id, $data->attachments, $data->category, (int) $USER->id);
+        // Fase 14 — "Recomendaciones SOP" files live in their own filearea.
+        $targetarea = $data->category === \local_monlaututoria\domain\entry_attachment_category::SOP_RECOMMENDATION
+            ? \local_monlaututoria\service\entry_attachment_service::FILEAREA_SOP_RECOMMENDATION
+            : \local_monlaututoria\service\entry_attachment_service::FILEAREA;
+        $newcount = $attachmentservice->save_uploaded_files($id, $data->attachments, $data->category, (int) $USER->id, $targetarea);
 
         redirect(
             new moodle_url('/local/monlaututoria/entries/attachments.php', ['id' => $id]),
@@ -113,7 +117,7 @@ if (empty($pairs)) {
         $downloadurl = moodle_url::make_pluginfile_url(
             $context->id,
             'local_monlaututoria',
-            \local_monlaututoria\service\entry_attachment_service::FILEAREA,
+            $file->get_filearea(),
             $id,
             $file->get_filepath(),
             $file->get_filename(),

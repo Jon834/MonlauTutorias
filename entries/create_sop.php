@@ -129,13 +129,16 @@ $form = new \local_monlaututoria\form\entry_sop_form(null, [
     'reasons'    => $reasonoptions,
 ]);
 
-$attachmentdraftitemid = file_get_submitted_draft_itemid('attachments');
-file_prepare_draft_area($attachmentdraftitemid, null, 'user', 'draft', null);
+$reportdraftid = file_get_submitted_draft_itemid('reportfiles');
+file_prepare_draft_area($reportdraftid, null, 'user', 'draft', null);
+$recommendationdraftid = file_get_submitted_draft_itemid('recommendationfiles');
+file_prepare_draft_area($recommendationdraftid, null, 'user', 'draft', null);
 
 $form->set_data((object) [
-    'studentid'      => $studentid,
-    'academicyearid' => (int) $academicyear->id,
-    'attachments'    => $attachmentdraftitemid,
+    'studentid'           => $studentid,
+    'academicyearid'      => (int) $academicyear->id,
+    'reportfiles'         => $reportdraftid,
+    'recommendationfiles' => $recommendationdraftid,
 ]);
 
 $returnurl = new moodle_url('/local/monlaututoria/student/view.php', [
@@ -164,9 +167,18 @@ if ($form->is_cancelled()) {
 
     $newentryid = (new \local_monlaututoria\service\entry_service())->create($command, (int) $USER->id);
 
-    if (!empty($data->attachments)) {
-        (new \local_monlaututoria\service\entry_attachment_service())->save_uploaded_files(
-            $newentryid, (int) $data->attachments, $data->attachmentcategory, (int) $USER->id
+    $attachmentservice = new \local_monlaututoria\service\entry_attachment_service();
+    if (!empty($data->reportfiles)) {
+        $attachmentservice->save_uploaded_files(
+            $newentryid, (int) $data->reportfiles,
+            \local_monlaututoria\domain\entry_attachment_category::SOP_REPORT, (int) $USER->id
+        );
+    }
+    if (!empty($data->recommendationfiles)) {
+        $attachmentservice->save_uploaded_files(
+            $newentryid, (int) $data->recommendationfiles,
+            \local_monlaututoria\domain\entry_attachment_category::SOP_RECOMMENDATION, (int) $USER->id,
+            \local_monlaututoria\service\entry_attachment_service::FILEAREA_SOP_RECOMMENDATION
         );
     }
 

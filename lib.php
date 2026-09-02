@@ -57,7 +57,7 @@ function local_monlaututoria_pluginfile($course, $cm, $context, $filearea, $args
     if ($context->contextlevel !== CONTEXT_SYSTEM) {
         return false;
     }
-    if ($filearea !== \local_monlaututoria\service\entry_attachment_service::FILEAREA) {
+    if (!in_array($filearea, \local_monlaututoria\service\entry_attachment_service::fileareas(), true)) {
         return false;
     }
     if (count($args) < 2) {
@@ -98,7 +98,7 @@ function local_monlaututoria_pluginfile($course, $cm, $context, $filearea, $args
     $file = $fs->get_file(
         $context->id,
         'local_monlaututoria',
-        \local_monlaututoria\service\entry_attachment_service::FILEAREA,
+        $filearea,
         $entryid,
         $filepath,
         $filename

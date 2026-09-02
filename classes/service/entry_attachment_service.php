@@ -48,6 +48,22 @@ final class entry_attachment_service {
     /** @var string Moodle File API filearea for every tutoring entry attachment */
     public const FILEAREA = 'entryattachment';
 
+    /**
+     * @var string Fase 14 — a second filearea just for the SOP entry's
+     * "Recomendaciones SOP" files, kept apart from "Informes facilitados"
+     * (FILEAREA) so the SOP form can offer two independent upload boxes.
+     */
+    public const FILEAREA_SOP_RECOMMENDATION = 'entrysoprec';
+
+    /**
+     * Every filearea this service (and pluginfile) serves.
+     *
+     * @return string[]
+     */
+    public static function fileareas(): array {
+        return [self::FILEAREA, self::FILEAREA_SOP_RECOMMENDATION];
+    }
+
     /** @var entry_repository */
     private $entryrepository;
 
@@ -81,7 +97,13 @@ final class entry_attachment_service {
      * @param int $userid
      * @return int how many new attachment rows were created
      */
-    public function save_uploaded_files(int $entryid, int $draftitemid, string $category, int $userid): int {
+    public function save_uploaded_files(
+        int $entryid,
+        int $draftitemid,
+        string $category,
+        int $userid,
+        string $filearea = self::FILEAREA
+    ): int {
         $existing = $this->entryrepository->get($entryid);
 
         if ($existing->status !== entry_status::ACTIVE) {
@@ -91,19 +113,22 @@ final class entry_attachment_service {
         if (!in_array($category, entry_attachment_category::values(), true)) {
             throw new \moodle_exception('error_entry_attachment_category_invalid', 'local_monlaututoria');
         }
+        if (!in_array($filearea, self::fileareas(), true)) {
+            throw new \moodle_exception('error_entry_attachment_category_invalid', 'local_monlaututoria');
+        }
 
         $context = \context_system::instance();
         file_save_draft_area_files(
             $draftitemid,
             $context->id,
             'local_monlaututoria',
-            self::FILEAREA,
+            $filearea,
             $entryid,
             ['subdirs' => 0]
         );
 
         $fs = get_file_storage();
-        $files = $fs->get_area_files($context->id, 'local_monlaututoria', self::FILEAREA, $entryid, 'filename', false);
+        $files = $fs->get_area_files($context->id, 'local_monlaututoria', $filearea, $entryid, 'filename', false);
 
         $newcount = 0;
         foreach ($files as $file) {
@@ -171,7 +196,10 @@ final class entry_attachment_service {
         }
 
         $fs = get_file_storage();
-        $files = $fs->get_area_files($context->id, 'local_monlaututoria', self::FILEAREA, $entryid, 'filename', false);
+        $files = [];
+        foreach (self::fileareas() as $area) {
+            $files += $fs->get_area_files($context->id, 'local_monlaututoria', $area, $entryid, 'filename', false);
+        }
         $metadatabypathnamehash = $this->repository->get_for_entry($entryid);
 
         $pairs = [];

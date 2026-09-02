@@ -186,7 +186,7 @@ if ($data->canseeattachments) {
             'url'           => moodle_url::make_pluginfile_url(
                 $context->id,
                 'local_monlaututoria',
-                \local_monlaututoria\service\entry_attachment_service::FILEAREA,
+                $file->get_filearea(),
                 $id,
                 $file->get_filepath(),
                 $file->get_filename(),

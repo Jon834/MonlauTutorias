@@ -21,8 +21,6 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
-use local_monlaututoria\domain\entry_attachment_category;
-
 /**
  * SOP tutoring entry registration form (fase 14). Same base fields as the
  * quick form MINUS "comentario compartido con el alumno" (a SOP entry is
@@ -77,18 +75,20 @@ final class entry_sop_form extends \moodleform {
         $mform->addElement('textarea', 'recommendationsop', get_string('entry_field_recommendationsop', 'local_monlaututoria'));
         $mform->setType('recommendationsop', PARAM_TEXT);
 
+        // Two independent upload boxes: what the student/family provided vs.
+        // what the orientator produced after studying the case.
         $mform->addElement(
-            'select',
-            'attachmentcategory',
-            get_string('entry_attachment_category', 'local_monlaututoria'),
-            entry_attachment_category::get_sop_options()
+            'filemanager',
+            'reportfiles',
+            get_string('entryattachmentcategory_sop_report', 'local_monlaututoria'),
+            null,
+            ['subdirs' => 0, 'maxfiles' => 10, 'accepted_types' => '*']
         );
-        $mform->setType('attachmentcategory', PARAM_ALPHAEXT);
 
         $mform->addElement(
             'filemanager',
-            'attachments',
-            get_string('entry_attachment_files', 'local_monlaututoria'),
+            'recommendationfiles',
+            get_string('entryattachmentcategory_sop_recommendation', 'local_monlaututoria'),
             null,
             ['subdirs' => 0, 'maxfiles' => 10, 'accepted_types' => '*']
         );

@@ -1,5 +1,15 @@
 # Changelog — local_monlaututoria
 
+## 0.14.5 — 2026-09-02
+
+**Formulario de tutoría SOP con dos cajas de archivos separadas.**
+
+- El formulario SOP tiene ahora **dos gestores de archivos independientes**: **"Informes facilitados"** (lo que aporta el alumno o la familia) y **"Recomendaciones SOP"** (lo que emite el orientador tras estudiar el caso). Se elimina el desplegable "Categoría documental".
+- Cada caja va a su propio *filearea* (`entryattachment` e `entrysoprec`), así no se pisan entre ellas. `entry_attachment_service::save_uploaded_files()` acepta un `$filearea`; `get_for_entry()`, `pluginfile` y el listado de adjuntos leen de ambos. El detalle de la tutoría muestra cada archivo con su categoría.
+- `version.php` → `2026091714` / `0.14.5`.
+
+---
+
 ## 0.14.4 — 2026-09-02
 
 - **Detalle de la tutoría**: los archivos adjuntos se listan ahora **en la propia pantalla**, con enlace de descarga y su categoría, no solo detrás del botón "Adjuntos de la tutoría" (que pasa a llamarse "Gestionar adjuntos" y sigue sirviendo para subir/quitar).

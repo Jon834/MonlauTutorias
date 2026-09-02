@@ -151,8 +151,12 @@ if ($form->is_cancelled()) {
     );
 
     if ($canupload && !empty($data->attachments)) {
+        // Fase 14 — "Recomendaciones SOP" files live in their own filearea.
+        $targetarea = ($data->attachmentcategory ?? '') === \local_monlaututoria\domain\entry_attachment_category::SOP_RECOMMENDATION
+            ? \local_monlaututoria\service\entry_attachment_service::FILEAREA_SOP_RECOMMENDATION
+            : \local_monlaututoria\service\entry_attachment_service::FILEAREA;
         (new \local_monlaututoria\service\entry_attachment_service($repository))->save_uploaded_files(
-            $id, (int) $data->attachments, $data->attachmentcategory, (int) $USER->id
+            $id, (int) $data->attachments, $data->attachmentcategory, (int) $USER->id, $targetarea
         );
     }
 
