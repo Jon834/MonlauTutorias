@@ -383,6 +383,39 @@ class assignment_repository {
     }
 
     /**
+     * Fase 14 — of the given students, which currently have a SOP orientation
+     * tutor (an active co_tutor) in the academic year. For the panel's "N
+     * alumnos con orientador SOP" card and the per-row badge.
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @param int|null $now
+     * @return int[] the subset with a current co_tutor
+     */
+    public function student_ids_with_cotutor(array $studentids, int $academicyearid, ?int $now = null): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        $now = $now ?? time();
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED);
+        $params += [
+            'academicyearid' => $academicyearid, 'status' => assignment_status::ACTIVE,
+            'type' => assignment_type::CO_TUTOR, 'now1' => $now, 'now2' => $now,
+        ];
+
+        return array_values(array_map('intval', $DB->get_fieldset_select(
+            self::TABLE,
+            'DISTINCT studentid',
+            "studentid $insql AND academicyearid = :academicyearid AND status = :status "
+                . 'AND assignmenttype = :type AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)',
+            $params
+        )));
+    }
+
+    /**
      * Whether $tutorid is currently ("vigente") the PRIMARY tutor of
      * $studentid — fase 14, to tell a primary tutor from the SOP tutor on
      * the student ficha.

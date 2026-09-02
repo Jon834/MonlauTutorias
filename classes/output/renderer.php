@@ -444,7 +444,8 @@ final class renderer extends \plugin_renderer_base {
     public function dashboard_summary_cards(
         \local_monlaututoria\domain\tutor_dashboard_summary $summary,
         bool $showreferrals = true,
-        bool $showpriority = true
+        bool $showpriority = true,
+        ?int $sopstudentcount = null
     ): string {
         // Fase 13 — the follow-ups/agreements/family-contact cards only make
         // sense when those modules are on. The counts are still computed by
@@ -482,6 +483,11 @@ final class renderer extends \plugin_renderer_base {
         // so this card would always read 0 there.
         if (!\local_monlaututoria\feature::simple_mode()) {
             $cards[] = ['label' => get_string('dashboard_summary_familycontacts', 'local_monlaututoria'), 'value' => $summary->familycontactcount];
+        }
+
+        // Fase 14 — how many of my students have a SOP orientador assigned.
+        if ($sopstudentcount !== null) {
+            $cards[] = ['label' => get_string('dashboard_summary_sopstudents', 'local_monlaututoria'), 'value' => $sopstudentcount];
         }
 
         $html = '';
@@ -522,7 +528,8 @@ final class renderer extends \plugin_renderer_base {
         bool $showpriority,
         string $currentsort,
         string $currentdir,
-        \moodle_url $baseurl
+        \moodle_url $baseurl,
+        array $sopentrystudentids = []
     ): string {
         if (empty($students)) {
             return $this->output->notification(
@@ -535,6 +542,8 @@ final class renderer extends \plugin_renderer_base {
         // "Estado de cobertura" (same yes/no), and "Pendientes" (Seg./Acu./
         // Der.) is always 0/0/0 because those modules are hidden. Drop both.
         $simplemode = \local_monlaututoria\feature::simple_mode();
+
+        $sopset = array_flip(array_map('intval', $sopentrystudentids));
 
         $table = new \html_table();
         $table->head = [
@@ -602,8 +611,15 @@ final class renderer extends \plugin_renderer_base {
                 );
             }
 
+            $namecell = \html_writer::link($studenturl, format_string($studentname));
+            if (isset($sopset[(int) $student->studentid])) {
+                $namecell .= ' ' . \html_writer::span(
+                    get_string('entry_sop_badge', 'local_monlaututoria'), 'badge badge-info'
+                );
+            }
+
             $row = [
-                \html_writer::link($studenturl, format_string($studentname)),
+                $namecell,
                 $lastentry,
                 $student->activeentrycount,
             ];
@@ -641,7 +657,12 @@ final class renderer extends \plugin_renderer_base {
      * @param int $academicyearid carried into every card's URL
      * @return string
      */
-    public function dashboard_student_roster(array $students, array $studentusers, int $academicyearid): string {
+    public function dashboard_student_roster(
+        array $students,
+        array $studentusers,
+        int $academicyearid,
+        array $sopentrystudentids = []
+    ): string {
         if (empty($students)) {
             return $this->output->notification(
                 get_string('dashboard_students_empty', 'local_monlaututoria'),
@@ -650,11 +671,15 @@ final class renderer extends \plugin_renderer_base {
         }
 
         $dateformat = get_string('strftimedatefullshort', 'langconfig');
+        $sopset = array_flip(array_map('intval', $sopentrystudentids));
         $cards = '';
 
         foreach ($students as $student) {
             $user = $studentusers[$student->studentid] ?? null;
             $name = $user ? fullname($user) : '#' . $student->studentid;
+            $sopbadge = isset($sopset[(int) $student->studentid])
+                ? ' ' . \html_writer::span(get_string('entry_sop_badge', 'local_monlaututoria'), 'badge badge-info')
+                : '';
 
             $url = new \moodle_url('/local/monlaututoria/student/view.php', [
                 'id' => $student->studentid,
@@ -692,7 +717,7 @@ final class renderer extends \plugin_renderer_base {
             $cards .= \html_writer::link(
                 $url,
                 \html_writer::div($picture, 'local-monlaututoria-roster__photo')
-                    . \html_writer::div(s($name), 'local-monlaututoria-roster__name')
+                    . \html_writer::div(s($name) . $sopbadge, 'local-monlaututoria-roster__name')
                     . \html_writer::div($meta, 'local-monlaututoria-roster__metawrap'),
                 ['class' => 'local-monlaututoria-roster__card']
             );

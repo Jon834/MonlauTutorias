@@ -843,6 +843,7 @@ $string['dashboard_roster_noentry'] = 'No tutoring entry yet';
 $string['dashboard_roster_formertutor'] = 'Tutoring ended';
 $string['dashboard_section_formerstudents'] = 'Students I tutored before';
 $string['dashboard_section_sopstudents'] = 'My SOP students';
+$string['dashboard_summary_sopstudents'] = 'Students with a SOP orientation tutor';
 $string['dashboard_section_followups'] = 'Follow-ups';
 $string['dashboard_section_agreements'] = 'Agreements';
 $string['dashboard_section_referrals'] = 'Referral cases';

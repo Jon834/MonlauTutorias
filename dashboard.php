@@ -314,6 +314,18 @@ $studentuserfields = implode(',', \core_user\fields::for_userpic()->get_required
 $studentusers = !empty($studentids)
     ? $DB->get_records_list('user', 'id', $studentids, '', $studentuserfields)
     : [];
+
+// Fase 14 — which of this tutor's students have a SOP orientador assigned,
+// and which have a SOP tutoría (for the "SOP" badge and the summary card).
+$sopstudentids = [];
+$sopentrystudentids = [];
+if (!empty($studentids) && \local_monlaututoria\feature::simple_mode()) {
+    $sopstudentids = (new \local_monlaututoria\repository\assignment_repository())
+        ->student_ids_with_cotutor($studentids, (int) $academicyear->id);
+    $sopentrystudentids = (new \local_monlaututoria\repository\entry_repository())
+        ->student_ids_with_sop_entries($studentids, (int) $academicyear->id);
+}
+
 $responsibleuserids = [];
 foreach (array_merge($dashboard->pendingagreements, $dashboard->overdueagreements) as $agreement) {
     if ($agreement->responsibleuserid !== null) {
@@ -405,7 +417,9 @@ $sortbaseurl = new moodle_url('/local/monlaututoria/dashboard.php', array_filter
 // tables below are the "Pendientes" view.
 if ($view === 'roster') {
     echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
-    echo $renderer->dashboard_student_roster($filteredstudents, $studentusers, (int) $academicyear->id);
+    echo $renderer->dashboard_student_roster(
+        $filteredstudents, $studentusers, (int) $academicyear->id, $sopentrystudentids
+    );
 
     if ($studentfilter === 'all') {
         $assignmentrepo = new \local_monlaututoria\repository\assignment_repository();
@@ -432,7 +446,10 @@ if ($view === 'roster') {
     exit;
 }
 
-echo $renderer->dashboard_summary_cards($dashboard->summary, $showreferrals, $showpriority);
+echo $renderer->dashboard_summary_cards(
+    $dashboard->summary, $showreferrals, $showpriority,
+    \local_monlaututoria\feature::simple_mode() ? count($sopstudentids) : null
+);
 echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
 echo $renderer->dashboard_students_table(
     $filteredstudents,
@@ -443,7 +460,8 @@ echo $renderer->dashboard_students_table(
     $showpriority,
     $studentsort,
     $studentdir,
-    $sortbaseurl
+    $sortbaseurl,
+    $sopentrystudentids
 );
 
 // Fase 13 — the follow-ups section is hidden entirely in simple mode.

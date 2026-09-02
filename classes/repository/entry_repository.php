@@ -222,6 +222,34 @@ final class entry_repository {
      * @param int $academicyearid
      * @return array<int, int> keyed by student id
      */
+    /**
+     * Fase 14 — of the given students, which have at least one active SOP
+     * tutoring entry in the academic year (for the "SOP" badge on the panel).
+     *
+     * @param int[] $studentids
+     * @param int $academicyearid
+     * @return int[] the subset with a SOP entry
+     */
+    public function student_ids_with_sop_entries(array $studentids, int $academicyearid): array {
+        global $DB;
+
+        if (empty($studentids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal(array_unique(array_map('intval', $studentids)), SQL_PARAMS_NAMED);
+        $params['academicyearid'] = $academicyearid;
+        $params['status'] = entry_status::ACTIVE;
+        $params['entrykind'] = \local_monlaututoria\domain\entry_kind::SOP;
+
+        return array_values(array_map('intval', $DB->get_fieldset_select(
+            self::TABLE,
+            'DISTINCT studentid',
+            "studentid $insql AND academicyearid = :academicyearid AND status = :status AND entrykind = :entrykind",
+            $params
+        )));
+    }
+
     public function count_active_by_students(array $studentids, int $academicyearid): array {
         global $DB;
 

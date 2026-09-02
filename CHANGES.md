@@ -1,5 +1,16 @@
 # Changelog — local_monlaututoria
 
+## 0.14.7 — 2026-09-02
+
+**Panel del tutor: badge SOP y tarjeta "Alumnos con orientador SOP".**
+
+- En "Mis alumnos" (roster y tabla "Pendientes"), un alumno con **alguna tutoría SOP** en el curso lleva ahora el badge **"SOP"** junto al nombre.
+- Nueva tarjeta de resumen **"Alumnos con orientador SOP"** = cuántos de tus alumnos tienen un orientador SOP asignado.
+- `assignment_repository::student_ids_with_cotutor()` + `entry_repository::student_ids_with_sop_entries()` (una consulta cada una).
+- `version.php` → `2026091716` / `0.14.7`.
+
+---
+
 ## 0.14.6 — 2026-09-02
 
 **Listado de asignaciones: ordenar por Alumno, Tutor, Cohorte y Curso académico.**

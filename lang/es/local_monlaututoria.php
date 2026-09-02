@@ -843,6 +843,7 @@ $string['dashboard_roster_noentry'] = 'Sin tutoría aún';
 $string['dashboard_roster_formertutor'] = 'Tutoría finalizada';
 $string['dashboard_section_formerstudents'] = 'Alumnos que tutoricé antes';
 $string['dashboard_section_sopstudents'] = 'Mis alumnos SOP';
+$string['dashboard_summary_sopstudents'] = 'Alumnos con orientador SOP';
 $string['dashboard_section_followups'] = 'Seguimientos';
 $string['dashboard_section_agreements'] = 'Acuerdos';
 $string['dashboard_section_referrals'] = 'Casos derivados';
