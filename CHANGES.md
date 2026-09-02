@@ -1,5 +1,12 @@
 # Changelog — local_monlaututoria
 
+## 0.14.3 — 2026-09-02
+
+- El icono de adjunto en el listado de tutorías salía como imagen rota: `pix_icon('i/attachment')` no existe en todos los temas. Sustituido por el clip de Font Awesome (`fa-solid fa-paperclip`), mismo criterio que `templates/assignment_summary.mustache`.
+- `version.php` → `2026091712` / `0.14.3`.
+
+---
+
 ## 0.14.2 — 2026-09-02
 
 **Fase 14 — desplegable de orientadores SOP en el formulario de asignación.**

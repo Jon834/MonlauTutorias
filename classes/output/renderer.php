@@ -1696,9 +1696,15 @@ final class renderer extends \plugin_renderer_base {
                 );
             }
             if (isset($withattachments[(int) $entry->id])) {
-                $markers .= ' ' . $this->output->pix_icon(
-                    'i/attachment', get_string('entry_has_attachments', 'local_monlaututoria')
-                );
+                // Font Awesome directly (the Boost theme loads it globally),
+                // same pattern as templates/assignment_summary.mustache — the
+                // core pix icon 'i/attachment' is not present in every theme.
+                $markers .= ' ' . \html_writer::tag('i', '', [
+                    'class'      => 'fa-solid fa-paperclip',
+                    'title'      => get_string('entry_has_attachments', 'local_monlaututoria'),
+                    'aria-label' => get_string('entry_has_attachments', 'local_monlaututoria'),
+                    'role'       => 'img',
+                ]);
             }
 
             $cells = [
