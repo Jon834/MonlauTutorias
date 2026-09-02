@@ -1,5 +1,11 @@
 # Changelog — local_monlaututoria
 
+## 0.14.8 — 2026-09-02
+
+- En modo simple, el conmutador del panel del tutor llama a la segunda vista **"Listado"** en vez de "Pendientes" (ahi solo queda la tabla de alumnos). `version.php` -> `2026091717` / `0.14.8`.
+
+---
+
 ## 0.14.7 — 2026-09-02
 
 **Panel del tutor: badge SOP y tarjeta "Alumnos con orientador SOP".**

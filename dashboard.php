@@ -251,7 +251,10 @@ echo html_writer::div($dashboardfilters, 'local-monlaututoria-toolbar');
 
 // Fase 13 — "Mis alumnos" (roster) / "Pendientes" (tablas) view switch.
 $viewlinks = '';
-foreach (['roster' => 'dashboard_view_roster', 'pending' => 'dashboard_view_pending'] as $viewkey => $viewstr) {
+// Fase 14 — in simple mode the "pending" view is just the students list
+// (follow-ups/agreements/priority are hidden), so it is labelled "Listado".
+$pendinglabelkey = $simplemode ? 'dashboard_view_list' : 'dashboard_view_pending';
+foreach (['roster' => 'dashboard_view_roster', 'pending' => $pendinglabelkey] as $viewkey => $viewstr) {
     $classes = 'nav-link' . ($viewkey === $view ? ' active' : '');
     $attributes = ['class' => $classes];
     if ($viewkey === $view) {

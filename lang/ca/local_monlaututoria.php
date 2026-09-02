@@ -837,6 +837,7 @@ $string['dashboard_pendingfilter_overdue'] = 'Nom?s ven?uts';
 $string['dashboard_section_students'] = 'Els meus alumnes';
 $string['dashboard_view_roster'] = 'Els meus alumnes';
 $string['dashboard_view_pending'] = 'Pendents';
+$string['dashboard_view_list'] = 'Llistat';
 $string['dashboard_roster_entrycount'] = '{$a} tutories';
 $string['dashboard_roster_lastentry'] = 'Última: {$a}';
 $string['dashboard_roster_noentry'] = 'Encara sense tutoria';

@@ -837,6 +837,7 @@ $string['dashboard_pendingfilter_overdue'] = 'Only overdue items';
 $string['dashboard_section_students'] = 'My students';
 $string['dashboard_view_roster'] = 'My students';
 $string['dashboard_view_pending'] = 'Pending work';
+$string['dashboard_view_list'] = 'List';
 $string['dashboard_roster_entrycount'] = '{$a} tutoring entries';
 $string['dashboard_roster_lastentry'] = 'Latest: {$a}';
 $string['dashboard_roster_noentry'] = 'No tutoring entry yet';

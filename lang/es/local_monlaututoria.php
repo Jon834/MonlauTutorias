@@ -837,6 +837,7 @@ $string['dashboard_pendingfilter_overdue'] = 'Solo vencidos';
 $string['dashboard_section_students'] = 'Mis alumnos';
 $string['dashboard_view_roster'] = 'Mis alumnos';
 $string['dashboard_view_pending'] = 'Pendientes';
+$string['dashboard_view_list'] = 'Listado';
 $string['dashboard_roster_entrycount'] = '{$a} tutorías';
 $string['dashboard_roster_lastentry'] = 'Última: {$a}';
 $string['dashboard_roster_noentry'] = 'Sin tutoría aún';
