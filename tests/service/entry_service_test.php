@@ -737,4 +737,77 @@ final class entry_service_test extends \advanced_testcase {
         $this->expectException(\moodle_exception::class);
         $service->annul($id, get_admin()->id, 'Second reason');
     }
+
+    /**
+     * Fase 14 — a SOP entry can only be recorded by the student's current
+     * SOP tutor (a co_tutor); the student never sees it.
+     */
+    public function test_sop_entry_requires_the_student_sop_tutor(): void {
+        $this->resetAfterTest();
+
+        $student = $this->getDataGenerator()->create_user();
+        $soptutor = $this->getDataGenerator()->create_user();
+        $stranger = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        (new \local_monlaututoria\repository\assignment_repository())->create((object) [
+            'studentid' => $student->id, 'tutorid' => $soptutor->id,
+            'academicyearid' => $academicyearid, 'assignmenttype' => 'co_tutor',
+            'createdby' => get_admin()->id,
+        ]);
+
+        $service = new entry_service();
+        $sopcommand = static fn (int $tutorid): entry_create_command => new entry_create_command(
+            $student->id, $tutorid, $academicyearid, strtotime('2026-10-01'),
+            null, null, 'notes', null, null, [], [], false,
+            \local_monlaututoria\domain\entry_kind::SOP, 'a recommendation'
+        );
+
+        // A non-SOP-tutor user cannot record a SOP entry.
+        try {
+            $service->create($sopcommand($stranger->id), $stranger->id);
+            $this->fail('expected moodle_exception');
+        } catch (\moodle_exception $e) {
+            $this->assertStringContainsString('SOP', $e->getMessage() . $e->errorcode);
+        }
+
+        // The SOP tutor can.
+        $id = $service->create($sopcommand($soptutor->id), $soptutor->id);
+        $this->assertIsInt($id);
+    }
+
+    public function test_student_never_sees_a_sop_entry(): void {
+        $this->resetAfterTest();
+        set_config('simplemode', '1', 'local_monlaututoria');
+
+        $student = $this->getDataGenerator()->create_user();
+        $soptutor = $this->getDataGenerator()->create_user();
+        $academicyearid = $this->create_academic_year();
+
+        $assignmentrepo = new \local_monlaututoria\repository\assignment_repository();
+        $assignmentrepo->create((object) [
+            'studentid' => $student->id, 'tutorid' => $soptutor->id,
+            'academicyearid' => $academicyearid, 'assignmenttype' => 'co_tutor',
+            'createdby' => get_admin()->id,
+        ]);
+        $this->grant_capability_to_user('local/monlaututoria:viewownfile', $student->id);
+
+        $service = new entry_service();
+        $sopid = $service->create(new entry_create_command(
+            $student->id, $soptutor->id, $academicyearid, strtotime('2026-10-01'),
+            null, null, 'sop notes', null, null, [], [], false,
+            \local_monlaututoria\domain\entry_kind::SOP, 'sop recommendation'
+        ), $soptutor->id);
+        $regularid = $service->create($this->valid_command($student->id, $soptutor->id, $academicyearid), get_admin()->id);
+
+        // The student's own history excludes the SOP entry entirely.
+        $history = $service->get_history_for_student($student->id, $academicyearid, [], $student->id);
+        $ids = array_map(static fn ($e) => $e->id, $history);
+        $this->assertContains($regularid, $ids);
+        $this->assertNotContains($sopid, $ids);
+
+        // ...and opening it directly is denied.
+        $this->expectException(\moodle_exception::class);
+        $service->get_for_viewer($sopid, $student->id);
+    }
 }

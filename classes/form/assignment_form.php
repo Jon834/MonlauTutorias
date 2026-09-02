@@ -81,10 +81,8 @@ final class assignment_form extends \moodleform {
             $mform->setType('cohortid', PARAM_INT);
         }
 
-        $typeoptions = assignment_type::get_options();
-        if ($simplemode) {
-            $typeoptions = [assignment_type::PRIMARY => $typeoptions[assignment_type::PRIMARY]];
-        }
+        // Fase 14 — simple mode: "Tutor principal" + "Orientador SOP" (co_tutor).
+        $typeoptions = $simplemode ? assignment_type::get_simple_options() : assignment_type::get_options();
         $mform->addElement(
             'select',
             'assignmenttype',

@@ -24,6 +24,7 @@ use local_monlaututoria\repository\reason_repository;
 use local_monlaututoria\repository\modality_repository;
 use local_monlaututoria\domain\entry;
 use local_monlaututoria\domain\entry_create_command;
+use local_monlaututoria\domain\entry_kind;
 use local_monlaututoria\domain\entry_participant_type;
 use local_monlaututoria\domain\entry_status;
 use local_monlaututoria\event\entry_created;
@@ -121,6 +122,19 @@ final class entry_service {
             throw new \moodle_exception('error_entry_followup_before_entrydate', 'local_monlaututoria');
         }
 
+        // Fase 14 — a SOP entry may only be recorded by the student's current
+        // SOP tutor (assigned as a co_tutor), or by coordination.
+        if ($command->entrykind === \local_monlaututoria\domain\entry_kind::SOP) {
+            $iscoordination = has_capability(
+                'local/monlaututoria:viewallassignments', \context_system::instance(), $userid
+            );
+            $assignmentrepo = new \local_monlaututoria\repository\assignment_repository();
+            if (!$iscoordination
+                && !$assignmentrepo->is_current_cotutor_of_student($command->tutorid, $command->studentid)) {
+                throw new \moodle_exception('error_sop_not_orientador', 'local_monlaututoria');
+            }
+        }
+
         foreach ($command->participants as $participant) {
             $this->validate_participant($participant);
         }
@@ -128,16 +142,18 @@ final class entry_service {
         $transaction = $DB->start_delegated_transaction();
 
         $entryid = $this->repository->create((object) [
-            'studentid'        => $command->studentid,
-            'tutorid'          => $command->tutorid,
-            'academicyearid'   => $command->academicyearid,
-            'entrydate'        => $command->entrydate,
-            'modalityid'       => $command->modalityid,
-            'contentvisible'   => $command->contentvisible,
-            'noteinternal'     => $command->noteinternal,
-            'noterestricted'   => $command->noterestricted,
-            'nextfollowupdate' => $command->nextfollowupdate,
-            'createdby'        => $userid,
+            'studentid'         => $command->studentid,
+            'tutorid'           => $command->tutorid,
+            'academicyearid'    => $command->academicyearid,
+            'entrydate'         => $command->entrydate,
+            'modalityid'        => $command->modalityid,
+            'contentvisible'    => $command->contentvisible,
+            'noteinternal'      => $command->noteinternal,
+            'noterestricted'    => $command->noterestricted,
+            'nextfollowupdate'  => $command->nextfollowupdate,
+            'entrykind'         => $command->entrykind,
+            'recommendationsop' => $command->recommendationsop,
+            'createdby'         => $userid,
         ]);
 
         foreach ($command->participants as $participant) {
@@ -393,6 +409,13 @@ final class entry_service {
             throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
         }
 
+        // Fase 14 — a SOP entry is never visible to the student, not even
+        // masked: the whole entry is off-limits to them.
+        if ($viewerid === (int) $record->studentid
+            && ($record->entrykind ?? entry_kind::REGULAR) === entry_kind::SOP) {
+            throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
+        }
+
         return entry::from_record($this->mask_content($record, $viewerid));
     }
 
@@ -438,6 +461,10 @@ final class entry_service {
         if ($this->scopeservice->access_is_historical_only($viewerid, $studentid)) {
             $filters['tutorid'] = $viewerid;
         }
+        // Fase 14 — the student never sees SOP entries.
+        if ($viewerid === $studentid) {
+            $filters['entrykind'] = entry_kind::REGULAR;
+        }
         $records = $this->repository->search($filters, $limitfrom, $limitnum, $sort, $direction);
 
         return array_map(
@@ -460,6 +487,9 @@ final class entry_service {
         $filters['academicyearid'] = $academicyearid;
         if ($this->scopeservice->access_is_historical_only($viewerid, $studentid)) {
             $filters['tutorid'] = $viewerid;
+        }
+        if ($viewerid === $studentid) {
+            $filters['entrykind'] = entry_kind::REGULAR;
         }
 
         return $this->repository->count_search($filters);

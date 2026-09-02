@@ -235,12 +235,14 @@ if ($academicyear === null) {
 
     echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 } else if ($tab === 'tutorias') {
-    // Fase 13 — in simple mode a current tutor-by-assignment can register
-    // without the createentry capability (entries/create.php re-checks scope).
-    // A former tutor ($islimitedview) never registers here.
-    $cancreateentry = has_capability('local/monlaututoria:createentry', $context)
+    $assignmentrepo = new \local_monlaututoria\repository\assignment_repository();
+    $iscoordination = has_capability('local/monlaututoria:viewallassignments', $context);
+    // Fase 13/14 — the plain "Registrar tutoría" is for the primary tutor
+    // (or coordination, or a createentry-capable role); the SOP tutor uses
+    // "Registrar tutoría SOP" below. A former tutor ($islimitedview) neither.
+    $cancreateentry = has_capability('local/monlaututoria:createentry', $context) || $iscoordination
         || (\local_monlaututoria\feature::simple_mode()
-            && $scopeservice->user_is_current_tutor((int) $USER->id));
+            && $assignmentrepo->is_current_primary_of_student((int) $USER->id, $studentid, (int) $academicyear->id));
     if (!$islimitedview && $cancreateentry) {
         $entryurlparams = ['studentid' => $studentid, 'academicyearid' => (int) $academicyear->id];
         // mb-4 (not the smaller mb-2 gap-only spacing used before): this row
@@ -259,6 +261,22 @@ if ($academicyear === null) {
             );
         }
         echo html_writer::div($registerbuttons, 'd-flex flex-wrap gap-2 mb-4');
+    }
+
+    // Fase 14 — "Registrar tutoría SOP": the student's current SOP orientation
+    // tutor (a co_tutor) or coordination.
+    if (!$islimitedview && \local_monlaututoria\feature::simple_mode()
+        && ($iscoordination
+            || $assignmentrepo->is_current_cotutor_of_student((int) $USER->id, $studentid, (int) $academicyear->id))) {
+        echo html_writer::div(
+            $OUTPUT->single_button(
+                new moodle_url('/local/monlaututoria/entries/create_sop.php', [
+                    'studentid' => $studentid, 'academicyearid' => (int) $academicyear->id,
+                ]),
+                get_string('entry_sop_register', 'local_monlaututoria')
+            ),
+            'd-flex flex-wrap gap-2 mb-4'
+        );
     }
 
     // Phase 5.4: real listing, replacing the placeholder. Filters: estado,

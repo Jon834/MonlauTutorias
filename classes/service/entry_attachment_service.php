@@ -158,7 +158,15 @@ final class entry_attachment_service {
 
         $context = \context_system::instance();
         $isstudent = $viewerid === (int) $existing->studentid;
-        if ($isstudent || !has_capability('local/monlaututoria:viewinternalnotes', $context, $viewerid)) {
+        // Fase 14 — a SOP entry's attachments are visible to any staff who
+        // passed the scope check above (tutor of this student, or coordination):
+        // the viewinternalnotes capability is not required in simple mode, the
+        // same as the SOP entry's own content (entry_service::mask_content()).
+        $issopsimple = !$isstudent
+            && ($existing->entrykind ?? 'regular') === \local_monlaututoria\domain\entry_kind::SOP
+            && \local_monlaututoria\feature::simple_mode();
+        if ($isstudent
+            || (!$issopsimple && !has_capability('local/monlaututoria:viewinternalnotes', $context, $viewerid))) {
             throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
         }
 

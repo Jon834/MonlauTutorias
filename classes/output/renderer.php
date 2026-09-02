@@ -740,6 +740,42 @@ final class renderer extends \plugin_renderer_base {
     }
 
     /**
+     * "Mis alumnos SOP" (fase 14): the students this user is the SOP
+     * orientation tutor of (a co_tutor). Card links to the ficha's "Tutorías"
+     * tab, from where they register SOP entries.
+     *
+     * @param array<int, \stdClass> $students user records with user_picture fields
+     * @param int $academicyearid
+     * @return string empty string when there are none
+     */
+    public function dashboard_sop_students_roster(array $students, int $academicyearid): string {
+        if (empty($students)) {
+            return '';
+        }
+
+        $cards = '';
+        foreach ($students as $user) {
+            $url = new \moodle_url('/local/monlaututoria/student/view.php', [
+                'id' => (int) $user->id,
+                'academicyearid' => $academicyearid,
+                'tab' => 'tutorias',
+            ]);
+            $cards .= \html_writer::link(
+                $url,
+                \html_writer::div(
+                    $this->output->user_picture($user, ['size' => 72, 'link' => false, 'alttext' => false]),
+                    'local-monlaututoria-roster__photo'
+                )
+                    . \html_writer::div(s(fullname($user)), 'local-monlaututoria-roster__name'),
+                ['class' => 'local-monlaututoria-roster__card']
+            );
+        }
+
+        return $this->heading(get_string('dashboard_section_sopstudents', 'local_monlaututoria'), 3)
+            . \html_writer::div($cards, 'local-monlaututoria-roster');
+    }
+
+    /**
      * A clickable column header that toggles sort direction — click once for
      * ascending, again for descending; clicking a different column always
      * starts ascending. Shared by every sortable table in this plugin

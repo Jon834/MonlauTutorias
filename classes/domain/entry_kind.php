@@ -14,21 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_monlaututoria\domain;
+
 /**
- * Version details for local_monlaututoria.
+ * Values for local_tut_entry.entrykind (fase 14).
+ *
+ * A 'sop' entry is recorded by the student's SOP orientation tutor (assigned
+ * as a co_tutor). It carries an extra "Recomendaciones SOP" field and is
+ * NEVER visible to the student — enforced in entry_service, not the template.
  *
  * @package    local_monlaututoria
  * @copyright  2026 Monlau Tutoria Project
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class entry_kind {
 
-defined('MOODLE_INTERNAL') || die();
+    /** @var string An ordinary tutoring entry. */
+    public const REGULAR = 'regular';
 
-$plugin->component = 'local_monlaututoria';
-$plugin->version   = 2026091709;
-// Instalación verificada correctamente en un Moodle 5.1 de pruebas real, así que
-// este valor es compatible con esa instancia; sigue sin confirmarse el número
-// exacto del core (no bloqueante, solo pendiente de precisión).
-$plugin->requires  = 2025100600;
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.14.0';
+    /** @var string A SOP (orientación psicopedagógica) entry. */
+    public const SOP = 'sop';
+
+    /**
+     * @return string[]
+     */
+    public static function values(): array {
+        return [self::REGULAR, self::SOP];
+    }
+}

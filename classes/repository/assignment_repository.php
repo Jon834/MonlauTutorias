@@ -383,6 +383,104 @@ class assignment_repository {
     }
 
     /**
+     * Whether $tutorid is currently ("vigente") the PRIMARY tutor of
+     * $studentid — fase 14, to tell a primary tutor from the SOP tutor on
+     * the student ficha.
+     *
+     * @param int $tutorid
+     * @param int $studentid
+     * @param int|null $academicyearid
+     * @param int|null $now
+     * @return bool
+     */
+    public function is_current_primary_of_student(
+        int $tutorid,
+        int $studentid,
+        ?int $academicyearid = null,
+        ?int $now = null
+    ): bool {
+        global $DB;
+
+        $now = $now ?? time();
+        $params = [
+            'tutorid' => $tutorid, 'studentid' => $studentid,
+            'status' => assignment_status::ACTIVE, 'type' => assignment_type::PRIMARY,
+            'now1' => $now, 'now2' => $now,
+        ];
+        $sql = 'tutorid = :tutorid AND studentid = :studentid AND status = :status '
+            . 'AND assignmenttype = :type AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)';
+        if ($academicyearid !== null) {
+            $sql .= ' AND academicyearid = :academicyearid';
+            $params['academicyearid'] = $academicyearid;
+        }
+
+        return $DB->record_exists_select(self::TABLE, $sql, $params);
+    }
+
+    /**
+     * Whether $tutorid is currently ("vigente") a CO-TUTOR of $studentid —
+     * fase 14, the check behind "is this user the student's SOP tutor".
+     *
+     * @param int $tutorid
+     * @param int $studentid
+     * @param int|null $academicyearid
+     * @param int|null $now
+     * @return bool
+     */
+    public function is_current_cotutor_of_student(
+        int $tutorid,
+        int $studentid,
+        ?int $academicyearid = null,
+        ?int $now = null
+    ): bool {
+        global $DB;
+
+        $now = $now ?? time();
+        $params = [
+            'tutorid' => $tutorid, 'studentid' => $studentid,
+            'status' => assignment_status::ACTIVE, 'type' => assignment_type::CO_TUTOR,
+            'now1' => $now, 'now2' => $now,
+        ];
+        $sql = 'tutorid = :tutorid AND studentid = :studentid AND status = :status '
+            . 'AND assignmenttype = :type AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)';
+        if ($academicyearid !== null) {
+            $sql .= ' AND academicyearid = :academicyearid';
+            $params['academicyearid'] = $academicyearid;
+        }
+
+        return $DB->record_exists_select(self::TABLE, $sql, $params);
+    }
+
+    /**
+     * Student ids $tutorid is currently a CO-TUTOR of (fase 14: the SOP
+     * tutor's students, for the panel's "Mis alumnos SOP" section).
+     *
+     * @param int $tutorid
+     * @param int|null $academicyearid
+     * @param int|null $now
+     * @return int[]
+     */
+    public function find_current_cotutor_student_ids(int $tutorid, ?int $academicyearid = null, ?int $now = null): array {
+        global $DB;
+
+        $now = $now ?? time();
+        $params = [
+            'tutorid' => $tutorid, 'status' => assignment_status::ACTIVE,
+            'type' => assignment_type::CO_TUTOR, 'now1' => $now, 'now2' => $now,
+        ];
+        $sql = 'tutorid = :tutorid AND status = :status AND assignmenttype = :type '
+            . 'AND timestart <= :now1 AND (timeend IS NULL OR timeend > :now2)';
+        if ($academicyearid !== null) {
+            $sql .= ' AND academicyearid = :academicyearid';
+            $params['academicyearid'] = $academicyearid;
+        }
+
+        return array_values(array_map('intval', $DB->get_fieldset_select(
+            self::TABLE, 'DISTINCT studentid', $sql, $params
+        )));
+    }
+
+    /**
      * Whether $tutorid has EVER been the primary tutor or co-tutor of any
      * student (any status, any time) — fase 13, lets a former tutor reach the
      * panel in simple mode even after all their assignments ended.

@@ -46,7 +46,9 @@ final class entry {
         public readonly int $createdby,
         public readonly int $modifiedby,
         public readonly int $timecreated,
-        public readonly int $timemodified
+        public readonly int $timemodified,
+        public readonly string $entrykind = entry_kind::REGULAR,
+        public readonly ?string $recommendationsop = null
     ) {
     }
 
@@ -73,7 +75,9 @@ final class entry {
             (int) ($record->createdby ?? 0),
             (int) ($record->modifiedby ?? 0),
             (int) ($record->timecreated ?? 0),
-            (int) ($record->timemodified ?? 0)
+            (int) ($record->timemodified ?? 0),
+            $record->entrykind ?? entry_kind::REGULAR,
+            $record->recommendationsop ?? null
         );
     }
 }

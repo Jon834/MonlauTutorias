@@ -1,5 +1,21 @@
 # Changelog — local_monlaututoria
 
+## 0.14.0 — 2026-09-02
+
+**Fase 14 (S1) — Orientador SOP.** Solo en modo simple. Ver `docs/fases/phase-14-sop.md`.
+
+- El **cotutor** pasa a ser el **Orientador SOP**: el formulario de asignación en modo simple ofrece solo "Tutor principal" y "Orientador SOP" (`assignment_type::get_simple_options()`).
+- **Esquema** (`local_tut_entry`, upgrade `2026091709`): `entrykind` (`regular`\|`sop`) y `recommendationsop` (texto).
+- **Tutoría SOP**: página nueva `entries/create_sop.php` + `entry_sop_form` (fecha, modalidad, motivo, Observaciones SOP, **Recomendaciones SOP**, adjuntos). Sin comentario compartido con el alumno.
+- **Visibilidad**: `entry_service` excluye por completo las tutorías SOP para el alumno (lista y detalle). Cualquier tutor asignado vigente (principal o SOP) + coordinación las ven completas.
+- **Quién registra SOP**: solo el orientador SOP del alumno o coordinación (validado en `entry_service::create()` y en la página). El tutor principal ve el botón "Registrar tutoría" normal; el orientador SOP ve "Registrar tutoría SOP".
+- **Adjuntos SOP**: dos categorías nuevas — "Informes facilitados" (`sop_report`) y "Recomendaciones SOP" (`sop_recommendation`). `entries/attachments.php`, `entry_attachment_service` y `pluginfile` permiten los adjuntos de una tutoría SOP en modo simple sin la capacidad `viewinternalnotes` (mismo criterio que el contenido SOP). El alumno nunca los ve.
+- **Panel del tutor**: nueva sección "Mis alumnos SOP" para el orientador.
+- `version.php` → `2026091709` / `0.14.0`. Pruebas nuevas en `entry_service_test.php`. `php -l` correcto; PHPUnit/Behat sin ejecutar.
+- Pendiente (S2): editar una tutoría SOP (el formulario de edición no tiene aún el campo Recomendaciones); relabel "Cotutores" → "Orientador SOP" en el Resumen de la ficha; badge SOP en el listado de tutorías.
+
+---
+
 ## 0.13.8 — 2026-09-01
 
 **Un tutor anterior puede consultar las tutorías que él hizo.**

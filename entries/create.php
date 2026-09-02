@@ -118,6 +118,15 @@ $scopeservice->require_user_can_access_student((int) $USER->id, $studentid, (int
 if ($scopeservice->access_is_historical_only((int) $USER->id, $studentid)) {
     throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
 }
+// Fase 14 — in simple mode, a plain (regular) tutoría is the primary tutor's
+// or coordination's; the SOP tutor uses entries/create_sop.php.
+if (\local_monlaututoria\feature::simple_mode()
+    && !has_capability('local/monlaututoria:createentry', $context)
+    && !has_capability('local/monlaututoria:viewallassignments', $context)
+    && !(new \local_monlaututoria\repository\assignment_repository())
+        ->is_current_primary_of_student((int) $USER->id, $studentid, (int) $academicyear->id)) {
+    throw new \moodle_exception('error_scope_access_denied', 'local_monlaututoria');
+}
 
 $student = core_user::get_user($studentid);
 if (!$student || !empty($student->deleted)) {

@@ -39,13 +39,17 @@ final class entry_attachment_form extends \moodleform {
     protected function definition() {
         $mform = $this->_form;
 
+        // Fase 14 — a SOP entry offers its own two categories instead.
+        $categories = !empty($this->_customdata['categories'])
+            ? $this->_customdata['categories']
+            : entry_attachment_category::get_options();
         $mform->addElement(
             'select',
             'category',
             get_string('entry_attachment_category', 'local_monlaututoria'),
-            entry_attachment_category::get_options()
+            $categories
         );
-        $mform->setType('category', PARAM_ALPHA);
+        $mform->setType('category', PARAM_ALPHAEXT);
 
         $mform->addElement(
             'filemanager',

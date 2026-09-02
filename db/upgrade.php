@@ -560,6 +560,28 @@ function xmldb_local_monlaututoria_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026091701, 'local', 'monlaututoria');
     }
 
+    if ($oldversion < 2026091709) {
+        // Fase 14 — SOP (orientador de servicio de orientación psicopedagógica).
+        $table = new xmldb_table('local_tut_entry');
+
+        $field = new xmldb_field('entrykind', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'regular', 'noterestricted');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('recommendationsop', XMLDB_TYPE_TEXT, null, null, null, null, null, 'entrykind');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $index = new xmldb_index('ix_entrykind', XMLDB_INDEX_NOTUNIQUE, ['entrykind']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026091709, 'local', 'monlaututoria');
+    }
+
     return true;
 }
 

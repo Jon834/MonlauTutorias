@@ -144,6 +144,8 @@
         <FIELD NAME="contentvisible" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Content shared with the student"/>
         <FIELD NAME="noteinternal" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Internal tutoring note, never shown to the student"/>
         <FIELD NAME="noterestricted" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Restricted note, most sensitive tier"/>
+        <FIELD NAME="entrykind" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="regular" SEQUENCE="false" COMMENT="regular or sop (fase 14) — a sop entry is recorded by the student's SOP orientation tutor and is never visible to the student"/>
+        <FIELD NAME="recommendationsop" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Fase 14 — 'Recomendaciones SOP' free text, only on sop entries, staff-only"/>
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="active" SEQUENCE="false" COMMENT="active, annulled — see entry_status. Annulment (phase 5.5) has no extra columns yet"/>
         <FIELD NAME="nextfollowupdate" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Optional next follow-up date"/>
         <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The author of this entry"/>
@@ -159,6 +161,7 @@
         <INDEX NAME="ix_tutorid" UNIQUE="false" FIELDS="tutorid"/>
         <INDEX NAME="ix_status" UNIQUE="false" FIELDS="status"/>
         <INDEX NAME="ix_entrydate" UNIQUE="false" FIELDS="entrydate"/>
+        <INDEX NAME="ix_entrykind" UNIQUE="false" FIELDS="entrykind"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_tut_entryreason" COMMENT="Many-to-many link between a tutoring entry and local_tut_reason (phase 5.1)">

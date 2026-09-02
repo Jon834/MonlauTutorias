@@ -116,6 +116,8 @@ $canedit = $isactive
         || ($isowner && (has_capability('local/monlaututoria:editownentry', $context) || $caneditownsimple)));
 $canannul = $isactive && has_capability('local/monlaututoria:annulentry', $context);
 
+$issop = ($entry->entrykind ?? 'regular') === \local_monlaututoria\domain\entry_kind::SOP;
+
 $data = (object) [
     'studentname'          => fullname($student),
     'studentfichaurl'      => (new moodle_url('/local/monlaututoria/student/view.php', ['id' => $entry->studentid]))->out(false),
@@ -127,6 +129,10 @@ $data = (object) [
     'hasreasons'           => !empty($reasonnames),
     'reasonnames'          => implode(', ', $reasonnames),
     'contentvisible'       => $entry->contentvisible !== null ? $entry->contentvisible : '—',
+    // Fase 14 — SOP entries: the student never reaches this page (get_for_viewer
+    // throws), so anyone here is staff and sees the SOP recommendation.
+    'issop'                => $issop,
+    'recommendationsop'    => $entry->recommendationsop !== null ? $entry->recommendationsop : '—',
     'shownoteinternal'     => !$isself
         && (\local_monlaututoria\feature::simple_mode()
             || has_capability('local/monlaututoria:viewinternalnotes', $context)),
@@ -146,8 +152,11 @@ $data = (object) [
     // class docblock for why there is no student-visible attachment tier.
     // Fase 13: the "!feature::enabled(...)" clauses hide these actions in
     // simple mode (their target pages refuse to load there anyway).
-    'canseeattachments'    => !$isself && has_capability('local/monlaututoria:viewinternalnotes', $context)
-        && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::ATTACHMENTS),
+    'canseeattachments'    => !$isself && (
+        ($issop && \local_monlaututoria\feature::simple_mode())
+        || (has_capability('local/monlaututoria:viewinternalnotes', $context)
+            && \local_monlaututoria\feature::enabled(\local_monlaututoria\feature::ATTACHMENTS))
+    ),
     'attachmentsurl'       => (new moodle_url('/local/monlaututoria/entries/attachments.php', ['id' => $id]))->out(false),
     // Phase 6.1: staff-only, same reasoning as attachments — an agreement is
     // created by tutoring staff, never by the student themselves.

@@ -407,11 +407,21 @@ if ($view === 'roster') {
     echo $renderer->heading(get_string('dashboard_section_students', 'local_monlaututoria'), 3);
     echo $renderer->dashboard_student_roster($filteredstudents, $studentusers, (int) $academicyear->id);
 
-    // Fase 13 — students this tutor used to have: they can still open the
-    // tutorías they recorded (narrowed to their own by entry_service).
     if ($studentfilter === 'all') {
-        $formerids = (new \local_monlaututoria\repository\assignment_repository())
-            ->find_historical_student_ids_by_tutor((int) $USER->id);
+        $assignmentrepo = new \local_monlaututoria\repository\assignment_repository();
+
+        // Fase 14 — students this user is the SOP orientation tutor of.
+        if (\local_monlaututoria\feature::simple_mode()) {
+            $sopids = $assignmentrepo->find_current_cotutor_student_ids((int) $USER->id, (int) $academicyear->id);
+            if (!empty($sopids)) {
+                $sopusers = $DB->get_records_list('user', 'id', $sopids, 'lastname, firstname', $studentuserfields);
+                echo $renderer->dashboard_sop_students_roster($sopusers, (int) $academicyear->id);
+            }
+        }
+
+        // Fase 13 — students this tutor used to have: they can still open the
+        // tutorías they recorded (narrowed to their own by entry_service).
+        $formerids = $assignmentrepo->find_historical_student_ids_by_tutor((int) $USER->id);
         if (!empty($formerids)) {
             $formerusers = $DB->get_records_list('user', 'id', $formerids, 'lastname, firstname', $studentuserfields);
             echo $renderer->dashboard_former_students_roster($formerusers);

@@ -54,7 +54,9 @@ final class entry_create_command {
         public readonly ?int $nextfollowupdate = null,
         public readonly array $reasonids = [],
         public readonly array $participants = [],
-        public readonly bool $canoverridelock = false
+        public readonly bool $canoverridelock = false,
+        public readonly string $entrykind = entry_kind::REGULAR,
+        public readonly ?string $recommendationsop = null
     ) {
     }
 }

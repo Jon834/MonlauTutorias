@@ -62,6 +62,8 @@ final class entry_repository {
         $record->contentvisible = $data->contentvisible ?? null;
         $record->noteinternal = $data->noteinternal ?? null;
         $record->noterestricted = $data->noterestricted ?? null;
+        $record->entrykind = $data->entrykind ?? \local_monlaututoria\domain\entry_kind::REGULAR;
+        $record->recommendationsop = $data->recommendationsop ?? null;
         $record->status = entry_status::ACTIVE;
         $record->nextfollowupdate = isset($data->nextfollowupdate) ? (int) $data->nextfollowupdate : null;
         $record->createdby = (int) $data->createdby;
@@ -374,7 +376,7 @@ final class entry_repository {
         $conditions = ['1 = 1'];
         $params = [];
 
-        $equalityfilters = ['studentid', 'tutorid', 'academicyearid', 'status', 'modalityid'];
+        $equalityfilters = ['studentid', 'tutorid', 'academicyearid', 'status', 'modalityid', 'entrykind'];
         foreach ($equalityfilters as $key) {
             if (isset($filters[$key]) && $filters[$key] !== '') {
                 $conditions[] = "$key = :$key";

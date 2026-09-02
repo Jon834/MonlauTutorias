@@ -80,11 +80,17 @@ function local_monlaututoria_pluginfile($course, $cm, $context, $filearea, $args
         return false;
     }
 
-    // Attachments are staff-only in this phase — same hard floor as
+    // Attachments are staff-only — same hard floor as
     // entry_attachment_service::get_for_entry(), reimplemented here because
-    // pluginfile.php never calls that service.
+    // pluginfile.php never calls that service. Fase 14: a SOP entry's files
+    // are visible to any staff who passed scope, no viewinternalnotes needed
+    // in simple mode (same as the SOP entry's own content).
     $isstudent = (int) $USER->id === (int) $entry->studentid;
-    if ($isstudent || !has_capability('local/monlaututoria:viewinternalnotes', $context)) {
+    $issopsimple = !$isstudent
+        && ($entry->entrykind ?? 'regular') === \local_monlaututoria\domain\entry_kind::SOP
+        && \local_monlaututoria\feature::simple_mode();
+    if ($isstudent
+        || (!$issopsimple && !has_capability('local/monlaututoria:viewinternalnotes', $context))) {
         return false;
     }
 

@@ -32,11 +32,20 @@ final class entry_attachment_category {
     public const EVIDENCE = 'evidence';
     public const OTHER = 'other';
 
+    /** @var string Fase 14 — "Informes facilitados" (SOP entries). */
+    public const SOP_REPORT = 'sop_report';
+
+    /** @var string Fase 14 — "Recomendaciones SOP" attachments (SOP entries). */
+    public const SOP_RECOMMENDATION = 'sop_recommendation';
+
     /**
      * @return string[]
      */
     public static function values(): array {
-        return [self::REPORT, self::CONSENT, self::EVIDENCE, self::OTHER];
+        return [
+            self::REPORT, self::CONSENT, self::EVIDENCE, self::OTHER,
+            self::SOP_REPORT, self::SOP_RECOMMENDATION,
+        ];
     }
 
     /**
@@ -48,6 +57,18 @@ final class entry_attachment_category {
             self::CONSENT  => get_string('entryattachmentcategory_consent', 'local_monlaututoria'),
             self::EVIDENCE => get_string('entryattachmentcategory_evidence', 'local_monlaututoria'),
             self::OTHER    => get_string('entryattachmentcategory_other', 'local_monlaututoria'),
+        ];
+    }
+
+    /**
+     * Fase 14 — the two categories a SOP entry uses.
+     *
+     * @return array<string, string>
+     */
+    public static function get_sop_options(): array {
+        return [
+            self::SOP_REPORT         => get_string('entryattachmentcategory_sop_report', 'local_monlaututoria'),
+            self::SOP_RECOMMENDATION => get_string('entryattachmentcategory_sop_recommendation', 'local_monlaututoria'),
         ];
     }
 }

@@ -93,6 +93,9 @@
         "createreferralurl": "https://example.org/local/monlaututoria/referrals/create.php?entryid=1"
     }
 }}
+{{#issop}}
+<p><span class="badge badge-info">{{#str}} entry_sop_badge, local_monlaututoria {{/str}}</span></p>
+{{/issop}}
 <dl class="row">
     <dt class="col-sm-3">{{#str}} assignment_col_student, local_monlaututoria {{/str}}</dt>
     <dd class="col-sm-9"><a href="{{studentfichaurl}}">{{studentname}}</a></dd>
@@ -122,9 +125,14 @@
     <dd class="col-sm-9">{{contentvisible}}</dd>
 
     {{#shownoteinternal}}
-    <dt class="col-sm-3">{{#str}} entry_field_noteinternal, local_monlaututoria {{/str}}</dt>
+    <dt class="col-sm-3">{{#issop}}{{#str}} entry_field_sopobservations, local_monlaututoria {{/str}}{{/issop}}{{^issop}}{{#str}} entry_field_noteinternal, local_monlaututoria {{/str}}{{/issop}}</dt>
     <dd class="col-sm-9">{{noteinternal}}</dd>
     {{/shownoteinternal}}
+
+    {{#issop}}
+    <dt class="col-sm-3">{{#str}} entry_field_recommendationsop, local_monlaututoria {{/str}}</dt>
+    <dd class="col-sm-9">{{recommendationsop}}</dd>
+    {{/issop}}
 
     {{#shownoterestricted}}
     <dt class="col-sm-3">{{#str}} entry_field_noterestricted, local_monlaututoria {{/str}}</dt>

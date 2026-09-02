@@ -33,22 +33,31 @@ require(__DIR__ . '/../../../config.php');
 
 require_login();
 $context = context_system::instance();
-\local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::ATTACHMENTS);
 
 $id = required_param('id', PARAM_INT);
 
 $entryrepository = new \local_monlaututoria\repository\entry_repository();
 $existing = $entryrepository->get($id);
 
+$issop = ($existing->entrykind ?? 'regular') === \local_monlaututoria\domain\entry_kind::SOP;
+// Fase 14 — attachments are hidden in simple mode EXCEPT on SOP entries.
+if (!$issop) {
+    \local_monlaututoria\feature::require_enabled(\local_monlaututoria\feature::ATTACHMENTS);
+}
+
 $attachmentservice = new \local_monlaututoria\service\entry_attachment_service($entryrepository);
-// Enforces scope_service + viewinternalnotes + the student hard floor —
-// throws before this page renders anything if the viewer is not entitled.
+// Enforces scope_service + viewinternalnotes (SOP-exempt in simple mode) +
+// the student hard floor — throws before this page renders anything if the
+// viewer is not entitled.
 $pairs = $attachmentservice->get_for_entry($id, (int) $USER->id);
 
 $isowner = ((int) $existing->createdby === (int) $USER->id);
+$caneditownsimple = \local_monlaututoria\feature::simple_mode()
+    && !(new \local_monlaututoria\service\scope_service())
+        ->access_is_historical_only((int) $USER->id, (int) $existing->studentid);
 $canupload = $existing->status === \local_monlaututoria\domain\entry_status::ACTIVE
     && (has_capability('local/monlaututoria:editanyentry', $context)
-        || ($isowner && has_capability('local/monlaututoria:editownentry', $context)));
+        || ($isowner && (has_capability('local/monlaututoria:editownentry', $context) || $caneditownsimple)));
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/monlaututoria/entries/attachments.php', ['id' => $id]);
@@ -59,7 +68,11 @@ $PAGE->set_heading(get_string('entry_attachments_title', 'local_monlaututoria'))
 $returnurl = new moodle_url('/local/monlaututoria/entries/view.php', ['id' => $id]);
 
 if ($canupload) {
-    $form = new \local_monlaututoria\form\entry_attachment_form(null);
+    $form = new \local_monlaututoria\form\entry_attachment_form(null, [
+        'categories' => $issop
+            ? \local_monlaututoria\domain\entry_attachment_category::get_sop_options()
+            : \local_monlaututoria\domain\entry_attachment_category::get_options(),
+    ]);
 
     // A fresh, empty draft area every time — never preloaded from the
     // permanent entryattachment area, so this filemanager only ever offers
@@ -89,7 +102,8 @@ echo $OUTPUT->heading(get_string('entry_attachments_title', 'local_monlaututoria
 if (empty($pairs)) {
     echo $OUTPUT->notification(get_string('entry_attachments_empty', 'local_monlaututoria'), \core\output\notification::NOTIFY_INFO);
 } else {
-    $categoryoptions = \local_monlaututoria\domain\entry_attachment_category::get_options();
+    $categoryoptions = \local_monlaututoria\domain\entry_attachment_category::get_options()
+        + \local_monlaututoria\domain\entry_attachment_category::get_sop_options();
     $table = new html_table();
     $table->head = [
         get_string('entry_attachment_files', 'local_monlaututoria'),

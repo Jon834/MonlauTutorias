@@ -50,4 +50,17 @@ final class assignment_type {
             self::OTHER       => get_string('assignmenttype_other', 'local_monlaututoria'),
         ];
     }
+
+    /**
+     * Fase 14 — in simple mode only two types matter, and the co-tutor is the
+     * "Orientador SOP".
+     *
+     * @return array<string, string>
+     */
+    public static function get_simple_options(): array {
+        return [
+            self::PRIMARY  => get_string('assignmenttype_primary', 'local_monlaututoria'),
+            self::CO_TUTOR => get_string('assignmenttype_sop', 'local_monlaututoria'),
+        ];
+    }
 }
