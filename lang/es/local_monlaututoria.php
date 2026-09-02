@@ -1064,3 +1064,11 @@ $string['coordination_scope_help_steps'] = 'Para habilitar un coordinador: 1) as
 $string['setting_simplemode'] = 'Modo simple';
 $string['setting_simplemode_desc'] = 'Reduce el plugin a lo esencial para el día a día: el tutor registra tutorías y el alumno consulta las suyas y quién es su tutor. Oculta acuerdos, seguimientos, derivaciones, panel de coordinación, notificaciones, importaciones (CSV y cohortes), cotutores y adjuntos — de la navegación y de sus páginas. No borra nada: los datos, los servicios y las pruebas siguen intactos, y desactivar esta casilla lo restaura todo. Desactivado por defecto.';
 $string['error_featuredisabled'] = 'Esta función no está disponible: el sitio está en modo simple de Monlau Tutoría.';
+
+// Fase 14 — notificacion de tutoria SOP al tutor principal (solo campana).
+$string['messageprovider:sopentryrecorded'] = 'El orientador SOP ha registrado una tutoria de un alumno tuyo';
+$string['message_sopentry_subject'] = 'El orientador SOP ha registrado una tutoria de {$a}';
+$string['message_sopentry_body'] = 'El orientador SOP ha registrado una tutoria de {$a->student}.
+
+Ver la tutoria: {$a->url}';
+$string['message_sopentry_body_html'] = '<p>El orientador SOP ha registrado una tutoria de <strong>{$a->student}</strong>.</p><p><a href="{$a->url}">Ver la tutoria</a></p>';

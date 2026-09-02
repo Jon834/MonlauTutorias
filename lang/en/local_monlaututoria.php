@@ -1065,3 +1065,11 @@ $string['coordination_scope_help_steps'] = 'To enable a coordinator: 1) assign t
 $string['setting_simplemode'] = 'Simple mode';
 $string['setting_simplemode_desc'] = 'Reduces the plugin to the day-to-day essentials: the tutor records tutoring entries and the student consults their own entries and who their tutor is. Hides agreements, follow-ups, referrals, the coordination dashboard, notifications, imports (CSV and from cohorts), co-tutors and attachments — from the navigation and from their pages. Nothing is deleted: data, services and tests stay intact, and clearing this checkbox restores everything. Off by default.';
 $string['error_featuredisabled'] = 'This feature is not available: the site is running Monlau Tutoria in simple mode.';
+
+// Fase 14 — SOP entry notification to the primary tutor (bell only).
+$string['messageprovider:sopentryrecorded'] = 'The SOP orientation tutor recorded an entry for one of your students';
+$string['message_sopentry_subject'] = 'The SOP orientation tutor recorded an entry for {$a}';
+$string['message_sopentry_body'] = 'The SOP orientation tutor recorded an entry for {$a->student}.
+
+View the entry: {$a->url}';
+$string['message_sopentry_body_html'] = '<p>The SOP orientation tutor recorded an entry for <strong>{$a->student}</strong>.</p><p><a href="{$a->url}">View the entry</a></p>';

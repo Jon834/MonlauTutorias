@@ -1,5 +1,18 @@
 # Changelog — local_monlaututoria
 
+## 0.14.11 — 2026-09-02
+
+**Notificación (campana) al tutor principal cuando se registra una tutoría SOP.**
+
+- Al registrar una tutoría SOP, el **tutor principal vigente** del alumno recibe una notificación **dentro de Moodle** (la campana). No se envía correo.
+- El mensaje es genérico — *"El orientador SOP ha registrado una tutoría de [alumno]"* + enlace — **sin** observaciones ni recomendaciones (regla de privacidad del proyecto).
+- No se avisa si el propio tutor principal es quien la registró.
+- Nuevo `classes/observer/sop_notification_observer.php` (suscrito a `entry_created` en `db/events.php`), independiente del módulo de notificaciones de la Fase 9 (que sigue oculto en modo simple). Nuevo proveedor de mensaje `sopentryrecorded` en `db/messages.php` (correo `MESSAGE_DISALLOWED`).
+- El usuario puede silenciarlo en *Preferencias → Notificaciones → "El orientador SOP ha registrado una tutoría de un alumno tuyo"*.
+- `version.php` → `2026091720` / `0.14.11`. Los proveedores de mensaje se sincronizan solos al actualizar; sin cambio de esquema.
+
+---
+
 ## 0.14.10 — 2026-09-02
 
 **Coordinación puede ver el panel de cualquier tutor u orientador SOP.**

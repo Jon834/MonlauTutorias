@@ -1064,3 +1064,11 @@ $string['coordination_scope_help_steps'] = 'Per habilitar un coordinador: 1) ass
 $string['setting_simplemode'] = 'Mode simple';
 $string['setting_simplemode_desc'] = 'Redueix el connector a l\'essencial del dia a dia: el tutor registra tutories i l\'alumne consulta les seves i qui és el seu tutor. Amaga acords, seguiments, derivacions, panell de coordinació, notificacions, importacions (CSV i de cohorts), cotutors i adjunts — de la navegació i de les seves pàgines. No esborra res: les dades, els serveis i les proves segueixen intactes, i desactivar aquesta casella ho restaura tot. Desactivat per defecte.';
 $string['error_featuredisabled'] = 'Aquesta funció no està disponible: el lloc funciona en mode simple de Monlau Tutoria.';
+
+// Fase 14 — notificacio de tutoria SOP al tutor principal (nomes campana).
+$string['messageprovider:sopentryrecorded'] = 'L\'orientador SOP ha registrat una tutoria d\'un alumne teu';
+$string['message_sopentry_subject'] = 'L\'orientador SOP ha registrat una tutoria de {$a}';
+$string['message_sopentry_body'] = 'L\'orientador SOP ha registrat una tutoria de {$a->student}.
+
+Veure la tutoria: {$a->url}';
+$string['message_sopentry_body_html'] = '<p>L\'orientador SOP ha registrat una tutoria de <strong>{$a->student}</strong>.</p><p><a href="{$a->url}">Veure la tutoria</a></p>';
